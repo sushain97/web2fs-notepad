@@ -8,6 +8,8 @@ class MaxIdSelectionAttemptsExceeded extends \Exception {}
 class NoteContentSizeExceeded extends \Exception {}
 
 class NoteStore {
+    # TODO: tighten all the 0777 permissions
+
     const MAX_ID_SELECTION_ATTEMPTS = 10;
     const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
 
@@ -18,7 +20,6 @@ class NoteStore {
         $this->logger = $logger;
         $this->kernel = $kernel;
 
-        # TODO: tighten these permissions
         if (!is_dir($this->getDataDir())) {
             mkdir($this->getDataDir(), 0777, true);
         }
@@ -32,7 +33,7 @@ class NoteStore {
     }
 
     private function getVersionDataDir() {
-        return $this->getDataDir().'/var/data/_versions/';
+        return $this->getDataDir().'_versions/';
     }
 
     private function getNoteVersionDataDir($id) {
@@ -40,8 +41,8 @@ class NoteStore {
     }
 
     private function getNoteVersionPath($id, $version) {
-        if (!is_int($version) || $version < 0) {
-            throw new Exception("Invalid version: $version");
+        if (intval($version) < 0) {
+            throw new \Exception("Invalid version: $version");
         }
 
         return $this->getNoteVersionDataDir($id).$version;;
@@ -57,7 +58,7 @@ class NoteStore {
 
     private function getCurrentNoteVersion($id) {
         if ($this->hasNote($id)) {
-            $versions = scandir($this->getNoteVersionDataDir());
+            $versions = scandir($this->getNoteVersionDataDir($id));
             rsort($versions, 1);
             return intval($versions[0]);
         } else {
@@ -79,7 +80,7 @@ class NoteStore {
             $id = substr(str_shuffle('234579abcdefghjkmnpqrstwxyz'), -5);
         } while($this->hasNote($id));
 
-        $this->logger->info("Generated new note id: $id");
+        $this->logger->info("Generated new note id: $id.");
 
         return $id;
     }
@@ -93,9 +94,9 @@ class NoteStore {
     }
 
     public function getNote($id, $version=null) {
-        $this->logger->info("Fetching note $id at version $version");
+        $this->logger->info("Fetching note $id at version $version.");
 
-        $content = get_file_contents($this->getNoteContentPath($id, $version));
+        $content = file_get_contents($this->getNoteContentPath($id, $version));
         if ($content === false) {
             throw new Exception('Unable to load note.');
         }
@@ -104,20 +105,28 @@ class NoteStore {
     }
 
     public function updateNote($id, $content) {
-        if (strlen($content) > self::MAX_FILE_SIZE_BYTES) {
-            throw new NoteContentSizeExceeded("Content with {strlen($content)} bytes exceeded maximum {self::MAX_FILE_SIZE_BYTES} bytes.");
+        $content_size = strlen($content);
+
+        if ($content_size > self::MAX_FILE_SIZE_BYTES) {
+            throw new NoteContentSizeExceeded("Content with $content_size bytes exceeded maximum {self::MAX_FILE_SIZE_BYTES} bytes.");
         }
 
-        $this->logger->info("Updating note $id with {strlen($content)} bytes");
+        $this->logger->info("Updating note $id with $content_size bytes.");
 
-        $current_version = $this->getCurrentNoteVersion($id);
-        $new_version_path = $this->getNoteVersionPath($id, $current_version + 1);
-        $this->logger->debug("Writing new version to $new_version_path");
-        file_put_contents($new_version_path, $content);
+        $newNote = !$this->hasNote($id);
+        if ($newNote) {
+            mkdir($this->getNoteVersionDataDir($id), 0777, true);
+        }
 
+        $newVersion = $newNote ? 0 : $this->getCurrentNoteVersion($id) + 1;
+        $newVersionPath = $this->getNoteVersionPath($id, $newVersion);
+        $this->logger->debug("Writing new version to $newVersionPath");
+        file_put_contents($newVersionPath, $content);
 
-        $root_content_path = $this->getNoteContentPath($id);
-        $this->logger->debug("Writing new version to $root_content_path");
-        file_put_contents($root_content_path, $content);
+        $rootContentPath = $this->getNoteContentPath($id);
+        $this->logger->debug("Writing new version to $rootContentPath");
+        file_put_contents($rootContentPath, $content);
+
+        return $newVersion;
     }
 }
