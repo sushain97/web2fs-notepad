@@ -48,7 +48,11 @@ class PageController extends AbstractController {
         } else {
             // TODO: render a page that shows the content and lets you edit it (updates URL to newest version + version listing + spinner)
             // TODO: ensure that if version is set, the page is frozen
-            return new Response('<html><body>Current content: '.$content.'</body></html>');
+            return $this->render('index.html.php', array(
+                'id' => $id,
+                'version' => $version,
+                'content' => $content,
+            ));
         }
     }
 
