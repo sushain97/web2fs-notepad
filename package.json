@@ -1,0 +1,10 @@
+{
+  "name": "web2fs-notepad",
+  "version": "0.1.0",
+  "description": "A minimal web notepad using filesystem storage",
+  "author": "Sushain K. Cherivirala <sushain@skc.name>",
+  "license": "ISC",
+  "dependencies": {
+    "basscss": "7.1.1"
+  }
+}

@@ -1,6 +1,6 @@
 {
     "name": "Web2FS Notepad",
-    "description": "A minimal notepad using filesystem storage",
+    "description": "A minimal web notepad using filesystem storage",
     "type": "project",
     "license": "proprietary",
     "require": {
