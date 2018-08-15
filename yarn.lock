@@ -179,3 +179,11 @@ flex-object@^2.0.4:
   resolved "https://registry.yarnpkg.com/flex-object/-/flex-object-2.0.5.tgz#11b9bbc0f4f864e9dc607e98ce2c670442bdc851"
   dependencies:
     basscss-defaults "^2.0.1"
+
+lodash@^4.17.10:
+  version "4.17.10"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.10.tgz#1b7793cf7259ea38fb3661d4d38b3260af8ae4e7"
+
+wretch@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/wretch/-/wretch-1.4.1.tgz#0423ae539a5279d17835f3995103d49c2906cd71"

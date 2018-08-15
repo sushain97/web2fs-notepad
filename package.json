@@ -5,6 +5,8 @@
   "author": "Sushain K. Cherivirala <sushain@skc.name>",
   "license": "ISC",
   "dependencies": {
-    "basscss": "7.1.1"
+    "basscss": "7.1.1",
+    "lodash": "^4.17.10",
+    "wretch": "^1.4.1"
   }
 }
