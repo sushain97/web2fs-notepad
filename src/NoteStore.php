@@ -69,7 +69,6 @@ class NoteStore {
     public function generateNewId() {
         // TODO: generate a human readable id instead
 
-        $id = null;
         $attempts = 1;
         do {
             if ($attempts >= self::MAX_ID_SELECTION_ATTEMPTS) {
@@ -78,7 +77,7 @@ class NoteStore {
 
             $attempts++;
             $id = substr(str_shuffle('234579abcdefghjkmnpqrstwxyz'), -5);
-        } while($this->hasNote($id));
+        } while($id == null || $this->hasNote($id));
 
         $this->logger->info("Generated new note id: $id.");
 
@@ -96,9 +95,17 @@ class NoteStore {
     public function getNote($id, $version=null) {
         $this->logger->info("Fetching note $id at version $version.");
 
-        $content = file_get_contents($this->getNoteContentPath($id, $version));
-        if ($content === false) {
-            throw new Exception('Unable to load note.');
+        $path = $this->getNoteContentPath($id, $version);
+        $file = fopen($path, 'r');
+        if (flock($file, LOCK_SH)) {
+            $content = fread($file, filesize($path));
+            if ($content === false) {
+                flock($file, LOCK_UN);
+                throw new Exception('Unable to load note.');
+            }
+            flock($file, LOCK_UN);
+        } else {
+            throw new Exception('Unable to secure file lock');
         }
 
         return $content;
@@ -118,14 +125,21 @@ class NoteStore {
             mkdir($this->getNoteVersionDataDir($id), 0777, true);
         }
 
-        $newVersion = $newNote ? 0 : $this->getCurrentNoteVersion($id) + 1;
-        $newVersionPath = $this->getNoteVersionPath($id, $newVersion);
-        $this->logger->debug("Writing new version to $newVersionPath");
-        file_put_contents($newVersionPath, $content);
-
         $rootContentPath = $this->getNoteContentPath($id);
-        $this->logger->debug("Writing new version to $rootContentPath");
-        file_put_contents($rootContentPath, $content);
+        $rootContentFile = fopen($rootContentPath, 'w');
+        if (flock($rootContentFile, LOCK_EX)) {
+            $this->logger->debug("Writing new version to $rootContentPath");
+            fwrite($rootContentFile, $content);
+
+            $newVersion = $newNote ? 0 : $this->getCurrentNoteVersion($id) + 1;
+            $newVersionPath = $this->getNoteVersionPath($id, $newVersion);
+            $this->logger->debug("Writing new version to $newVersionPath");
+            file_put_contents($newVersionPath, $content);
+
+            flock($rootContentFile, LOCK_UN);
+        } else {
+            throw new Exception('Unable to secure file lock');
+        }
 
         return $newVersion;
     }
