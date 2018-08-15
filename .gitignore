@@ -4,3 +4,4 @@
 /vendor/
 /.web-server-pid
 node_modules/
+bundle.js
