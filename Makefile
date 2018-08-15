@@ -2,4 +2,4 @@ all:
 	composer install
 	yarn install
 
-# TODO: add linting for JS and PHP
+# TODO: add linting for JS and PHP + CI + badges
