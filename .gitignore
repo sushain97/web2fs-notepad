@@ -5,3 +5,4 @@
 /.web-server-pid
 node_modules/
 bundle.js
+yarn-error.log

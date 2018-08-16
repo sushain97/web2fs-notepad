@@ -5,8 +5,8 @@ Minimal web-based notepad with versioning. Data is stored directly
 on the filesystem making backups easy, searching as simple as a
 `grep` and limiting runtime dependencies to PHP.
 
-Uses [Symfony][1] on the backend and ES6 transpiled with [Webpack][2].
-CSS is provided courtesy of [Basscss][3].
+Uses [Symfony][1] on the backend and [Preact][2], [TypeScript][3] and
+[BlueprintJS][4] for the frontend.
 
 [TODO: screenshot]
 
@@ -21,5 +21,6 @@ Development
 TODO
 
 [1]: https://symfony.com/
-[2]: https://webpack.js.org/
-[3]: http://basscss.com/v7/
+[2]: https://preactjs.com/
+[3]: http://typescriptlang.org/
+[4]: https://blueprintjs.com/

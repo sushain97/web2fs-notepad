@@ -7,18 +7,31 @@
   "private": true,
   "scripts": {
     "build": "webpack",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "lint": "tslint --project . && prettier src/**/{*.tsx,*.ts} --list-different"
   },
   "dependencies": {
-    "basscss": "7.1.1",
-    "dotenv": "^6.0.0",
+    "@blueprintjs/core": "^3.3.0",
+    "@blueprintjs/icons": "^3.0.0",
     "lodash": "^4.17.10",
+    "preact": "^8.3.1",
+    "preact-compat": "^3.18.2",
+    "store": "^2.0.12",
     "wretch": "^1.4.1"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-preset-env": "^1.7.0",
+    "@types/lodash": "^4.14.116",
+    "@types/react": "^16.4.11",
+    "@types/react-dom": "^16.0.7",
+    "@types/store": "^2.0.0",
+    "dotenv": "^6.0.0",
+    "prettier": "^1.14.2",
+    "ts-loader": "^4.4.2",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.14.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "tslint-react": "^3.6.0",
+    "typescript": "^3.0.1",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.0"
   }

@@ -3,4 +3,7 @@ all:
 	yarn install
 	yarn build
 
-# TODO: add linting for JS and PHP + CI + badges
+test:
+	yarn lint
+
+# TODO: add linting for PHP + CI + badges

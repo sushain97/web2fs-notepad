@@ -17,6 +17,14 @@ class Note {
         $this->version = $version;
         $this->content = $content;
     }
+
+    public function serialize(): array {
+        return array(
+            'id' => $this->id,
+            'version' => $this->version,
+            'content' => $this->content,
+        );
+    }
 }
 
 class NoteStore {
@@ -68,7 +76,7 @@ class NoteStore {
         }
     }
 
-    private function getCurrentNoteVersion(string $id): int {
+    function getCurrentNoteVersion(string $id): int {
         if ($this->hasNote($id)) {
             $versions = scandir($this->getNoteVersionDataDir($id));
             rsort($versions, 1);
@@ -110,7 +118,8 @@ class NoteStore {
         $path = $this->getNoteContentPath($id, $version);
         $file = fopen($path, 'r');
         if (flock($file, LOCK_SH)) {
-            $content = fread($file, filesize($path));
+            $fileSize = filesize($path);
+            $content = $fileSize == 0 ? '' : fread($file, filesize($path));
             if ($content === false) {
                 flock($file, LOCK_UN);
                 throw new Exception('Unable to load note.');
@@ -120,7 +129,7 @@ class NoteStore {
             throw new Exception('Unable to secure file lock');
         }
 
-        $note = new Note($id, $version || $this->getCurrentNoteVersion($id), $content);
+        $note = new Note($id, $version == null ? $this->getCurrentNoteVersion($id) : $version, $content);
         return $note;
     }
 

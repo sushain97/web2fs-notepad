@@ -44,9 +44,8 @@ class PageController extends AbstractController {
         $hasNote = $store->hasNote($id);
         if (!$hasNote) {
             $store->updateNote($id, '');
-        } else {
-            $note = $store->getNote($id);
         }
+        $note = $store->getNote($id, $version);
 
         if (strpos($user_agent, 'curl') === 0) {
             return new Response($content);
@@ -54,10 +53,8 @@ class PageController extends AbstractController {
             // TODO: render a page that shows the content and lets you edit it (updates URL to newest version + version listing + spinner)
             // TODO: ensure that if version is set, the page is frozen
             return $this->render('index.html.php', array(
-                'id' => $note->id,
-                'displayedVersion' => $version || $note->version,
-                'latestVersion' => $note->version,
-                'content' => $note->content,
+                'note' => $note->serialize(),
+                'currentVersion' => $store->getCurrentNoteVersion($id),
             ));
         }
     }

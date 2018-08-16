@@ -6,26 +6,31 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="author" content="Sushain K. Cherivirala">
-        <!-- Dynamically link this -->
-        <link rel="stylesheet" href="/basscss.min.css" integrity="sha384-/biuPsPEkt10QoeOExIADuWNrpFFXALKPgBhEDkRdKDJdQOPpbNU3uUeFbL/KPJg" crossorigin="anonymous">
+        <!-- Dynamically link, minify and combine these -->
+        <link rel="stylesheet" href="/node_modules/normalize.css/normalize.css"/>
+        <link rel="stylesheet" href="/node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css"/>
+        <link rel="stylesheet" href="/node_modules/@blueprintjs/core/lib/css/blueprint.css"/>
         <style type="text/css">
-            #content-input {
-                height: calc(100vh - 4rem);
+            /* TODO, write this in SCSS in another file and use Blueprint's vars */
+            body {
+                margin: 2rem;
+                background-color: #F5F8FA;
+            }
+
+            textarea.bp3-input.content-input {
+                height: calc(100vh - 5.75rem);
+                margin-bottom: 1rem;
             }
         </style>
         <script type="text/javascript">
             window.CONTEXT = {
-                id: '<?php echo $id ?>',
-                displayedVersion: '<?php echo $displayedVersion ?>',
-                latestVersion: '<?php echo $latestVersion ?>',
+                note: <?php echo json_encode($note) ?>,
+                currentVersion: <?php echo $currentVersion ?>,
             };
         </script>
         <!-- TODO: add a favicon -->
     </head>
-    <body class="m3 bg-darken-1">
-        <textarea class="col-12 line-height-2" id="content-input" autofocus>
-<?php echo htmlspecialchars($content, ENT_QUOTES, 'UTF-8') ?>
-        </textarea>
+    <body>
         <script type="text/javascript" src="/bundle.js"></script>
     </body>
 </html>

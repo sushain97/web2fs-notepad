@@ -1,0 +1,17 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:latest",
+        "tslint-react",
+        "tslint-eslint-rules",
+        "tslint-config-prettier"
+    ],
+    "rules": {
+        "member-ordering": {
+            "options": {
+                "alphabetize": true,
+                "order": "instance-sandwich"
+            }
+        }
+    }
+}
