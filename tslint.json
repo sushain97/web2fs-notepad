@@ -4,6 +4,7 @@
         "tslint:latest",
         "tslint-react",
         "tslint-eslint-rules",
+        "@blueprintjs/tslint-config/blueprint-rules",
         "tslint-config-prettier"
     ],
     "rules": {
