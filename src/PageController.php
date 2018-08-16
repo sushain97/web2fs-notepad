@@ -14,7 +14,7 @@ class PageController extends AbstractController {
     /**
      * @Route("/", name="new_note", methods={"GET"})
      */
-    public function new_note(NoteStore $store) {
+    public function new_note(NoteStore $store): Response {
         try {
             $id = $store->generateNewId();
         } catch (MaxIdSelectionAttemptsExceeded $e) {
@@ -33,7 +33,7 @@ class PageController extends AbstractController {
      *     defaults={"version"=null}
      * )
      */
-    public function show_note($id, $version, NoteStore $store) {
+    public function show_note(string $id, ?string $version, NoteStore $store): Response {
         $request = Request::createFromGlobals();
         $user_agent = $request->headers->get('User-Agent');
 
@@ -41,7 +41,12 @@ class PageController extends AbstractController {
             throw $this->createNotFoundException("Version does not exist: $version.");
         }
 
-        $content = $store->hasNote($id) ? $store->getNote($id, $version) : '';
+        $hasNote = $store->hasNote($id);
+        if (!$hasNote) {
+            $store->updateNote($id, '');
+        } else {
+            $note = $store->getNote($id);
+        }
 
         if (strpos($user_agent, 'curl') === 0) {
             return new Response($content);
@@ -49,9 +54,10 @@ class PageController extends AbstractController {
             // TODO: render a page that shows the content and lets you edit it (updates URL to newest version + version listing + spinner)
             // TODO: ensure that if version is set, the page is frozen
             return $this->render('index.html.php', array(
-                'id' => $id,
-                'version' => $version,
-                'content' => $content,
+                'id' => $note->id,
+                'displayedVersion' => $version || $note->version,
+                'latestVersion' => $note->version,
+                'content' => $note->content,
             ));
         }
     }
@@ -59,7 +65,7 @@ class PageController extends AbstractController {
     /**
      * @Route("/{id}", name="update_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function update_note($id, NoteStore $store) {
+    public function update_note(string $id, NoteStore $store): Response {
         $request = Request::createFromGlobals();
         if (!$request->request->has('text')) {
             throw new BadRequestHttpException('Missing update text parameter.');
@@ -77,9 +83,23 @@ class PageController extends AbstractController {
     }
 
     /**
+     * @Route("/{id}", name="delete_note", methods={"DELETE"}, requirements={"id"="[A-z0-9_-]+"})
+     */
+    public function delete_note(string $id): Response {
+
+    }
+
+    /**
      * @Route("/{id}/history", name="list_note_history", methods={"GET"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function list_note_history($id) {
+    public function list_note_history(string $id): Response {
         // TODO: write this (return some JSON info including sizes of versions and mtimes?)
+    }
+
+    /**
+     * @Route("/{id}/rename", name="rename_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
+     */
+    public function rename_note(string $id): Response {
+        // TODO: write this and redirect?
     }
 }

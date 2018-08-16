@@ -13,10 +13,19 @@
                 height: calc(100vh - 4rem);
             }
         </style>
+        <script type="text/javascript">
+            window.CONTEXT = {
+                id: '<?php echo $id ?>',
+                displayedVersion: '<?php echo $displayedVersion ?>',
+                latestVersion: '<?php echo $latestVersion ?>',
+            };
+        </script>
         <!-- TODO: add a favicon -->
     </head>
     <body class="m3 bg-darken-1">
-        <textarea class="col-12 line-height-2" id="content-input" autofocus><?php echo $content ?></textarea>
-        <script type="text/javascript" src="bundle.js"></script>
+        <textarea class="col-12 line-height-2" id="content-input" autofocus>
+<?php echo htmlspecialchars($content, ENT_QUOTES, 'UTF-8') ?>
+        </textarea>
+        <script type="text/javascript" src="/bundle.js"></script>
     </body>
 </html>

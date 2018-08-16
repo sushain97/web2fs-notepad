@@ -7,6 +7,18 @@ use Symfony\Component\HttpKernel\KernelInterface;
 class MaxIdSelectionAttemptsExceeded extends \Exception {}
 class NoteContentSizeExceeded extends \Exception {}
 
+class Note {
+    public $id;
+    public $version;
+    public $content;
+
+    public function __construct(string $id, int $version, string $content) {
+        $this->id = $id;
+        $this->version = $version;
+        $this->content = $content;
+    }
+}
+
 class NoteStore {
     # TODO: tighten all the 0777 permissions
 
@@ -28,19 +40,19 @@ class NoteStore {
         }
     }
 
-    private function getDataDir() {
+    private function getDataDir(): string {
         return $this->kernel->getProjectDir().'/var/data/';
     }
 
-    private function getVersionDataDir() {
+    private function getVersionDataDir(): string {
         return $this->getDataDir().'_versions/';
     }
 
-    private function getNoteVersionDataDir($id) {
+    private function getNoteVersionDataDir(string $id): string {
         return $this->getVersionDataDir().$id.'/';
     }
 
-    private function getNoteVersionPath($id, $version) {
+    private function getNoteVersionPath(string $id, int $version): string {
         if (intval($version) < 0) {
             throw new \Exception("Invalid version: $version");
         }
@@ -48,7 +60,7 @@ class NoteStore {
         return $this->getNoteVersionDataDir($id).$version;;
     }
 
-    private function getNoteContentPath($id, $version=null) {
+    private function getNoteContentPath(string $id, ?int $version=null): string {
         if ($version === null) {
             return $this->getDataDir().$id;
         } else {
@@ -56,7 +68,7 @@ class NoteStore {
         }
     }
 
-    private function getCurrentNoteVersion($id) {
+    private function getCurrentNoteVersion(string $id): int {
         if ($this->hasNote($id)) {
             $versions = scandir($this->getNoteVersionDataDir($id));
             rsort($versions, 1);
@@ -66,7 +78,7 @@ class NoteStore {
         }
     }
 
-    public function generateNewId() {
+    public function generateNewId(): string {
         // TODO: generate a human readable id instead
 
         $attempts = 1;
@@ -84,15 +96,15 @@ class NoteStore {
         return $id;
     }
 
-    public function hasNote($id) {
+    public function hasNote(string $id): bool {
         return file_exists($this->getNoteContentPath($id));
     }
 
-    public function hasNoteVersion($id, $version) {
+    public function hasNoteVersion(string $id, int $version): bool {
         return file_exists($this->getNoteContentPath($id));
     }
 
-    public function getNote($id, $version=null) {
+    public function getNote(string $id, ?int $version=null): Note {
         $this->logger->info("Fetching note $id at version $version.");
 
         $path = $this->getNoteContentPath($id, $version);
@@ -108,10 +120,11 @@ class NoteStore {
             throw new Exception('Unable to secure file lock');
         }
 
-        return $content;
+        $note = new Note($id, $version || $this->getCurrentNoteVersion($id), $content);
+        return $note;
     }
 
-    public function updateNote($id, $content) {
+    public function updateNote(string $id, string $content): int {
         $content_size = strlen($content);
 
         if ($content_size > self::MAX_FILE_SIZE_BYTES) {
