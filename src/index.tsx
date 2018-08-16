@@ -1,4 +1,4 @@
-import { Intent, Spinner, Tag, TextArea } from '@blueprintjs/core';
+import { Intent, Position, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
 import { debounce } from 'lodash';
 import preact from 'preact';
@@ -26,20 +26,36 @@ interface IAppState {
   updating: boolean;
 }
 
+const AppToaster = Toaster.create({
+  position: Position.TOP,
+});
+
 class App extends preact.Component<IAppProps, IAppState> {
   private contentRef?: HTMLTextAreaElement;
 
   private updateNote = debounce(async () => {
-    // TODO: surface errors
-    const { note } = this.props;
-    const { id, content } = this.props.note;
-    this.setState({ updating: true });
-    const { version } = await wretch(`/${id}`)
-      .formUrl({ text: content })
-      .post()
-      .json();
-    this.setState({ updating: false, currentVersion: version, note: { ...note, version } });
-    window.history.pushState(null, '', `/${id}/${version}`);
+    try {
+      const { note } = this.state;
+      const { id, content } = note;
+      this.setState({ updating: true });
+      const { version } = await wretch(`/${id}`)
+        .formUrl({ text: content })
+        .post()
+        .json();
+      this.setState({ updating: false, currentVersion: version, note: { ...note, version } });
+      window.history.pushState(null, '', `/${id}/${version}`);
+    } catch (error) {
+      // TODO: figure out why this won't work (something with preact?)
+      AppToaster.show(
+        {
+          icon: IconNames.WARNING_SIGN,
+          intent: Intent.WARNING,
+          message: `Update Failed: ${error}`,
+        },
+        'update_failed',
+      );
+      this.setState({ updating: false });
+    }
   }, UPDATE_DEBOUNCE_MS);
 
   public constructor(props: IAppProps) {
