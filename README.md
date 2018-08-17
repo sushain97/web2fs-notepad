@@ -15,6 +15,7 @@ Uses [Symfony][1] on the backend with [Preact][2], [TypeScript][3], and
 Installation
 ------------
 
+1. Copy `.env.dist` to `.env` and edit settings.
 1. Install [PHP][11] 7.1.3+.
 1. Install [`yarn`][5] and [`composer`][6].
 1. Run `./bin/install`.
