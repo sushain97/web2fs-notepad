@@ -1,6 +1,8 @@
 web2fs-notepad
 ===============
 
+[![CircleCI](https://circleci.com/gh/sushain97/web2fs-notepad/tree/master.svg?style=svg)](https://circleci.com/gh/sushain97/web2fs-notepad/tree/master)
+
 Minimal filesystem based web notepad with versioning. Data is stored directly
 on the filesystem making backups easy, searching as simple as a `grep` and
 limiting runtime dependencies to PHP.
