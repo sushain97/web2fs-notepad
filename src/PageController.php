@@ -15,7 +15,7 @@ class PageController extends AbstractController
     /**
      * @Route("/", name="new_note", methods={"GET"})
      */
-    public function new_note(NoteStore $store): Response
+    public function newNote(NoteStore $store): Response
     {
         try {
             $id = $store->generateNewId();
@@ -35,7 +35,7 @@ class PageController extends AbstractController
      *     defaults={"version"=null}
      * )
      */
-    public function show_note(string $id, ?string $version, NoteStore $store): Response
+    public function showNote(string $id, ?string $version, NoteStore $store): Response
     {
         $request = Request::createFromGlobals();
         $user_agent = $request->headers->get('User-Agent');
@@ -53,7 +53,8 @@ class PageController extends AbstractController
         if (strpos($user_agent, 'curl') === 0) {
             return new Response($content);
         } else {
-            // TODO: render a page that shows the content and lets you edit it (updates URL to newest version + version listing + spinner)
+            // TODO: render a page that shows the content and lets you edit it
+            //       (updates URL to newest version + version listing + spinner)
             // TODO: ensure that if version is set, the page is frozen
             return $this->render('index.html.php', array(
                 'note' => $note->serialize(),
@@ -65,7 +66,7 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}", name="update_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function update_note(string $id, NoteStore $store): Response
+    public function updateNote(string $id, NoteStore $store): Response
     {
         $request = Request::createFromGlobals();
         if (!$request->request->has('text')) {
@@ -86,14 +87,15 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}", name="delete_note", methods={"DELETE"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function delete_note(string $id): Response
+    public function deleteNote(string $id): Response
     {
+        // TODO: write this function
     }
 
     /**
      * @Route("/{id}/history", name="list_note_history", methods={"GET"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function list_note_history(string $id): Response
+    public function listNoteHistory(string $id): Response
     {
         // TODO: write this (return some JSON info including sizes of versions and mtimes?)
     }
@@ -101,7 +103,7 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}/rename", name="rename_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function rename_note(string $id): Response
+    public function renameNote(string $id): Response
     {
         // TODO: write this and redirect?
     }

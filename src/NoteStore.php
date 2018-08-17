@@ -4,6 +4,8 @@ namespace App;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 
+// phpcs:disable PSR1.Classes.ClassDeclaration.MultipleClasses
+
 class MaxIdSelectionAttemptsExceeded extends \Exception
 {
 }
@@ -91,7 +93,7 @@ class NoteStore
         }
     }
 
-    function getCurrentNoteVersion(string $id): int
+    public function getCurrentNoteVersion(string $id): int
     {
         if ($this->hasNote($id)) {
             $versions = scandir($this->getNoteVersionDataDir($id));
@@ -158,7 +160,9 @@ class NoteStore
         $content_size = strlen($content);
 
         if ($content_size > self::MAX_FILE_SIZE_BYTES) {
-            throw new NoteContentSizeExceeded("Content with $content_size bytes exceeded maximum {self::MAX_FILE_SIZE_BYTES} bytes.");
+            throw new NoteContentSizeExceeded(
+                "Content with $content_size bytes exceeded maximum {self::MAX_FILE_SIZE_BYTES} bytes."
+            );
         }
 
         $this->logger->info("Updating note $id with $content_size bytes.");
