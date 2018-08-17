@@ -9,6 +9,7 @@
     <arg name="basepath" value="."/>
     <arg name="colors" />
     <arg name="parallel" value="4" />
+    <arg value="p" />
 
     <rule ref="PSR2" />
 </ruleset>

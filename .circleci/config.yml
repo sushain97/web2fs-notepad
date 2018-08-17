@@ -25,3 +25,4 @@ jobs:
               - node_modules
             key: js-dependencies-{{ checksum "yarn.lock" }}
         - run: yarn lint
+        - run: ./vendor/bin/phpcs
