@@ -7,8 +7,11 @@
   "private": true,
   "scripts": {
     "build": "webpack",
-    "watch": "webpack --watch",
-    "lint": "tslint --project . && prettier src/**/{*.tsx,*.ts} --list-different"
+    "watch": "yarn run build --watch",
+    "tslint": "tslint --project .",
+    "prettier": "prettier src/**/{*.tsx,*.ts}",
+    "lint": "yarn run tslint && yarn run prettier --list-different",
+    "fix": "yarn run tslint --fix && yarn run prettier --write"
   },
   "dependencies": {
     "@blueprintjs/core": "^3.3.0",
