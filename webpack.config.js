@@ -2,6 +2,8 @@ require('dotenv').config();
 
 const path = require('path');
 
+// TODO: investigate Symfony's built-in Webpack support
+
 module.exports = {
     mode: process.env.APP_ENV == 'dev' ? 'development' : 'production',
     entry: './src/index.tsx',

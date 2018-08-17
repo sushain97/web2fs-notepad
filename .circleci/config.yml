@@ -1,0 +1,27 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/php:7.0-apache-node-browsers
+    working_directory: ~/web2fs-notepad
+    steps:
+        - checkout
+        - restore_cache:
+            keys:
+              - php-dependencies-{{ checksum "composer.json" }}
+              - php-dependencies-
+        - restore_cache:
+            keys:
+              - js-dependencies-{{ checksum "yarn.lock" }}
+              - js-dependencies-
+        - run: composer install -n --prefer-dist
+        - save_cache:
+            paths:
+              - vendor
+            key: php-dependencies-{{ checksum "composer.json" }}
+        - run: yarn install
+        - save_cache:
+            paths:
+              - node_modules
+            key: js-dependencies-{{ checksum "yarn.lock" }}
+        - run: yarn lint

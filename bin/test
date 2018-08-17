@@ -5,3 +5,7 @@ set -eux
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 yarn lint
+
+# TODO: Add + run Jest tests (with coverage?)
+# TODO: Add + run phpunit tests (with coverage?)
+# TODO: Run PHP_CodeSniffer

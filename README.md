@@ -20,7 +20,8 @@ Installation
 Development
 -----------
 
-TODO
+Locally, run tests and linting using `./bin/test`. [CircleCI][7] powers CI
+and mirrors the test script's actions.
 
 [1]: https://symfony.com/
 [2]: https://preactjs.com/
@@ -28,3 +29,4 @@ TODO
 [4]: https://blueprintjs.com/
 [5]: https://yarnpkg.com/
 [6]: https://getcomposer.org/
+[7]: https://circleci.com/
