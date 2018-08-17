@@ -1,0 +1,11 @@
+ /* TODO: write this in SCSS and use Blueprint's vars */
+
+body {
+    margin: 2rem;
+    background-color: #F5F8FA;
+}
+
+textarea.bp3-input.content-input {
+    height: calc(100vh - 5.75rem);
+    margin-bottom: 1rem;
+}

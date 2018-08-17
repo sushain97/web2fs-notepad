@@ -1,8 +1,7 @@
 /.env
-/public/bundles/
 /var/
 /vendor/
 /.web-server-pid
 node_modules/
-bundle.js
+bundle.*
 yarn-error.log

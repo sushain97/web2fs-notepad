@@ -10,18 +10,7 @@
         <link rel="stylesheet" href="/node_modules/normalize.css/normalize.css"/>
         <link rel="stylesheet" href="/node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css"/>
         <link rel="stylesheet" href="/node_modules/@blueprintjs/core/lib/css/blueprint.css"/>
-        <style type="text/css">
-            /* TODO, write this in SCSS in another file and use Blueprint's vars */
-            body {
-                margin: 2rem;
-                background-color: #F5F8FA;
-            }
-
-            textarea.bp3-input.content-input {
-                height: calc(100vh - 5.75rem);
-                margin-bottom: 1rem;
-            }
-        </style>
+        <link rel="stylesheet" href="/bundle.css"/>
         <script type="text/javascript">
             window.CONTEXT = {
                 note: <?php echo json_encode($note) ?>,
