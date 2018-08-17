@@ -22,6 +22,7 @@ Installation
 1. Point your web server with PHP support to `/public`.
 
 TODO: add a Dockerfile
+TODO: produce a deployable artifact
 
 Development
 -----------

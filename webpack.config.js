@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 const PUBLIC = path.resolve(__dirname, 'public');
 
@@ -48,6 +49,15 @@ module.exports = {
             filename: 'bundle.css',
             path: PUBLIC,
         }),
+        new OptimizeCssAssetsPlugin({
+            cssProcessor: require('cssnano'),
+            cssProcessorOptions: {
+                discardComments: {
+                    removeAll: true,
+                },
+            },
+            canPrint: true,
+        })
     ],
     resolve: {
         alias: {
