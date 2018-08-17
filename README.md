@@ -15,9 +15,12 @@ Uses [Symfony][1] on the backend with [Preact][2], [TypeScript][3], and
 Installation
 ------------
 
+1. Install [PHP][11] 7.1.3+.
 1. Install [`yarn`][5] and [`composer`][6].
 1. Run `./bin/install`.
-1. Point your web server with PHP support to `public`.
+1. Point your web server with PHP support to `/public`.
+
+TODO: add a Dockerfile
 
 Development
 -----------
@@ -38,3 +41,4 @@ using `./bin/fix`.
 [8]: https://prettier.io/
 [9]: https://palantir.github.io/tslint/
 [10]: http://pear.php.net/package/PHP_CodeSniffer
+[11]: http://www.php.net/

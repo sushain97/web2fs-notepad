@@ -11,6 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class PageController extends AbstractController
 {
     // TODO: customize the 400/404/500 templates (especially for curl)
+    // TODO: add an OpenAPI spec
 
     /**
      * @Route("/", name="new_note", methods={"GET"})
