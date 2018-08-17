@@ -1,10 +1,12 @@
+import '@blueprintjs/core/lib/css/blueprint.css'; // tslint:disable-line no-submodule-imports
+import '@blueprintjs/icons/lib/css/blueprint-icons.css';  // tslint:disable-line no-submodule-imports
 import './index.css';
 
 import { Intent, Position, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
 import { debounce } from 'lodash';
 import preact from 'preact';
-import * as store from 'store/dist/store.modern'; // tslint:disable-line
+import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 import wretch from 'wretch';
 
 // TODO: bright/dark mode that gets remembered

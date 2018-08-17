@@ -31,6 +31,16 @@ module.exports = {
                     },
                     'css-loader',
                 ],
+            },
+            {
+                test: /\.(png|woff|woff2|eot|ttf|svg)$/i,
+                use: [{
+                    loader: 'url-loader',
+                    options: {
+                        limit: 8192,
+                        fallback: 'responsive-loader',
+                    },
+                }],
             }
         ],
     },

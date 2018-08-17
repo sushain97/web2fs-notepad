@@ -2,6 +2,7 @@
 /var/
 /vendor/
 /.web-server-pid
-node_modules/
-bundle.*
-yarn-error.log
+/node_modules/
+/public/
+!/public/index.php
+/yarn-error.log

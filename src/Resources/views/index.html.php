@@ -6,10 +6,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="author" content="Sushain K. Cherivirala">
-        <!-- Dynamically link, minify and combine these -->
-        <link rel="stylesheet" href="/node_modules/normalize.css/normalize.css"/>
-        <link rel="stylesheet" href="/node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css"/>
-        <link rel="stylesheet" href="/node_modules/@blueprintjs/core/lib/css/blueprint.css"/>
+        <!-- TODO: minify CSS -->
         <link rel="stylesheet" href="/bundle.css"/>
         <script type="text/javascript">
             window.CONTEXT = {
