@@ -1,13 +1,13 @@
 web2fs-notepad
 ===============
 
-[![CircleCI](https://circleci.com/gh/sushain97/web2fs-notepad/tree/master.svg?style=svg)](https://circleci.com/gh/sushain97/web2fs-notepad/tree/master)
+[![CircleCI](https://circleci.com/gh/sushain97/web2fs-notepad.svg?style=svg&circle-token=42feed6af40ba8f31483d2249a20b855a3e7d776)](https://circleci.com/gh/sushain97/web2fs-notepad)
 
 Minimal filesystem based web notepad with versioning. Data is stored directly
 on the filesystem making backups easy, searching as simple as a `grep` and
 limiting runtime dependencies to PHP.
 
-Uses [Symfony][1] on the backend and [Preact][2], [TypeScript][3] and
+Uses [Symfony][1] on the backend with [Preact][2], [TypeScript][3], and
 [BlueprintJS][4] on the frontend.
 
 [TODO: screenshot]
