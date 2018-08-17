@@ -17,7 +17,7 @@ module.exports = {
     },
     devtool: 'eval',
     resolve: {
-        extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js', '.css'],
+        extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js'],
     },
     module: {
         rules: [{
@@ -26,10 +26,11 @@ module.exports = {
                 loader: 'ts-loader',
             },
             {
-                test: /\.css$/,
+                test: /\.(sa|sc|c)ss$/,
                 use: [
                     MiniCssExtractPlugin.loader,
                     'css-loader',
+                    'sass-loader',
                 ],
             },
             {

@@ -1,8 +1,9 @@
- /* TODO: write this in SCSS and use Blueprint's vars */
+/* TOOD: add scss linting */
+@import '~@blueprintjs/core/lib/scss/variables.scss';
 
 body {
     margin: 2rem;
-    background-color: #F5F8FA;
+    background-color: $light-gray5;
 }
 
 /* TODO: use flex layout instead */
