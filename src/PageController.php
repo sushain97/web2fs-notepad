@@ -8,13 +8,15 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
-class PageController extends AbstractController {
+class PageController extends AbstractController
+{
     // TODO: customize the 400/404/500 templates (especially for curl)
 
     /**
      * @Route("/", name="new_note", methods={"GET"})
      */
-    public function new_note(NoteStore $store): Response {
+    public function new_note(NoteStore $store): Response
+    {
         try {
             $id = $store->generateNewId();
         } catch (MaxIdSelectionAttemptsExceeded $e) {
@@ -33,7 +35,8 @@ class PageController extends AbstractController {
      *     defaults={"version"=null}
      * )
      */
-    public function show_note(string $id, ?string $version, NoteStore $store): Response {
+    public function show_note(string $id, ?string $version, NoteStore $store): Response
+    {
         $request = Request::createFromGlobals();
         $user_agent = $request->headers->get('User-Agent');
 
@@ -62,7 +65,8 @@ class PageController extends AbstractController {
     /**
      * @Route("/{id}", name="update_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function update_note(string $id, NoteStore $store): Response {
+    public function update_note(string $id, NoteStore $store): Response
+    {
         $request = Request::createFromGlobals();
         if (!$request->request->has('text')) {
             throw new BadRequestHttpException('Missing update text parameter.');
@@ -82,21 +86,23 @@ class PageController extends AbstractController {
     /**
      * @Route("/{id}", name="delete_note", methods={"DELETE"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function delete_note(string $id): Response {
-
+    public function delete_note(string $id): Response
+    {
     }
 
     /**
      * @Route("/{id}/history", name="list_note_history", methods={"GET"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function list_note_history(string $id): Response {
+    public function list_note_history(string $id): Response
+    {
         // TODO: write this (return some JSON info including sizes of versions and mtimes?)
     }
 
     /**
      * @Route("/{id}/rename", name="rename_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function rename_note(string $id): Response {
+    public function rename_note(string $id): Response
+    {
         // TODO: write this and redirect?
     }
 }
