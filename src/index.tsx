@@ -1,5 +1,5 @@
 import '@blueprintjs/core/lib/css/blueprint.css'; // tslint:disable-line no-submodule-imports
-import '@blueprintjs/icons/lib/css/blueprint-icons.css';  // tslint:disable-line no-submodule-imports
+import '@blueprintjs/icons/lib/css/blueprint-icons.css'; // tslint:disable-line no-submodule-imports
 import './index.scss';
 
 import { Intent, Position, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';

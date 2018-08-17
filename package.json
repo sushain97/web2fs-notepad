@@ -10,8 +10,9 @@
     "watch": "yarn run build --watch",
     "tslint": "tslint --project .",
     "prettier": "prettier src/**/{*.tsx,*.ts}",
-    "lint": "yarn run tslint && yarn run prettier --list-different",
-    "fix": "yarn run tslint --fix && yarn run prettier --write"
+    "stylelint": "stylelint src",
+    "lint": "yarn run tslint && yarn run prettier --list-different && yarn run stylelint",
+    "fix": "yarn run tslint --fix && yarn run prettier --write && yarn run stylelint --fix"
   },
   "dependencies": {
     "@blueprintjs/core": "^3.3.0",
@@ -36,6 +37,8 @@
     "optimize-css-assets-webpack-plugin": "^5.0.0",
     "prettier": "^1.14.2",
     "sass-loader": "^7.1.0",
+    "stylelint": "^9.4.0",
+    "stylelint-config-recommended": "^2.1.0",
     "ts-loader": "^4.4.2",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.14.0",
