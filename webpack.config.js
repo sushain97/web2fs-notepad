@@ -26,9 +26,8 @@ module.exports = {
             },
             {
                 test: /\.css$/,
-                use: [{
-                        loader: MiniCssExtractPlugin.loader,
-                    },
+                use: [
+                    MiniCssExtractPlugin.loader,
                     'css-loader',
                 ],
             },
@@ -38,7 +37,7 @@ module.exports = {
                     loader: 'url-loader',
                     options: {
                         limit: 8192,
-                        fallback: 'responsive-loader',
+                        fallback: 'file-loader',
                     },
                 }],
             }

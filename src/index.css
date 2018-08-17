@@ -5,6 +5,7 @@ body {
     background-color: #F5F8FA;
 }
 
+/* TODO: use flex layout instead */
 textarea.bp3-input.content-input {
     height: calc(100vh - 5.75rem);
     margin-bottom: 1rem;
