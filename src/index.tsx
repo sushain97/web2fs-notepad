@@ -1,5 +1,6 @@
 import '@blueprintjs/core/lib/css/blueprint.css'; // tslint:disable-line no-submodule-imports
 import '@blueprintjs/icons/lib/css/blueprint-icons.css'; // tslint:disable-line no-submodule-imports
+import 'normalize.css';
 import './index.scss';
 
 import { Intent, Position, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';
@@ -87,7 +88,7 @@ class App extends preact.Component<IAppProps, IAppState> {
     // TODO: better UI/UX for disabled
     // TODO: access to old versions via interactive tag?
     return (
-      <div>
+      <div className="container">
         <TextArea
           inputRef={this.contentRefHandler}
           intent={Intent.PRIMARY}
@@ -100,7 +101,7 @@ class App extends preact.Component<IAppProps, IAppState> {
           autoFocus={true}
           className="content-input"
         />
-        {
+        <div className="status-bar">
           <Tag
             icon={updating ? <Spinner size={20} /> : IconNames.SAVED}
             minimal={true}
@@ -108,7 +109,7 @@ class App extends preact.Component<IAppProps, IAppState> {
           >
             Version {note.version} of {currentVersion}
           </Tag>
-        }
+        </div>
       </div>
     );
   }
