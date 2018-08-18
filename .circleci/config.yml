@@ -31,19 +31,23 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - '.*'
-            - '*'
             - config
             - node_modules
             - public
             - src
+            - composer.json
+            - composer.lock
+            - symfony.lock
+            - webpack.config.ts
   build:
     <<: *defaults
+    environment:
+      APP_ENV: prod
     steps:
       - attach_workspace:
           at: .
       - run: composer install --no-dev --prefer-dist --optimize-autoloader
-      - run: yarn build --mode production
+      - run: yarn build
       - run: tar -cvzf dist.tar config/ public/ vendor/ .env.dist README.md
       - store_artifacts:
           path: dist.tar
