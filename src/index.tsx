@@ -5,14 +5,14 @@ import './index.scss';
 
 import { Intent, Position, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
-import { debounce } from 'lodash';
+import { throttle } from 'lodash';
 import preact from 'preact';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 import wretch from 'wretch';
 
 // TODO: bright/dark mode that gets remembered
 
-const UPDATE_DEBOUNCE_MS = 1000;
+const UPDATE_THROTTLE_MS = 1000;
 
 interface INote {
   content: string;
@@ -38,7 +38,7 @@ const AppToaster = Toaster.create({
 class App extends preact.Component<IAppProps, IAppState> {
   private contentRef?: HTMLTextAreaElement;
 
-  private updateNote = debounce(async () => {
+  private updateNote = throttle(async () => {
     try {
       const { note } = this.state;
       const { id, content } = note;
@@ -61,7 +61,7 @@ class App extends preact.Component<IAppProps, IAppState> {
       );
       this.setState({ updating: false });
     }
-  }, UPDATE_DEBOUNCE_MS);
+  }, UPDATE_THROTTLE_MS);
 
   public constructor(props: IAppProps) {
     super(props);
