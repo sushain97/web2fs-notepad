@@ -6,14 +6,18 @@ import './index.scss';
 import { Intent, Position, Spinner, Tag, TextArea, Toast, Toaster } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
 import axios, { CancelTokenSource } from 'axios';
-import { throttle } from 'lodash';
+import { debounce } from 'lodash';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 
 // TODO: bright/dark mode that gets remembered
 
-const UPDATE_THROTTLE_MS = 1000;
+// We want to ensure that versions are somewhat meaningful by debouncing
+// updates. However, we don't want to allow lots of unsent input to get
+// built up so we only buffer UPDATE_MAX_WAIT_MS of updates.
+const UPDATE_DEBOUNCE_MS = 2500;
+const UPDATE_MAX_WAIT_MS = 10000;
 
 interface INote {
   content: string;
@@ -32,54 +36,59 @@ interface IAppState {
   updating: boolean;
 }
 
+const AppToaster = Toaster.create();
+
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement;
-  private toasterRef?: Toaster;
   private updateFailedToastKey?: string;
 
-  private updateNote = throttle(async () => {
-    try {
-      const { note } = this.state;
-      const { id, content } = note;
+  private updateNote = debounce(
+    async () => {
+      try {
+        const { note } = this.state;
+        const { id, content } = note;
 
-      if (this.cancelTokenSource) {
-        this.cancelTokenSource.cancel();
+        if (this.cancelTokenSource) {
+          this.cancelTokenSource.cancel();
+        }
+
+        this.cancelTokenSource = axios.CancelToken.source();
+
+        this.setState({ updating: true });
+        const {
+          data: { version },
+        } = await axios.post<INote>(`/${id}`, `text=${encodeURIComponent(content)}`, {
+          cancelToken: this.cancelTokenSource.token,
+        });
+
+        this.cancelTokenSource = null;
+        this.setState({
+          currentVersion: version,
+          note: { ...this.state.note, version },
+          updating: false,
+        });
+        window.history.pushState(null, '', `/${id}/${version}`);
+      } catch (error) {
+        if (!axios.isCancel(error)) {
+          this.updateFailedToastKey = AppToaster.show(
+            {
+              icon: IconNames.WARNING_SIGN,
+              intent: Intent.WARNING,
+              message: `Update Failed: ${error}`,
+            },
+            this.updateFailedToastKey,
+          );
+        }
+
+        this.setState({
+          updating: false,
+        });
       }
-
-      this.cancelTokenSource = axios.CancelToken.source();
-
-      this.setState({ updating: true });
-      const {
-        data: { version },
-      } = await axios.post<INote>(`/${id}`, `text=${encodeURIComponent(content)}`, {
-        cancelToken: this.cancelTokenSource.token,
-      });
-
-      this.cancelTokenSource = null;
-      this.setState({
-        currentVersion: version,
-        note: { ...this.state.note, version },
-        updating: false,
-      });
-      window.history.pushState(null, '', `/${id}/${version}`);
-    } catch (error) {
-      if (!axios.isCancel(error)) {
-        this.updateFailedToastKey = this.toasterRef.show(
-          {
-            icon: IconNames.WARNING_SIGN,
-            intent: Intent.WARNING,
-            message: `Update Failed: ${error}`,
-          },
-          this.updateFailedToastKey,
-        );
-      }
-
-      this.setState({
-        updating: false,
-      });
-    }
-  }, UPDATE_THROTTLE_MS);
+    },
+    UPDATE_DEBOUNCE_MS,
+    { maxWait: UPDATE_MAX_WAIT_MS },
+  );
 
   public constructor(props: IAppProps) {
     super(props);
@@ -131,7 +140,6 @@ class App extends React.Component<IAppProps, IAppState> {
             Version {note.version} of {currentVersion}
           </Tag>
         </div>
-        <Toaster ref={this.toasterRefHandler} />
       </>
     );
   }
@@ -186,10 +194,6 @@ class App extends React.Component<IAppProps, IAppState> {
         selectionStart: this.contentRef.selectionStart,
       });
     }
-  };
-
-  private toasterRefHandler = (ref?: Toaster) => {
-    this.toasterRef = ref;
   };
 }
 
