@@ -17,7 +17,11 @@ In order of increasing complexity,
 
 ### Docker
 
-TODO: add a Dockerfile
+1. Install [Docker][12].
+1. Download/clone source from GitHub.
+1. Copy `.env.dist` to `.env` and edit settings.
+
+TODO: finish this
 
 ### Artifact Download
 
@@ -26,18 +30,22 @@ TODO: add a Dockerfile
 1. Copy `.env.dist` to `.env` and edit settings.
 1. Point your web server with PHP support to `/public`.
 
+TODO: verify this works
+
 ### Local Build
 
-1. Copy `.env.dist` to `.env` and edit settings.
 1. Install [PHP][11] 7.1.3+.
 1. Install [`yarn`][5] and [`composer`][6].
+1. Download/clone source from GitHub.
+1. Copy `.env.dist` to `.env` and edit settings.
 1. Run `./bin/install`.
 1. Point your web server with PHP support to `/public`.
 
 ## Development
 
-Locally, run tests and linting using `./bin/test`. [CircleCI][7] powers CI
-and mirrors the test script's actions.
+Use the local build instructions above to install dependencies. Run tests and
+linting using `./bin/test`. [CircleCI][7] powers CI and mirrors the test
+script's actions.
 
 Autofix errors from by [Prettier][8], [TSLint][9] and [PHP_CodeSniffer][10]
 using `./bin/fix`.
@@ -53,3 +61,4 @@ using `./bin/fix`.
 [9]: https://palantir.github.io/tslint/
 [10]: http://pear.php.net/package/PHP_CodeSniffer
 [11]: http://www.php.net/
+[12]: https://www.docker.com/
