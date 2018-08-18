@@ -143,7 +143,7 @@ class NoteStore
 
     public function hasNoteVersion(string $id, int $version): bool
     {
-        return file_exists($this->getNoteContentPath($id));
+        return file_exists($this->getNoteContentPath($id, $version));
     }
 
     public function getNote(string $id, ?int $version = null): Note
