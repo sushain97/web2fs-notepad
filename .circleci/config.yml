@@ -1,28 +1,56 @@
 version: 2
+defaults: &defaults
+  docker:
+    - image: circleci/php:7.1-apache-node-browsers
+  working_directory: ~/web2fs-notepad
 jobs:
-  build:
-    docker:
-      - image: circleci/php:7.1-apache-node-browsers
-    working_directory: ~/web2fs-notepad
+  test:
+    <<: *defaults
     steps:
-        - checkout
-        - restore_cache:
-            keys:
-              - php-dependencies-{{ checksum "composer.json" }}
-              - php-dependencies-
-        - restore_cache:
-            keys:
-              - js-dependencies-{{ checksum "yarn.lock" }}
-              - js-dependencies-
-        - run: composer install -n --prefer-dist
-        - save_cache:
-            paths:
-              - vendor
-            key: php-dependencies-{{ checksum "composer.json" }}
-        - run: yarn install
-        - save_cache:
-            paths:
-              - node_modules
-            key: js-dependencies-{{ checksum "yarn.lock" }}
-        - run: yarn lint
-        - run: ./vendor/bin/phpcs
+      - checkout
+      - restore_cache:
+          keys:
+            - php-dependencies-{{ checksum "composer.json" }}
+            - php-dependencies-
+      - restore_cache:
+          keys:
+            - js-dependencies-{{ checksum "yarn.lock" }}
+            - js-dependencies-
+      - run: composer install -n --prefer-dist
+      - save_cache:
+          paths:
+            - vendor
+          key: php-dependencies-{{ checksum "composer.json" }}
+      - run: yarn install
+      - save_cache:
+          paths:
+            - node_modules
+          key: js-dependencies-{{ checksum "yarn.lock" }}
+      - run: yarn lint
+      - run: ./vendor/bin/phpcs
+      - persist_to_workspace:
+          root: .
+          paths:
+            - '*'
+            - config
+            - node_modules
+            - public
+            - src
+  build:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: /root/web2fs-notepad
+      - run: composer install --no-dev --prefer-dist --optimize-autoloader
+      - run: yarn build --mode production
+      - run: tar -cvzf dist.tar config/ public/ vendor/ .env.dist README.md
+      - store_artifacts:
+          path: dist.tar
+workflows:
+  version: 2
+  test_and_build:
+    jobs:
+      - test
+      - build:
+        requires:
+            - test
