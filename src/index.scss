@@ -15,5 +15,16 @@ body {
 }
 
 .status-bar {
+    display: flex;
+    justify-content: space-between;
     padding-top: $content-status-bar-spacing;
+}
+
+.status-bar-callout {
+    width: auto;
+
+    & h5 {
+        display: inline-block;
+        margin: 0 $pt-grid-size 0 0;
+    }
 }

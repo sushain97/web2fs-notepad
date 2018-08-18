@@ -78,12 +78,12 @@ class PageController extends AbstractController
         $content = $request->request->get('text');
 
         try {
-            $newVersion = $store->updateNote($id, $content);
+            $note = $store->updateNote($id, $content);
         } catch (NoteContentSizeExceeded $e) {
             throw new BadRequestHttpException("Failed to update note: {$e->getMessage()}.");
         }
 
-        return $this->json(array('version' => $newVersion));
+        return $this->json($note->serialize());
     }
 
     /**

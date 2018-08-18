@@ -3,7 +3,7 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css'; // tslint:disable-line 
 import 'normalize.css';
 import './index.scss';
 
-import { Intent, Position, Spinner, Tag, TextArea, Toast, Toaster } from '@blueprintjs/core';
+import { Callout, H5, Intent, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
@@ -22,6 +22,7 @@ const UPDATE_MAX_WAIT_MS = 10000;
 interface INote {
   content: string;
   id: string;
+  modificationTime: number;
   version: number;
 }
 
@@ -56,19 +57,21 @@ class App extends React.Component<IAppProps, IAppState> {
         this.cancelTokenSource = axios.CancelToken.source();
 
         this.setState({ updating: true });
-        const {
-          data: { version },
-        } = await axios.post<INote>(`/${id}`, `text=${encodeURIComponent(content)}`, {
-          cancelToken: this.cancelTokenSource.token,
-        });
+        const { data: updatedNote } = await axios.post<INote>(
+          `/${id}`,
+          `text=${encodeURIComponent(content)}`,
+          {
+            cancelToken: this.cancelTokenSource.token,
+          },
+        );
 
         this.cancelTokenSource = null;
         this.setState({
-          currentVersion: version,
-          note: { ...this.state.note, version },
+          currentVersion: updatedNote.version,
+          note: { ...updatedNote, content: this.state.note.content },
           updating: false,
         });
-        window.history.pushState(null, '', `/${id}/${version}`);
+        window.history.pushState(null, '', `/${id}/${updatedNote.version}`);
       } catch (error) {
         if (!axios.isCancel(error)) {
           this.updateFailedToastKey = AppToaster.show(
@@ -115,7 +118,6 @@ class App extends React.Component<IAppProps, IAppState> {
     const { note, currentVersion, updating } = this.state;
     const disabled = note.version !== currentVersion;
 
-    // TODO: better UI/UX for disabled
     // TODO: access to old versions via interactive tag?
     return (
       <>
@@ -123,13 +125,13 @@ class App extends React.Component<IAppProps, IAppState> {
           inputRef={this.contentRefHandler}
           intent={Intent.PRIMARY}
           value={note.content}
-          disabled={disabled}
           title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
-          onChange={this.handleContentChange}
-          onKeyDown={this.handleContentKeyDown}
+          onChange={disabled ? undefined : this.handleContentChange}
+          onKeyDown={disabled ? undefined : this.handleContentKeyDown}
           fill={true}
           autoFocus={true}
           className="content-input"
+          readOnly={disabled}
         />
         <div className="status-bar">
           <Tag
@@ -139,6 +141,10 @@ class App extends React.Component<IAppProps, IAppState> {
           >
             Version {note.version} of {currentVersion}
           </Tag>
+          <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
+            {disabled && <H5>Editing disabled for old version</H5>}
+            Last modified {new Date(note.modificationTime * 1000).toLocaleString()}
+          </Callout>
         </div>
       </>
     );

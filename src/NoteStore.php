@@ -18,11 +18,13 @@ class Note
     public $id;
     public $version;
     public $content;
+    public $mtime;
 
-    public function __construct(string $id, int $version, string $content)
+    public function __construct(string $id, int $version, int $mtime, string $content)
     {
         $this->id = $id;
         $this->version = $version;
+        $this->mtime = $mtime;
         $this->content = $content;
     }
 
@@ -31,6 +33,7 @@ class Note
         return array(
             'id' => $this->id,
             'version' => $this->version,
+            'modificationTime' => $this->mtime,
             'content' => $this->content,
         );
     }
@@ -93,6 +96,16 @@ class NoteStore
         }
     }
 
+    private function getNoteModificationTime(string $id, ?int $version = null): int
+    {
+        $time = filemtime($this->getNoteContentPath($id, $version));
+
+        if ($time === false) {
+            throw new \Exception("Unable to fetch modification time");
+        }
+        return $time;
+    }
+
     public function getCurrentNoteVersion(string $id): int
     {
         if ($this->hasNote($id)) {
@@ -151,11 +164,13 @@ class NoteStore
             throw new Exception('Unable to secure file lock');
         }
 
-        $note = new Note($id, $version == null ? $this->getCurrentNoteVersion($id) : $version, $content);
+        $version = $version == null ? $this->getCurrentNoteVersion($id) : $version;
+        $mtime = $this->getNoteModificationTime($id);
+        $note = new Note($id, $version, $mtime, $content);
         return $note;
     }
 
-    public function updateNote(string $id, string $content): int
+    public function updateNote(string $id, string $content): Note
     {
         $content_size = strlen($content);
 
@@ -188,6 +203,7 @@ class NoteStore
             throw new Exception('Unable to secure file lock');
         }
 
-        return $newVersion;
+        $note = new Note($id, $newVersion, time(), $content);
+        return $note;
     }
 }
