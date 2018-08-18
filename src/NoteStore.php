@@ -165,7 +165,7 @@ class NoteStore
         }
 
         $version = $version == null ? $this->getCurrentNoteVersion($id) : $version;
-        $mtime = $this->getNoteModificationTime($id);
+        $mtime = $this->getNoteModificationTime($id, $version);
         $note = new Note($id, $version, $mtime, $content);
         return $note;
     }
