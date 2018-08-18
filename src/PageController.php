@@ -12,6 +12,7 @@ class PageController extends AbstractController
 {
     // TODO: customize the 400/404/500 templates (especially for curl)
     // TODO: add an OpenAPI spec
+    // TODO: note sharing?
 
     /**
      * @Route("/", name="new_note", methods={"GET"})
