@@ -39,7 +39,8 @@ jobs:
             - composer.json
             - composer.lock
             - symfony.lock
-            - webpack.config.ts
+            - webpack.config.js
+            - package.json
   build:
     <<: *defaults
     environment:

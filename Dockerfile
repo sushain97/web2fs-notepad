@@ -20,7 +20,8 @@ WORKDIR /src
 COPY yarn.lock package.json /src/
 RUN yarn install
 
-COPY symfony.lock composer.json composer.lock bin /src/
+COPY symfony.lock composer.json composer.lock /src/
+COPY bin bin
 RUN composer install --no-dev --prefer-dist --optimize-autoloader
 
 COPY . .
