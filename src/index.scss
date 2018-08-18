@@ -22,8 +22,13 @@ body {
 
 .status-bar-callout {
     width: auto;
+    padding: $pt-grid-size / 2 $pt-grid-size $pt-grid-size / 2;
 
-    & h5 {
+    &.bp3-callout-icon > .bp3-icon:first-child {
+        top: $pt-grid-size / 2;
+    }
+
+    & .bp3-heading {
         display: inline-block;
         margin: 0 $pt-grid-size 0 0;
     }
