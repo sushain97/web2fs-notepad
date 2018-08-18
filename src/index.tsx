@@ -3,15 +3,26 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css'; // tslint:disable-line 
 import 'normalize.css';
 import './index.scss';
 
-import { Callout, H5, Intent, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';
+import {
+  Alert,
+  Button,
+  Callout,
+  H5,
+  Intent,
+  Spinner,
+  Tag,
+  TextArea,
+  Toaster,
+} from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
 import axios, { CancelTokenSource } from 'axios';
-import { debounce } from 'lodash';
+import { debounce, noop } from 'lodash';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 
 // TODO: bright/dark mode that gets remembered
+// TODO: new format rendering (markdeep, code along with existing plain text) with lazy load(?)
 
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
@@ -32,6 +43,7 @@ interface IAppProps {
 }
 
 interface IAppState {
+  confirmDeleteAlertOpen: boolean;
   content: string;
   currentVersion: number;
   note: INote;
@@ -99,6 +111,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     const { note, currentVersion } = props;
     this.state = {
+      confirmDeleteAlertOpen: false,
       content: note.content,
       currentVersion,
       note,
@@ -118,10 +131,11 @@ class App extends React.Component<IAppProps, IAppState> {
 
   public render() {
     const {
-      note: { version, modificationTime },
+      note: { id, version, modificationTime },
       currentVersion,
       updating,
       content,
+      confirmDeleteAlertOpen,
     } = this.state;
     const disabled = version !== currentVersion;
 
@@ -152,7 +166,25 @@ class App extends React.Component<IAppProps, IAppState> {
             {disabled && <H5>Editing disabled for old version</H5>}
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
+          <Button
+            icon={IconNames.TRASH}
+            onClick={this.handleDeleteButtonClick}
+            intent={Intent.DANGER}
+          />
         </div>
+        {confirmDeleteAlertOpen && (
+          <Alert
+            isOpen={confirmDeleteAlertOpen}
+            intent={Intent.DANGER}
+            confirmButtonText="Delete"
+            cancelButtonText="Cancel"
+            icon={IconNames.TRASH}
+            onCancel={noop}
+            onConfirm={this.deleteNote}
+          >
+            Are you sure you want to delete this note? Unless backed up, it can not be restored.
+          </Alert>
+        )}
       </>
     );
   }
@@ -170,6 +202,19 @@ class App extends React.Component<IAppProps, IAppState> {
       if (selectionEnd != null) {
         this.contentRef.selectionEnd = selectionEnd;
       }
+    }
+  };
+
+  private deleteNote = async () => {
+    try {
+      await axios.delete(`/${this.state.note.id}`);
+      window.location.href = '/';
+    } catch (error) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: `Delete Failed: ${error}`,
+      });
     }
   };
 
@@ -200,6 +245,10 @@ class App extends React.Component<IAppProps, IAppState> {
       )}`;
       currentTarget.selectionEnd = selectionStart + 1;
     }
+  };
+
+  private handleDeleteButtonClick = () => {
+    this.setState({ confirmDeleteAlertOpen: true });
   };
 
   private handleSelectionChange = () => {

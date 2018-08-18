@@ -157,11 +157,11 @@ class NoteStore
             $content = $fileSize == 0 ? '' : fread($file, filesize($path));
             if ($content === false) {
                 flock($file, LOCK_UN);
-                throw new Exception('Unable to load note.');
+                throw new \Exception('Unable to load note.');
             }
             flock($file, LOCK_UN);
         } else {
-            throw new Exception('Unable to secure file lock');
+            throw new \Exception('Unable to secure file lock');
         }
 
         $version = $version == null ? $this->getCurrentNoteVersion($id) : $version;
@@ -200,10 +200,18 @@ class NoteStore
 
             flock($rootContentFile, LOCK_UN);
         } else {
-            throw new Exception('Unable to secure file lock');
+            throw new \Exception('Unable to secure file lock');
         }
 
         $note = new Note($id, $newVersion, time(), $content);
         return $note;
+    }
+
+    public function deleteNote(string $id)
+    {
+        unlink($this->getNoteContentPath($id));
+        $versionDataDir = $this->getNoteVersionDataDir($id);
+        array_map('unlink', glob("$versionDataDir/*"));
+        rmdir($versionDataDir);
     }
 }

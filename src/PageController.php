@@ -89,9 +89,10 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}", name="delete_note", methods={"DELETE"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function deleteNote(string $id): Response
+    public function deleteNote(string $id, NoteStore $store)
     {
-        // TODO: write this function
+        $store->deleteNote($id);
+        return new Response();
     }
 
     /**
