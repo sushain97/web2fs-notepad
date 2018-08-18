@@ -172,22 +172,24 @@ class App extends React.Component<IAppProps, IAppState> {
             intent={Intent.DANGER}
           />
         </div>
-        {confirmDeleteAlertOpen && (
-          <Alert
-            isOpen={confirmDeleteAlertOpen}
-            intent={Intent.DANGER}
-            confirmButtonText="Delete"
-            cancelButtonText="Cancel"
-            icon={IconNames.TRASH}
-            onCancel={noop}
-            onConfirm={this.deleteNote}
-          >
-            Are you sure you want to delete this note? Unless backed up, it can not be restored.
-          </Alert>
-        )}
+        <Alert
+          isOpen={confirmDeleteAlertOpen}
+          intent={Intent.DANGER}
+          confirmButtonText="Delete"
+          cancelButtonText="Cancel"
+          icon={IconNames.TRASH}
+          onCancel={this.cancelNoteDeletion}
+          onConfirm={this.deleteNote}
+        >
+          Are you sure you want to delete this note? Unless backed up, it can not be restored.
+        </Alert>
       </>
     );
   }
+
+  private cancelNoteDeletion = () => {
+    this.setState({ confirmDeleteAlertOpen: false });
+  };
 
   private contentRefHandler = (ref?: HTMLTextAreaElement) => {
     this.contentRef = ref;
