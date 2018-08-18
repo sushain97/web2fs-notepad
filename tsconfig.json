@@ -6,7 +6,6 @@
         "removeComments": true,
         "sourceMap": true,
         "jsx": "react",
-        "jsxFactory": "preact.h",
         "allowSyntheticDefaultImports": true,
         "alwaysStrict": true,
     },

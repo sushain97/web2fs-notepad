@@ -3,10 +3,11 @@ import '@blueprintjs/icons/lib/css/blueprint-icons.css'; // tslint:disable-line 
 import 'normalize.css';
 import './index.scss';
 
-import { Intent, Position, Spinner, Tag, TextArea, Toaster } from '@blueprintjs/core';
+import { Intent, Position, Spinner, Tag, TextArea, Toast, Toaster } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
 import { throttle } from 'lodash';
-import preact from 'preact';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 import wretch from 'wretch';
 
@@ -31,12 +32,10 @@ interface IAppState {
   updating: boolean;
 }
 
-const AppToaster = Toaster.create({
-  position: Position.TOP,
-});
-
-class App extends preact.Component<IAppProps, IAppState> {
+class App extends React.Component<IAppProps, IAppState> {
   private contentRef?: HTMLTextAreaElement;
+  private toasterRef?: Toaster;
+  private updateFailedToastKey?: string;
 
   private updateNote = throttle(async () => {
     try {
@@ -50,16 +49,17 @@ class App extends preact.Component<IAppProps, IAppState> {
       this.setState({ updating: false, currentVersion: version, note: { ...note, version } });
       window.history.pushState(null, '', `/${id}/${version}`);
     } catch (error) {
-      // TODO: figure out why this won't work (something with preact?)
-      AppToaster.show(
+      this.updateFailedToastKey = this.toasterRef.show(
         {
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
           message: `Update Failed: ${error}`,
         },
-        'update_failed',
+        this.updateFailedToastKey,
       );
-      this.setState({ updating: false });
+      this.setState({
+        updating: false,
+      });
     }
   }, UPDATE_THROTTLE_MS);
 
@@ -84,7 +84,8 @@ class App extends preact.Component<IAppProps, IAppState> {
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
   }
 
-  public render(props, { note, currentVersion, updating }: IAppState) {
+  public render() {
+    const { note, currentVersion, updating } = this.state;
     const disabled = note.version !== currentVersion;
 
     // TODO: better UI/UX for disabled
@@ -112,12 +113,13 @@ class App extends preact.Component<IAppProps, IAppState> {
             Version {note.version} of {currentVersion}
           </Tag>
         </div>
+        <Toaster ref={this.toasterRefHandler} />
       </div>
     );
   }
 
-  private contentRefHandler = (contentRef?: HTMLTextAreaElement) => {
-    this.contentRef = contentRef;
+  private contentRefHandler = (ref?: HTMLTextAreaElement) => {
+    this.contentRef = ref;
 
     if (this.contentRef) {
       const { selectionStart = null, selectionEnd = null } = store.get(this.props.note.id) || {};
@@ -167,8 +169,10 @@ class App extends preact.Component<IAppProps, IAppState> {
       });
     }
   };
+
+  private toasterRefHandler = (ref?: Toaster) => {
+    this.toasterRef = ref;
+  };
 }
 
-// FIXME: this is fighting around some weird type issues with Preact and TypeScript
-const MungedApp: any = App;
-preact.render(<MungedApp {...(window as any).CONTEXT} />, document.body);
+ReactDOM.render(<App {...(window as any).CONTEXT} />, document.body);
