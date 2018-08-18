@@ -41,6 +41,7 @@ jobs:
             - symfony.lock
             - webpack.config.js
             - package.json
+            - tsconfig.json
   build:
     <<: *defaults
     environment:
