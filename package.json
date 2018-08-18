@@ -17,13 +17,12 @@
   "dependencies": {
     "@blueprintjs/core": "^3.3.0",
     "@blueprintjs/icons": "^3.0.0",
+    "axios": "^0.18.0",
     "lodash": "^4.17.10",
     "normalize.css": "^8.0.0",
-    "preact-compat": "^3.18.2",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
-    "store": "^2.0.12",
-    "wretch": "^1.4.1"
+    "store": "^2.0.12"
   },
   "devDependencies": {
     "@blueprintjs/tslint-config": "^1.5.0",

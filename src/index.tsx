@@ -5,11 +5,11 @@ import './index.scss';
 
 import { Intent, Position, Spinner, Tag, TextArea, Toast, Toaster } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
+import axios, { CancelTokenSource } from 'axios';
 import { throttle } from 'lodash';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
-import wretch from 'wretch';
 
 // TODO: bright/dark mode that gets remembered
 
@@ -33,6 +33,7 @@ interface IAppState {
 }
 
 class App extends React.Component<IAppProps, IAppState> {
+  private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement;
   private toasterRef?: Toaster;
   private updateFailedToastKey?: string;
@@ -41,22 +42,39 @@ class App extends React.Component<IAppProps, IAppState> {
     try {
       const { note } = this.state;
       const { id, content } = note;
+
+      if (this.cancelTokenSource) {
+        this.cancelTokenSource.cancel();
+      }
+
+      this.cancelTokenSource = axios.CancelToken.source();
+
       this.setState({ updating: true });
-      const { version } = await wretch(`/${id}`)
-        .formUrl({ text: content })
-        .post()
-        .json();
-      this.setState({ updating: false, currentVersion: version, note: { ...note, version } });
+      const {
+        data: { version },
+      } = await axios.post<INote>(`/${id}`, `text=${encodeURIComponent(content)}`, {
+        cancelToken: this.cancelTokenSource.token,
+      });
+
+      this.cancelTokenSource = null;
+      this.setState({
+        currentVersion: version,
+        note: { ...this.state.note, version },
+        updating: false,
+      });
       window.history.pushState(null, '', `/${id}/${version}`);
     } catch (error) {
-      this.updateFailedToastKey = this.toasterRef.show(
-        {
-          icon: IconNames.WARNING_SIGN,
-          intent: Intent.WARNING,
-          message: `Update Failed: ${error}`,
-        },
-        this.updateFailedToastKey,
-      );
+      if (!axios.isCancel(error)) {
+        this.updateFailedToastKey = this.toasterRef.show(
+          {
+            icon: IconNames.WARNING_SIGN,
+            intent: Intent.WARNING,
+            message: `Update Failed: ${error}`,
+          },
+          this.updateFailedToastKey,
+        );
+      }
+
       this.setState({
         updating: false,
       });
@@ -91,7 +109,7 @@ class App extends React.Component<IAppProps, IAppState> {
     // TODO: better UI/UX for disabled
     // TODO: access to old versions via interactive tag?
     return (
-      <div className="container">
+      <>
         <TextArea
           inputRef={this.contentRefHandler}
           intent={Intent.PRIMARY}
@@ -114,7 +132,7 @@ class App extends React.Component<IAppProps, IAppState> {
           </Tag>
         </div>
         <Toaster ref={this.toasterRefHandler} />
-      </div>
+      </>
     );
   }
 
@@ -175,4 +193,4 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 }
 
-ReactDOM.render(<App {...(window as any).CONTEXT} />, document.body);
+ReactDOM.render(<App {...(window as any).CONTEXT} />, document.getElementById('container'));

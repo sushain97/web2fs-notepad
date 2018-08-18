@@ -16,6 +16,7 @@
         <!-- TODO: add a favicon -->
     </head>
     <body>
+        <div id="container"></div>
         <script type="text/javascript" src="/bundle.js"></script>
     </body>
 </html>
