@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -eux
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+if [[ $# -eq 0 ]] ; then
+    echo "Usage: $BASH_SOURCE output_file"
+    exit 1
+fi
+
+tar -cvzf "$1" var/data
