@@ -42,15 +42,23 @@ class PageController extends AbstractController
         $request = Request::createFromGlobals();
         $user_agent = $request->headers->get('User-Agent');
 
+        $hasNote = $store->hasNote($id);
+
         if ($version !== null && $version != 0 && !$store->hasNoteVersion($id, $version)) {
-            throw $this->createNotFoundException("Version does not exist: $version.");
+            if ($hasNote) {
+                throw $this->createNotFoundException("Version does not exist: $version.");
+            } else {
+                throw $this->createNotFoundException("Note does not exist: $id.");
+            }
         }
 
-        $hasNote = $store->hasNote($id);
-        if (!$hasNote) {
-            $store->updateNote($id, '');
+        if ($hasNote) {
+            $note = $store->getNote($id, $version);
+        } else {
+            // We don't actually persist a note to the filesystem to imitate lazy
+            // saving and avoid saving a bunch of empty files.
+            $note = new Note($id, 0, time(), '');
         }
-        $note = $store->getNote($id, $version);
 
         if (strpos($user_agent, 'curl') === 0) {
             return new Response($content);
@@ -60,7 +68,7 @@ class PageController extends AbstractController
             // TODO: ensure that if version is set, the page is frozen
             return $this->render('index.html.php', array(
                 'note' => $note->serialize(),
-                'currentVersion' => $store->getCurrentNoteVersion($id),
+                'currentVersion' => $hasNote ? $store->getCurrentNoteVersion($id) : 0,
             ));
         }
     }
@@ -91,7 +99,9 @@ class PageController extends AbstractController
      */
     public function deleteNote(string $id, NoteStore $store)
     {
-        $store->deleteNote($id);
+        if ($store->hasNote($id)) {
+            $store->deleteNote($id);
+        }
         return new Response();
     }
 
