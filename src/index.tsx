@@ -6,13 +6,16 @@ import './index.scss';
 import {
   Alert,
   Button,
+  ButtonGroup,
   Callout,
   H5,
   Intent,
+  Position,
   Spinner,
   Tag,
   TextArea,
   Toaster,
+  Tooltip,
 } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
 import axios, { CancelTokenSource } from 'axios';
@@ -130,61 +133,12 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   public render() {
-    const {
-      note: { id, version, modificationTime },
-      currentVersion,
-      updating,
-      content,
-      confirmDeleteAlertOpen,
-    } = this.state;
-    const disabled = version !== currentVersion;
-
     // TODO: access to old versions via interactive tag?
     return (
       <>
-        <TextArea
-          inputRef={this.contentRefHandler}
-          intent={Intent.PRIMARY}
-          value={content}
-          title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
-          onChange={disabled ? undefined : this.handleContentChange}
-          onKeyDown={disabled ? undefined : this.handleContentKeyDown}
-          fill={true}
-          autoFocus={true}
-          className="content-input"
-          readOnly={disabled}
-        />
-        <div className="status-bar">
-          <Tag
-            icon={updating ? <Spinner size={20} /> : IconNames.SAVED}
-            minimal={true}
-            large={true}
-          >
-            Version {version} of {currentVersion}
-          </Tag>
-          <div>
-            <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
-              {disabled && <H5>Editing disabled for old version</H5>}
-              Last modified {new Date(modificationTime * 1000).toLocaleString()}
-            </Callout>
-            <Button
-              icon={IconNames.TRASH}
-              onClick={this.handleDeleteButtonClick}
-              intent={Intent.DANGER}
-            />
-          </div>
-        </div>
-        <Alert
-          isOpen={confirmDeleteAlertOpen}
-          intent={Intent.DANGER}
-          confirmButtonText="Delete"
-          cancelButtonText="Cancel"
-          icon={IconNames.TRASH}
-          onCancel={this.cancelNoteDeletion}
-          onConfirm={this.deleteNote}
-        >
-          Are you sure you want to delete this note and all associated versions?
-        </Alert>
+        {this.renderTextArea(this.state)}
+        {this.renderStatusBar(this.state)}
+        {this.renderDeleteAlert(this.state)}
       </>
     );
   }
@@ -255,6 +209,25 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ confirmDeleteAlertOpen: true });
   };
 
+  private handleDownloadButtonClick = (ev: React.MouseEvent<HTMLElement>) => {
+    const { content, id, version } = this.state.note;
+    const filename = `${id}_${version}.txt`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    if (window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveBlob(blob, filename);
+    } else {
+      const downloadLink = window.document.createElement('a');
+      downloadLink.href = window.URL.createObjectURL(blob);
+      downloadLink.download = filename;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
+    ev.currentTarget.blur();
+  };
+
   private handleSelectionChange = () => {
     if (this.contentRef) {
       store.set(this.props.note.id, {
@@ -263,6 +236,75 @@ class App extends React.Component<IAppProps, IAppState> {
       });
     }
   };
+
+  private renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
+    return (
+      <Alert
+        isOpen={confirmDeleteAlertOpen}
+        intent={Intent.DANGER}
+        confirmButtonText="Delete"
+        cancelButtonText="Cancel"
+        icon={IconNames.TRASH}
+        onCancel={this.cancelNoteDeletion}
+        onConfirm={this.deleteNote}
+      >
+        Are you sure you want to delete this note and all associated versions?
+      </Alert>
+    );
+  }
+
+  private renderStatusBar({
+    currentVersion,
+    note: { version, modificationTime },
+    updating,
+  }: IAppState) {
+    const disabled = version !== currentVersion;
+
+    return (
+      <div className="status-bar">
+        <Tag icon={updating ? <Spinner size={20} /> : IconNames.SAVED} minimal={true} large={true}>
+          Version {version} of {currentVersion}
+        </Tag>
+        <div>
+          <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
+            {disabled && <H5>Editing disabled for old version</H5>}
+            Last modified {new Date(modificationTime * 1000).toLocaleString()}
+          </Callout>
+          <ButtonGroup>
+            <Tooltip content="Download" position={Position.TOP}>
+              <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
+            </Tooltip>
+            <Tooltip content="Delete" position={Position.TOP}>
+              <Button
+                icon={IconNames.TRASH}
+                onClick={this.handleDeleteButtonClick}
+                intent={Intent.DANGER}
+              />
+            </Tooltip>
+          </ButtonGroup>
+        </div>
+      </div>
+    );
+  }
+
+  private renderTextArea({ content, currentVersion, note: { version } }: IAppState) {
+    const disabled = version !== currentVersion;
+
+    return (
+      <TextArea
+        inputRef={this.contentRefHandler}
+        intent={Intent.PRIMARY}
+        value={content}
+        title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
+        onChange={disabled ? undefined : this.handleContentChange}
+        onKeyDown={disabled ? undefined : this.handleContentKeyDown}
+        fill={true}
+        autoFocus={true}
+        className="content-input"
+        readOnly={disabled}
+      />
+    );
+  }
 }
 
 ReactDOM.render(<App {...(window as any).CONTEXT} />, document.getElementById('container'));
