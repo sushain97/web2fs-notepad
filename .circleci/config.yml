@@ -31,6 +31,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
+            - '.*'
             - '*'
             - config
             - node_modules
@@ -40,7 +41,7 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /root/web2fs-notepad
+          at: .
       - run: composer install --no-dev --prefer-dist --optimize-autoloader
       - run: yarn build --mode production
       - run: tar -cvzf dist.tar config/ public/ vendor/ .env.dist README.md
@@ -52,5 +53,5 @@ workflows:
     jobs:
       - test
       - build:
-        requires:
-            - test
+          requires:
+              - test
