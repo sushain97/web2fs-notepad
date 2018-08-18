@@ -32,8 +32,6 @@ TODO: finish this
 1. Copy `.env.dist` to `.env` and edit settings.
 1. Point your web server with PHP support to `/public`.
 
-TODO: verify this works
-
 ### Local Build
 
 1. Install [PHP][11] 7.1.3+.
@@ -51,10 +49,10 @@ If you're building for production, also run
 Use the local build instructions above to install dependencies. Then, start
 the development web server using `./bin/console server:run`.
 
-Run tests and linting using `./bin/test`. [CircleCI][7] powers CI and mirrors
+Run tests and linters using `./bin/test`. [CircleCI][7] powers CI and mirrors
 the test script's actions.
 
-Autofix errors from by [Prettier][8], [TSLint][9], [Stylelint][13], and
+Autofix errors from [Prettier][8], [TSLint][9], [Stylelint][13], and
 [PHP_CodeSniffer][10] using `./bin/fix`.
 
 [1]: https://symfony.com/
