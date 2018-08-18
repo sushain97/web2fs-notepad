@@ -13,7 +13,9 @@ Uses [Symfony][1] on the backend with [Preact][2], [TypeScript][3], and
 
 ## Installation
 
-In order of increasing complexity,
+These are roughly in order of increasing complexity where both
+Docker and the artifact download produce production installations
+by default.
 
 ### Docker
 
@@ -41,14 +43,19 @@ TODO: verify this works
 1. Run `./bin/install`.
 1. Point your web server with PHP support to `/public`.
 
+If you're building for production, also run
+`composer dump-autoload --optimize`.
+
 ## Development
 
-Use the local build instructions above to install dependencies. Run tests and
-linting using `./bin/test`. [CircleCI][7] powers CI and mirrors the test
-script's actions.
+Use the local build instructions above to install dependencies. Then, start
+the development web server using `./bin/console server:run`.
 
-Autofix errors from by [Prettier][8], [TSLint][9] and [PHP_CodeSniffer][10]
-using `./bin/fix`.
+Run tests and linting using `./bin/test`. [CircleCI][7] powers CI and mirrors
+the test script's actions.
+
+Autofix errors from by [Prettier][8], [TSLint][9], [Stylelint][13], and
+[PHP_CodeSniffer][10] using `./bin/fix`.
 
 [1]: https://symfony.com/
 [2]: https://preactjs.com/
@@ -62,3 +69,4 @@ using `./bin/fix`.
 [10]: http://pear.php.net/package/PHP_CodeSniffer
 [11]: http://www.php.net/
 [12]: https://www.docker.com/
+[13]: https://stylelint.io/
