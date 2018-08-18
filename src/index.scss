@@ -21,8 +21,9 @@ body {
 }
 
 .status-bar-callout {
-    width: auto;
     padding: $pt-grid-size / 2 $pt-grid-size $pt-grid-size / 2;
+    margin-right: $pt-grid-size;
+    display: inline;
 
     &.bp3-callout-icon > .bp3-icon:first-child {
         top: $pt-grid-size / 2;

@@ -162,15 +162,17 @@ class App extends React.Component<IAppProps, IAppState> {
           >
             Version {version} of {currentVersion}
           </Tag>
-          <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
-            {disabled && <H5>Editing disabled for old version</H5>}
-            Last modified {new Date(modificationTime * 1000).toLocaleString()}
-          </Callout>
-          <Button
-            icon={IconNames.TRASH}
-            onClick={this.handleDeleteButtonClick}
-            intent={Intent.DANGER}
-          />
+          <div>
+            <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
+              {disabled && <H5>Editing disabled for old version</H5>}
+              Last modified {new Date(modificationTime * 1000).toLocaleString()}
+            </Callout>
+            <Button
+              icon={IconNames.TRASH}
+              onClick={this.handleDeleteButtonClick}
+              intent={Intent.DANGER}
+            />
+          </div>
         </div>
         <Alert
           isOpen={confirmDeleteAlertOpen}
@@ -181,7 +183,7 @@ class App extends React.Component<IAppProps, IAppState> {
           onCancel={this.cancelNoteDeletion}
           onConfirm={this.deleteNote}
         >
-          Are you sure you want to delete this note? Unless backed up, it can not be restored.
+          Are you sure you want to delete this note and all associated versions?
         </Alert>
       </>
     );
