@@ -164,7 +164,7 @@ class NoteStore
             throw new \Exception('Unable to secure file lock');
         }
 
-        $version = $version == null ? $this->getCurrentNoteVersion($id) : $version;
+        $version = $version === null ? $this->getCurrentNoteVersion($id) : $version;
         $mtime = $this->getNoteModificationTime($id, $version);
         $note = new Note($id, $version, $mtime, $content);
         return $note;
