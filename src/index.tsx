@@ -76,10 +76,12 @@ class App extends preact.Component<IAppProps, IAppState> {
 
   public componentDidMount() {
     document.addEventListener('selectionchange', this.handleSelectionChange);
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   public componentWillUnmount() {
     document.removeEventListener('selectionchange', this.handleSelectionChange);
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
   }
 
   public render(props, { note, currentVersion, updating }: IAppState) {
@@ -127,6 +129,14 @@ class App extends preact.Component<IAppProps, IAppState> {
       if (selectionEnd != null) {
         this.contentRef.selectionEnd = selectionEnd;
       }
+    }
+  };
+
+  private handleBeforeUnload = ev => {
+    if (this.state.updating) {
+      const message = 'Are you sure you want to leave this page with unsaved changes?';
+      ev.returnValue = message;
+      return message;
     }
   };
 
