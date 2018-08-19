@@ -390,6 +390,7 @@ class App extends React.Component<IAppProps, IAppState> {
               <input
                 className={Classes.INPUT}
                 required={true}
+                autoFocus={true}
                 pattern="[A-z0-9_-]+"
                 placeholder="Enter new name"
                 ref={this.renameInput}
