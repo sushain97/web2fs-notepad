@@ -28,7 +28,7 @@ import {
 } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
 import axios, { CancelTokenSource } from 'axios';
-import { constant, debounce } from 'lodash-es';
+import { debounce } from 'lodash-es';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
