@@ -15,12 +15,17 @@ class Kernel extends BaseKernel
 
     const CONFIG_EXTS = '.{php,xml,yaml,yml}';
 
-    public function getCacheDir()
+    public function getProjectDir(): string
+    {
+        return realpath(__DIR__.'/../');
+    }
+
+    public function getCacheDir(): string
     {
         return $this->getProjectDir().'/var/cache/'.$this->environment;
     }
 
-    public function getLogDir()
+    public function getLogDir(): string
     {
         return $this->getProjectDir().'/var/log';
     }
@@ -35,7 +40,7 @@ class Kernel extends BaseKernel
         }
     }
 
-    protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader)
+    protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader): void
     {
         $container->addResource(new FileResource($this->getProjectDir().'/config/bundles.php'));
         $container->setParameter('container.dumper.inline_class_loader', true);
@@ -45,7 +50,7 @@ class Kernel extends BaseKernel
         $loader->load($confDir.'/{services}'.self::CONFIG_EXTS, 'glob');
     }
 
-    protected function configureRoutes(RouteCollectionBuilder $routes)
+    protected function configureRoutes(RouteCollectionBuilder $routes): void
     {
         $routes->import($this->getProjectDir().'/config/{routes}'.self::CONFIG_EXTS, '/', 'glob');
     }
