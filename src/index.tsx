@@ -8,6 +8,7 @@ import {
   Button,
   ButtonGroup,
   Callout,
+  Classes,
   H5,
   Intent,
   Position,
@@ -24,7 +25,6 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 
-// TODO: bright/dark mode that gets remembered
 // TODO: new format rendering (markdeep, code along with existing plain text) with lazy load(?)
 
 // We want to ensure that versions are somewhat meaningful by debouncing
@@ -32,6 +32,8 @@ import * as store from 'store/dist/store.modern'; // tslint:disable-line no-subm
 // built up so we only buffer UPDATE_MAX_WAIT_MS of updates.
 const UPDATE_DEBOUNCE_MS = 2000;
 const UPDATE_MAX_WAIT_MS = 10000;
+
+type Mode = 'light' | 'dark';
 
 interface INote {
   content: string;
@@ -49,6 +51,7 @@ interface IAppState {
   confirmDeleteAlertOpen: boolean;
   content: string;
   currentVersion: number;
+  mode: Mode;
   note: INote;
   updating: boolean;
 }
@@ -117,6 +120,7 @@ class App extends React.Component<IAppProps, IAppState> {
       confirmDeleteAlertOpen: false,
       content: note.content,
       currentVersion,
+      mode: store.get('mode', 'light'),
       note,
       updating: false,
     };
@@ -135,11 +139,11 @@ class App extends React.Component<IAppProps, IAppState> {
   public render() {
     // TODO: access to old versions via interactive tag?
     return (
-      <>
+      <div id="container" className={this.state.mode === 'dark' ? Classes.DARK : undefined}>
         {this.renderTextArea(this.state)}
         {this.renderStatusBar(this.state)}
         {this.renderDeleteAlert(this.state)}
-      </>
+      </div>
     );
   }
 
@@ -228,6 +232,13 @@ class App extends React.Component<IAppProps, IAppState> {
     ev.currentTarget.blur();
   };
 
+  private handleModeToggle = (ev: React.MouseEvent<HTMLElement>) => {
+    const mode = this.state.mode === 'light' ? 'dark' : 'light';
+    this.setState({ mode });
+    store.set('mode', mode);
+    ev.currentTarget.blur();
+  };
+
   private handleSelectionChange = () => {
     if (this.contentRef) {
       store.set(this.props.note.id, {
@@ -256,6 +267,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderStatusBar({
     currentVersion,
     note: { version, modificationTime },
+    mode,
     updating,
   }: IAppState) {
     const disabled = version !== currentVersion;
@@ -271,6 +283,15 @@ class App extends React.Component<IAppProps, IAppState> {
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
           <ButtonGroup>
+            <Tooltip
+              content={mode === 'light' ? 'Dark Mode' : 'Light Mode'}
+              position={Position.TOP}
+            >
+              <Button
+                icon={mode === 'light' ? IconNames.MOON : IconNames.FLASH}
+                onClick={this.handleModeToggle}
+              />
+            </Tooltip>
             <Tooltip content="Download" position={Position.TOP}>
               <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
             </Tooltip>
@@ -307,4 +328,4 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 }
 
-ReactDOM.render(<App {...(window as any).CONTEXT} />, document.getElementById('container'));
+ReactDOM.render(<App {...(window as any).CONTEXT} />, document.getElementById('app'));
