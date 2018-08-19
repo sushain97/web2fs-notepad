@@ -77,7 +77,7 @@ class PageController extends AbstractController
     {
         $request = Request::createFromGlobals();
         if (!$request->request->has('text')) {
-            throw new BadRequestHttpException('Missing update text parameter.');
+            throw new BadRequestHttpException('Missing text parameter.');
         }
 
         $content = $request->request->get('text');
@@ -117,8 +117,29 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}/rename", name="rename_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function renameNote(string $id): Response
+    public function renameNote(string $id,  NoteStore $store): Response
     {
-        // TODO: write this and redirect?
+        $request = Request::createFromGlobals();
+        if (!$request->request->has('newId')) {
+            throw new BadRequestHttpException('Missing newId parameter.');
+        }
+
+        $newId = $request->request->get('newId');
+
+        if ($store->hasNote($newId)) {
+            throw new BadRequestHttpException('Cannot overwrite existing note.');
+        }
+
+        if (!preg_match('/[A-z0-9_-]+/', $newId)) {
+            throw new BadRequestHttpException('New ID must match pattern [A-z0-9_-]+.');
+        }
+
+        // Renaming a non-existent note is effectively a no-op so just let the
+        // user think they've renamed it. This lets the consumers be less intelligent.
+        if ($store->hasNote($id)) {
+            $store->renameNote($id, $newId);
+        }
+
+        return new Response();
     }
 }

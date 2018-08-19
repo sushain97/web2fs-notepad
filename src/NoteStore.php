@@ -12,6 +12,9 @@ class MaxIdSelectionAttemptsExceeded extends \Exception
 class NoteContentSizeExceeded extends \Exception
 {
 }
+class NoteAlreadyExists extends \Exception
+{
+}
 
 class Note
 {
@@ -248,5 +251,20 @@ class NoteStore
         );
 
         return $history;
+    }
+
+    public function renameNote(string $id, string $newId)
+    {
+        if ($this->hasNote($newId)) {
+            throw new \NoteAlreadyExists("Refusing to overwrite $newId content.");
+        }
+
+        $versionDataDir = $this->getNoteVersionDataDir($id);
+        $newVersionDataDir = $this->getNoteVersionDataDir($newId);
+        rename($versionDataDir, $newVersionDataDir);
+
+        $contentPath = $this->getNoteContentPath($id);
+        $newContentPath = $this->getNoteContentPath($newId);
+        rename($contentPath, $newContentPath);
     }
 }
