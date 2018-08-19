@@ -5,6 +5,7 @@ import './index.scss';
 
 import {
   Alert,
+  AnchorButton,
   Button,
   ButtonGroup,
   Callout,
@@ -414,7 +415,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private renderStatusBar({
     currentVersion,
-    note: { version, modificationTime },
+    note: { id, version, modificationTime },
     mode,
     updating,
   }: IAppState) {
@@ -422,20 +423,31 @@ class App extends React.Component<IAppProps, IAppState> {
 
     return (
       <div className="status-bar">
-        <Popover
-          content={this.renderHistoryMenu()}
-          onOpening={this.handleHistoryPopoverOpening}
-          position={Position.TOP_LEFT}
-        >
-          <Tag
-            icon={updating ? <Spinner size={20} /> : IconNames.SAVED}
-            minimal={true}
-            large={true}
-            interactive={true}
+        <div className="status-bar-history">
+          <Popover
+            content={this.renderHistoryMenu()}
+            onOpening={this.handleHistoryPopoverOpening}
+            position={Position.TOP_LEFT}
           >
-            Version {version} of {currentVersion}
-          </Tag>
-        </Popover>
+            <Tag
+              icon={updating ? <Spinner size={20} /> : IconNames.SAVED}
+              minimal={true}
+              large={true}
+              interactive={true}
+            >
+              Version {version} of {currentVersion}
+            </Tag>
+          </Popover>
+          {disabled && (
+            <Tooltip content={'View latest'} position={Position.TOP}>
+              <AnchorButton
+                className="view-latest-button"
+                icon={IconNames.UPDATED}
+                href={`/${id}/${currentVersion}`}
+              />
+            </Tooltip>
+          )}
+        </div>
         <div>
           <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
             {disabled && <H5>Editing disabled for old version</H5>}

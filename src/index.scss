@@ -26,6 +26,14 @@ body {
     display: flex;
     justify-content: space-between;
     padding-top: $content-status-bar-spacing;
+
+    .status-bar-history {
+        display: flex;
+
+        .view-latest-button {
+            margin-left: $pt-grid-size;
+        }
+    }
 }
 
 .status-bar-callout {
@@ -37,7 +45,7 @@ body {
         top: $pt-grid-size / 2;
     }
 
-    & .#{$ns}-heading {
+    .#{$ns}-heading {
         display: inline-block;
         margin: 0 $pt-grid-size 0 0;
     }
