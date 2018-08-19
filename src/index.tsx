@@ -9,6 +9,7 @@ import {
   ButtonGroup,
   Callout,
   Classes,
+  FocusStyleManager,
   H5,
   Intent,
   Position,
@@ -55,6 +56,8 @@ interface IAppState {
   note: INote;
   updating: boolean;
 }
+
+FocusStyleManager.onlyShowFocusOnTabs();
 
 const AppToaster = Toaster.create();
 
@@ -213,7 +216,7 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ confirmDeleteAlertOpen: true });
   };
 
-  private handleDownloadButtonClick = (ev: React.MouseEvent<HTMLElement>) => {
+  private handleDownloadButtonClick = () => {
     const { content, id, version } = this.state.note;
     const filename = `${id}_${version}.txt`;
 
@@ -228,15 +231,12 @@ class App extends React.Component<IAppProps, IAppState> {
       downloadLink.click();
       document.body.removeChild(downloadLink);
     }
-
-    ev.currentTarget.blur();
   };
 
-  private handleModeToggle = (ev: React.MouseEvent<HTMLElement>) => {
+  private handleModeToggle = () => {
     const mode = this.state.mode === 'light' ? 'dark' : 'light';
     this.setState({ mode });
     store.set('mode', mode);
-    ev.currentTarget.blur();
   };
 
   private handleSelectionChange = () => {
