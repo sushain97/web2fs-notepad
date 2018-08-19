@@ -33,8 +33,6 @@ TODO: verify this works and switch to docker-compose for persistence?
 1. Copy `.env.dist` to `.env` and edit settings.
 1. Point your web server with PHP support to `/public`.
 
-TODO: verify the artifact works
-
 ### Local Build
 
 1. Install [PHP][11] 7.1.3+.
