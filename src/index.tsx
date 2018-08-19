@@ -57,7 +57,7 @@ const AppToaster = Toaster.create();
 
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
-  private contentRef?: HTMLTextAreaElement;
+  private contentRef?: HTMLTextAreaElement | null;
   private updateFailedToastKey?: string;
 
   private updateNote = debounce(
@@ -81,7 +81,7 @@ class App extends React.Component<IAppProps, IAppState> {
           },
         );
 
-        this.cancelTokenSource = null;
+        delete this.cancelTokenSource;
         this.setState({
           currentVersion: updatedNote.version,
           note: updatedNote,
@@ -147,7 +147,7 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ confirmDeleteAlertOpen: false });
   };
 
-  private contentRefHandler = (ref?: HTMLTextAreaElement) => {
+  private contentRefHandler = (ref: HTMLTextAreaElement | null) => {
     this.contentRef = ref;
 
     if (this.contentRef) {
@@ -176,7 +176,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleBeforeUnload = ev => {
+  private handleBeforeUnload = (ev: BeforeUnloadEvent) => {
     const { updating, note, content } = this.state;
 
     if (updating || content !== note.content) {
