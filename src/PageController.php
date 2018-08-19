@@ -117,7 +117,7 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}/rename", name="rename_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function renameNote(string $id,  NoteStore $store): Response
+    public function renameNote(string $id, NoteStore $store): Response
     {
         $request = Request::createFromGlobals();
         if (!$request->request->has('newId')) {
