@@ -63,9 +63,6 @@ class PageController extends AbstractController
         if (strpos($user_agent, 'curl') === 0) {
             return new Response($content);
         } else {
-            // TODO: render a page that shows the content and lets you edit it
-            //       (updates URL to newest version + version listing + spinner)
-            // TODO: ensure that if version is set, the page is frozen
             return $this->render('index.html.php', array(
                 'note' => $note->serialize(),
                 'currentVersion' => $hasNote ? $store->getCurrentNoteVersion($id) : 0,

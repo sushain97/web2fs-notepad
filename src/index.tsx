@@ -19,7 +19,7 @@ import {
   Toaster,
   Tooltip,
 } from '@blueprintjs/core';
-import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
+import { IconNames } from '@blueprintjs/icons';
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash-es';
 import * as React from 'react';
