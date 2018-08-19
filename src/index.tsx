@@ -351,22 +351,23 @@ class App extends React.Component<IAppProps, IAppState> {
       note: { id },
     } = this.state;
 
-    return (
-      <Menu>
-        {history ? (
-          history.map(({ modificationTime, size }, i) => (
-            <MenuItem
-              key={i}
-              text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
-              label={fileSize(size)}
-              href={`/${id}/${i + 1}`}
-            />
-          ))
-        ) : (
-          <MenuItem text={<NonIdealState icon={<Spinner />} />} />
-        )}
-      </Menu>
-    );
+    let content;
+    if (history == null) {
+      content = <MenuItem text={<NonIdealState icon={<Spinner />} />} />;
+    } else if (history.length === 0) {
+      content = <MenuItem text="Unsaved." />;
+    } else {
+      content = history.map(({ modificationTime, size }, i) => (
+        <MenuItem
+          key={i}
+          text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
+          label={fileSize(size)}
+          href={`/${id}/${i + 1}`}
+        />
+      ));
+    }
+
+    return <Menu>{content}</Menu>;
   }
 
   private renderRenameDialog({ renameDialogOpen }: IAppState) {
