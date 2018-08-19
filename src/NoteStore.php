@@ -67,8 +67,9 @@ class NoteStore
     # TODO: tighten all the 0777 permissions
 
     const INITIAL_VERSION = 1;
-    const MAX_ID_SELECTION_ATTEMPTS = 10;
-    const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
+    private const MAX_ID_SELECTION_ATTEMPTS = 10;
+    private const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
+    private const DATA_MODE = 0777;
 
     private $logger;
     private $kernel;
@@ -79,10 +80,10 @@ class NoteStore
         $this->kernel = $kernel;
 
         if (!is_dir($this->getDataDir())) {
-            mkdir($this->getDataDir(), 0777, true);
+            mkdir($this->getDataDir(), self::DATA_MODE, true);
         }
         if (!is_dir($this->getVersionDataDir())) {
-            mkdir($this->getVersionDataDir(), 0777, true);
+            mkdir($this->getVersionDataDir(), self::DATA_MODE, true);
         }
     }
 
@@ -208,7 +209,7 @@ class NoteStore
 
         $newNote = !$this->hasNote($id);
         if ($newNote) {
-            mkdir($this->getNoteVersionDataDir($id), 0777, true);
+            mkdir($this->getNoteVersionDataDir($id), self::DATA_MODE, true);
         }
 
         $rootContentPath = $this->getNoteContentPath($id);
