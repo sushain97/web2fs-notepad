@@ -28,6 +28,7 @@ import {
 } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
 import axios, { CancelTokenSource } from 'axios';
+import { fileSize } from 'humanize-plus';
 import { debounce } from 'lodash-es';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -355,7 +356,7 @@ class App extends React.Component<IAppProps, IAppState> {
             <MenuItem
               key={i}
               text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
-              label={`${size} bytes`}
+              label={fileSize(size)}
               href={`/${id}/${i + 1}`}
             />
           ))
