@@ -368,7 +368,12 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private renderRenameDialog({ renameDialogOpen }: IAppState) {
     return (
-      <Dialog isOpen={renameDialogOpen} title="Rename Note" icon={IconNames.EDIT}>
+      <Dialog
+        isOpen={renameDialogOpen}
+        title="Rename Note"
+        icon={IconNames.EDIT}
+        onClose={this.handelRenameCancel}
+      >
         <div className={Classes.DIALOG_BODY}>
           <form ref={this.renameForm} onSubmit={this.handleRename}>
             <FormGroup
