@@ -53,7 +53,7 @@ jobs:
           at: .
       - run: composer install --no-dev --prefer-dist --optimize-autoloader
       - run: yarn build
-      - run: tar -cvzf dist.tar config/ public/ vendor/ .env.dist README.md
+      - run: tar -cvzf dist.tar config/ public/ vendor/ bin/ .env.dist README.md
       - store_artifacts:
           path: dist.tar
 workflows:
