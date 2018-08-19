@@ -23,7 +23,7 @@ RUN yarn install
 
 COPY .env symfony.lock composer.json composer.lock /web2fs-notepad/
 COPY bin bin
-RUN composer install --prefer-dist --optimize-autoloader --no-scripts
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts
 
 COPY . .
 RUN yarn build --mode production
