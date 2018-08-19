@@ -232,7 +232,7 @@ class NoteStore
         return $note;
     }
 
-    public function deleteNote(string $id)
+    public function deleteNote(string $id): void
     {
         unlink($this->getNoteContentPath($id));
         $versionDataDir = $this->getNoteVersionDataDir($id);
@@ -255,7 +255,7 @@ class NoteStore
         return $history;
     }
 
-    public function renameNote(string $id, string $newId)
+    public function renameNote(string $id, string $newId): void
     {
         if ($this->hasNote($newId)) {
             throw new \NoteAlreadyExists("Refusing to overwrite $newId content.");
