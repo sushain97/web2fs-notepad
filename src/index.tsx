@@ -15,6 +15,7 @@ import {
   FocusStyleManager,
   FormGroup,
   H5,
+  Icon,
   Intent,
   Menu,
   MenuItem,
@@ -449,7 +450,11 @@ class App extends React.Component<IAppProps, IAppState> {
           )}
         </div>
         <div>
-          <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
+          <Callout
+            intent={disabled ? Intent.WARNING : undefined}
+            icon={Intent.WARNING && <Icon icon={IconNames.WARNING_SIGN} />} // manually inserted in order to control sizing
+            className="status-bar-callout"
+          >
             {disabled && <H5>Editing disabled for old version</H5>}
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
