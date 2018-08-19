@@ -39,6 +39,26 @@ class Note
     }
 }
 
+class NoteHistoryEntry
+{
+    public $mtime;
+    public $size;
+
+    public function __construct(int $mtime, int $size)
+    {
+        $this->mtime = $mtime;
+        $this->size = $size;
+    }
+
+    public function serialize(): array
+    {
+        return array(
+            'modificationTime' => $this->mtime,
+            'size' => $this->size,
+        );
+    }
+}
+
 class NoteStore
 {
     # TODO: tighten all the 0777 permissions
@@ -213,5 +233,18 @@ class NoteStore
         $versionDataDir = $this->getNoteVersionDataDir($id);
         array_map('unlink', glob("$versionDataDir/*"));
         rmdir($versionDataDir);
+    }
+
+    public function getNoteHistory(string $id): array
+    {
+        $versionDataDir = $this->getNoteVersionDataDir($id);
+
+        $history = [];
+        foreach(glob("$versionDataDir/*") as $version) {
+            $stat = stat($version);
+            $history[] = new NoteHistoryEntry($stat['mtime'], $stat['size']);
+        }
+
+        return $history;
     }
 }

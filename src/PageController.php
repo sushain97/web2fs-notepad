@@ -94,7 +94,7 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}", name="delete_note", methods={"DELETE"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function deleteNote(string $id, NoteStore $store)
+    public function deleteNote(string $id, NoteStore $store): Response
     {
         if ($store->hasNote($id)) {
             $store->deleteNote($id);
@@ -105,9 +105,9 @@ class PageController extends AbstractController
     /**
      * @Route("/{id}/history", name="list_note_history", methods={"GET"}, requirements={"id"="[A-z0-9_-]+"})
      */
-    public function listNoteHistory(string $id): Response
+    public function listNoteHistory(string $id, NoteStore $store): Response
     {
-        // TODO: write this (return some JSON info including sizes of versions and mtimes?)
+        return $this->json($store->getNoteHistory($id));
     }
 
     /**
