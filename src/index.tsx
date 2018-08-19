@@ -19,7 +19,7 @@ import {
 } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons'; // TODO: make sure tree shaking is working
 import axios, { CancelTokenSource } from 'axios';
-import { debounce, noop } from 'lodash';
+import { debounce } from 'lodash-es';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
