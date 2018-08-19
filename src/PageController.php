@@ -37,14 +37,14 @@ class PageController extends AbstractController
      *     defaults={"version"=null}
      * )
      */
-    public function showNote(string $id, ?string $version, NoteStore $store): Response
+    public function showNote(string $id, ?int $version, NoteStore $store): Response
     {
         $request = Request::createFromGlobals();
-        $user_agent = $request->headers->get('User-Agent');
+        $userAgent = $request->headers->get('User-Agent');
 
         $hasNote = $store->hasNote($id);
 
-        if ($version !== null && $version != 0 && !$store->hasNoteVersion($id, $version)) {
+        if ($version !== null && !$store->hasNoteVersion($id, $version)) {
             if ($hasNote) {
                 throw $this->createNotFoundException("Version does not exist: $version.");
             } else {
@@ -54,18 +54,20 @@ class PageController extends AbstractController
 
         if ($hasNote) {
             $note = $store->getNote($id, $version);
+            $currentVersion = $store->getCurrentNoteVersion($id);
         } else {
             // We don't actually persist a note to the filesystem to imitate lazy
             // saving and avoid saving a bunch of empty files.
-            $note = new Note($id, 0, time(), '');
+            $currentVersion = NoteStore::INITIAL_VERSION;
+            $note = new Note($id, $currentVersion, time(), '');
         }
 
-        if (strpos($user_agent, 'curl') === 0) {
+        if (strpos($userAgent, 'curl') === 0) {
             return new Response($content);
         } else {
             return $this->render('index.html.php', array(
                 'note' => $note->serialize(),
-                'currentVersion' => $hasNote ? $store->getCurrentNoteVersion($id) : 0,
+                'currentVersion' => $currentVersion,
             ));
         }
     }

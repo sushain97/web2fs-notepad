@@ -354,9 +354,9 @@ class App extends React.Component<IAppProps, IAppState> {
           history.map(({ modificationTime, size }, i) => (
             <MenuItem
               key={i}
-              text={`v${i} - ${new Date(modificationTime * 1000).toLocaleString()}`}
+              text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
               label={`${size} bytes`}
-              href={`/${id}/${i}`}
+              href={`/${id}/${i + 1}`}
             />
           ))
         ) : (

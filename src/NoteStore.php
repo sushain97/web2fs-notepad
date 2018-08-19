@@ -66,6 +66,7 @@ class NoteStore
 {
     # TODO: tighten all the 0777 permissions
 
+    const INITIAL_VERSION = 1;
     const MAX_ID_SELECTION_ATTEMPTS = 10;
     const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
 
@@ -102,7 +103,7 @@ class NoteStore
 
     private function getNoteVersionPath(string $id, int $version): string
     {
-        if (intval($version) < 0) {
+        if (intval($version) < self::INITIAL_VERSION) {
             throw new \Exception("Invalid version: $version");
         }
 
@@ -136,7 +137,7 @@ class NoteStore
             rsort($versions, 1);
             return intval($versions[0]);
         } else {
-            return 0;
+            return self::INITIAL_VERSION;
         }
     }
 
@@ -216,7 +217,7 @@ class NoteStore
             $this->logger->debug("Writing new version to $rootContentPath");
             fwrite($rootContentFile, $content);
 
-            $newVersion = $newNote ? 0 : $this->getCurrentNoteVersion($id) + 1;
+            $newVersion = $newNote ? self::INITIAL_VERSION : $this->getCurrentNoteVersion($id) + 1;
             $newVersionPath = $this->getNoteVersionPath($id, $newVersion);
             $this->logger->debug("Writing new version to $newVersionPath");
             file_put_contents($newVersionPath, $content);
