@@ -9,7 +9,10 @@ import {
   ButtonGroup,
   Callout,
   Classes,
+  Code,
+  Dialog,
   FocusStyleManager,
+  FormGroup,
   H5,
   Intent,
   Menu,
@@ -25,12 +28,13 @@ import {
 } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
 import axios, { CancelTokenSource } from 'axios';
-import { debounce } from 'lodash-es';
+import { constant, debounce } from 'lodash-es';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 
 // TODO: new format rendering (markdeep, code along with existing plain text) with lazy load(?)
+// TODO: refresh props instead of window.location.href replace
 
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
@@ -64,6 +68,7 @@ interface IAppState {
   history?: INoteVersionEntry[];
   mode: Mode;
   note: INote;
+  renameDialogOpen: boolean;
   updating: boolean;
 }
 
@@ -74,6 +79,8 @@ const AppToaster = Toaster.create();
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement | null;
+  private renameForm: React.RefObject<HTMLFormElement>;
+  private renameInput: React.RefObject<HTMLInputElement>;
   private updateFailedToastKey?: string;
 
   private updateNote = debounce(
@@ -135,8 +142,12 @@ class App extends React.Component<IAppProps, IAppState> {
       currentVersion,
       mode: store.get('mode', 'light'),
       note,
+      renameDialogOpen: false,
       updating: false,
     };
+
+    this.renameForm = React.createRef();
+    this.renameInput = React.createRef();
   }
 
   public componentDidMount() {
@@ -155,13 +166,10 @@ class App extends React.Component<IAppProps, IAppState> {
         {this.renderTextArea(this.state)}
         {this.renderStatusBar(this.state)}
         {this.renderDeleteAlert(this.state)}
+        {this.renderRenameDialog(this.state)}
       </div>
     );
   }
-
-  private cancelNoteDeletion = () => {
-    this.setState({ confirmDeleteAlertOpen: false });
-  };
 
   private contentRefHandler = (ref: HTMLTextAreaElement | null) => {
     this.contentRef = ref;
@@ -190,6 +198,10 @@ class App extends React.Component<IAppProps, IAppState> {
         message: `Delete Failed: ${error}`,
       });
     }
+  };
+
+  private handelRenameCancel = () => {
+    this.setState({ renameDialogOpen: false });
   };
 
   private handleBeforeUnload = (ev: BeforeUnloadEvent) => {
@@ -264,6 +276,47 @@ class App extends React.Component<IAppProps, IAppState> {
     store.set('mode', mode);
   };
 
+  private handleNoteDeletionCancel = () => {
+    this.setState({ confirmDeleteAlertOpen: false });
+  };
+
+  private handleRename = async (ev?: React.FormEvent) => {
+    const {
+      note: { id },
+    } = this.state;
+    const form = this.renameForm.current!;
+
+    if (ev) {
+      ev.preventDefault();
+    }
+
+    if (this.renameForm.current!.checkValidity()) {
+      try {
+        const newId = this.renameInput.current!.value;
+        await axios.post(`/${id}/rename`, `newId=${encodeURIComponent(newId)}`);
+        window.location.href = `/${newId}`;
+      } catch (error) {
+        AppToaster.show({
+          icon: IconNames.WARNING_SIGN,
+          intent: Intent.WARNING,
+          message: `Rename Failed: ${error}`,
+        });
+      }
+    } else {
+      // We use this minor hack to trigger the native form validation UI
+      const temporarySubmitButton = document.createElement('button');
+      form.appendChild(temporarySubmitButton);
+      temporarySubmitButton.click();
+      form.removeChild(temporarySubmitButton);
+    }
+
+    return false;
+  };
+
+  private handleRenameButtonClick = () => {
+    this.setState({ renameDialogOpen: true });
+  };
+
   private handleSelectionChange = () => {
     if (this.contentRef) {
       store.set(this.props.note.id, {
@@ -281,7 +334,7 @@ class App extends React.Component<IAppProps, IAppState> {
         confirmButtonText="Delete"
         cancelButtonText="Cancel"
         icon={IconNames.TRASH}
-        onCancel={this.cancelNoteDeletion}
+        onCancel={this.handleNoteDeletionCancel}
         onConfirm={this.deleteNote}
       >
         Are you sure you want to delete this note and all associated versions?
@@ -310,6 +363,46 @@ class App extends React.Component<IAppProps, IAppState> {
           <MenuItem text={<NonIdealState icon={<Spinner />} />} />
         )}
       </Menu>
+    );
+  }
+
+  private renderRenameDialog({ renameDialogOpen }: IAppState) {
+    return (
+      <Dialog isOpen={renameDialogOpen} title="Rename Note" icon={IconNames.EDIT}>
+        <div className={Classes.DIALOG_BODY}>
+          <form ref={this.renameForm} onSubmit={this.handleRename}>
+            <FormGroup
+              inline={true}
+              helperText={
+                <>
+                  Must be unique and match the pattern <Code>[A-z0-9_-]+</Code>
+                </>
+              }
+            >
+              <input
+                className={Classes.INPUT}
+                required={true}
+                pattern="[A-z0-9_-]+"
+                placeholder="Enter new name"
+                ref={this.renameInput}
+              />
+            </FormGroup>
+          </form>
+        </div>
+        <div className={Classes.DIALOG_FOOTER}>
+          <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+            <Button onClick={this.handelRenameCancel}>Cancel</Button>
+            <Button
+              title="Rename"
+              intent={Intent.PRIMARY}
+              icon={IconNames.CONFIRM}
+              onClick={this.handleRename}
+            >
+              Rename
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     );
   }
 
@@ -351,6 +444,9 @@ class App extends React.Component<IAppProps, IAppState> {
                 icon={mode === 'light' ? IconNames.MOON : IconNames.FLASH}
                 onClick={this.handleModeToggle}
               />
+            </Tooltip>
+            <Tooltip content="Rename" position={Position.TOP}>
+              <Button icon={IconNames.EDIT} onClick={this.handleRenameButtonClick} />
             </Tooltip>
             <Tooltip content="Download" position={Position.TOP}>
               <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
