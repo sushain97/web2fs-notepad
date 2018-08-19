@@ -12,6 +12,10 @@ import {
   FocusStyleManager,
   H5,
   Intent,
+  Menu,
+  MenuItem,
+  NonIdealState,
+  Popover,
   Position,
   Spinner,
   Tag,
@@ -43,6 +47,11 @@ interface INote {
   version: number;
 }
 
+interface INoteVersionEntry {
+  modificationTime: number;
+  size: number;
+}
+
 interface IAppProps {
   currentVersion: number;
   note: INote;
@@ -52,6 +61,7 @@ interface IAppState {
   confirmDeleteAlertOpen: boolean;
   content: string;
   currentVersion: number;
+  history?: INoteVersionEntry[];
   mode: Mode;
   note: INote;
   updating: boolean;
@@ -140,7 +150,6 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   public render() {
-    // TODO: access to old versions via interactive tag?
     return (
       <div id="container" className={this.state.mode === 'dark' ? Classes.DARK : undefined}>
         {this.renderTextArea(this.state)}
@@ -233,6 +242,22 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
+  private handleHistoryPopoverOpening = async () => {
+    try {
+      this.setState({ history: undefined });
+      const { data: history } = await axios.get<INoteVersionEntry[]>(
+        `/${this.state.note.id}/history`,
+      );
+      this.setState({ history });
+    } catch (error) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: `Fetching hustory failed: ${error}`,
+      });
+    }
+  };
+
   private handleModeToggle = () => {
     const mode = this.state.mode === 'light' ? 'dark' : 'light';
     this.setState({ mode });
@@ -264,6 +289,30 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
+  private renderHistoryMenu() {
+    const {
+      history,
+      note: { id },
+    } = this.state;
+
+    return (
+      <Menu>
+        {history ? (
+          history.map(({ modificationTime, size }, i) => (
+            <MenuItem
+              key={i}
+              text={`v${i} - ${new Date(modificationTime * 1000).toLocaleString()}`}
+              label={`${size} bytes`}
+              href={`/${id}/${i}`}
+            />
+          ))
+        ) : (
+          <MenuItem text={<NonIdealState icon={<Spinner />} />} />
+        )}
+      </Menu>
+    );
+  }
+
   private renderStatusBar({
     currentVersion,
     note: { version, modificationTime },
@@ -274,9 +323,20 @@ class App extends React.Component<IAppProps, IAppState> {
 
     return (
       <div className="status-bar">
-        <Tag icon={updating ? <Spinner size={20} /> : IconNames.SAVED} minimal={true} large={true}>
-          Version {version} of {currentVersion}
-        </Tag>
+        <Popover
+          content={this.renderHistoryMenu()}
+          onOpening={this.handleHistoryPopoverOpening}
+          // position={Position.LEFT_BOTTOM}
+        >
+          <Tag
+            icon={updating ? <Spinner size={20} /> : IconNames.SAVED}
+            minimal={true}
+            large={true}
+            interactive={true}
+          >
+            Version {version} of {currentVersion}
+          </Tag>
+        </Popover>
         <div>
           <Callout intent={disabled ? Intent.WARNING : undefined} className="status-bar-callout">
             {disabled && <H5>Editing disabled for old version</H5>}

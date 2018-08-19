@@ -107,7 +107,11 @@ class PageController extends AbstractController
      */
     public function listNoteHistory(string $id, NoteStore $store): Response
     {
-        return $this->json($store->getNoteHistory($id));
+        $history = $store->getNoteHistory($id);
+        $serialize = function ($entry): array {
+            return $entry->serialize();
+        };
+        return $this->json(array_map($serialize, $history));
     }
 
     /**

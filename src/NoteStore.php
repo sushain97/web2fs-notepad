@@ -239,11 +239,13 @@ class NoteStore
     {
         $versionDataDir = $this->getNoteVersionDataDir($id);
 
-        $history = [];
-        foreach(glob("$versionDataDir/*") as $version) {
-            $stat = stat($version);
-            $history[] = new NoteHistoryEntry($stat['mtime'], $stat['size']);
-        }
+        $history = array_map(
+            function ($version): NoteHistoryEntry {
+                $stat = stat($version);
+                return new NoteHistoryEntry($stat['mtime'], $stat['size']);
+            },
+            glob("$versionDataDir/*")
+        );
 
         return $history;
     }
