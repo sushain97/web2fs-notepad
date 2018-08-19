@@ -17,7 +17,7 @@ body {
 
     background-color: $light-gray5;
 
-    &.bp3-dark {
+    &.#{$ns}-dark {
         background-color: $dark-gray4;
     }
 }
@@ -33,11 +33,11 @@ body {
     margin-right: $pt-grid-size;
     display: inline;
 
-    &.bp3-callout-icon > .bp3-icon:first-child {
+    &.#{$ns}-callout-icon > .#{$ns}-icon:first-child {
         top: $pt-grid-size / 2;
     }
 
-    & .bp3-heading {
+    & .#{$ns}-heading {
         display: inline-block;
         margin: 0 $pt-grid-size 0 0;
     }
