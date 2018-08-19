@@ -33,6 +33,9 @@ TODO: verify this works and switch to docker-compose for persistence?
 1. Copy `.env.dist` to `.env` and edit settings.
 1. Point your web server with PHP support to `/public`.
 
+Run `./bin/update circle_build_number` to update your deployment (runtime
+dependency on [`jq`][14]).
+
 ### Local Build
 
 1. Install [PHP][11] 7.1.3+.
@@ -69,3 +72,4 @@ Autofix errors from [Prettier][8], [TSLint][9], [Stylelint][13], and
 [11]: http://www.php.net/
 [12]: https://www.docker.com/
 [13]: https://stylelint.io/
+[14]: https://stedolan.github.io/jq/

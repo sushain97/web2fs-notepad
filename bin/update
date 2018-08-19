@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -eux
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+if [[ -z "$CIRCLE_TOKEN" ]]; then
+    echo 'Please set the CIRCLE_TOKEN environment variable. See https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token.';
+    exit 1;
+fi
+
+if [[ $# -eq 0 ]] ; then
+    echo "Usage: ${BASH_SOURCE[0]} circle_build_number";
+    exit 1
+fi
+
+artifacts=$(curl -s "https://circleci.com/api/v1.1/project/github/sushain97/web2fs-notepad/$1/artifacts?circle-token=$CIRCLE_TOKEN")
+dist_url=$(echo "$artifacts" | jq -r '.[] | select(.path=="home/circleci/web2fs-notepad/dist.tar.gz") | .["url"]')
+wget "$dist_url?circle-token=$CIRCLE_TOKEN" -O dist.tar.gz
+tar -xvf dist.tar.gz
+rm dist.tar.gz
