@@ -326,7 +326,7 @@ class App extends React.Component<IAppProps, IAppState> {
         <Popover
           content={this.renderHistoryMenu()}
           onOpening={this.handleHistoryPopoverOpening}
-          // position={Position.LEFT_BOTTOM}
+          position={Position.TOP_LEFT}
         >
           <Tag
             icon={updating ? <Spinner size={20} /> : IconNames.SAVED}
