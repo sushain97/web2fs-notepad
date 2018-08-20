@@ -33,12 +33,12 @@ class Note
 
     public function serialize(): array
     {
-        return array(
+        return [
             'id' => $this->id,
             'version' => $this->version,
             'modificationTime' => $this->mtime,
             'content' => $this->content,
-        );
+        ];
     }
 }
 
@@ -55,10 +55,10 @@ class NoteHistoryEntry
 
     public function serialize(): array
     {
-        return array(
+        return [
             'modificationTime' => $this->mtime,
             'size' => $this->size,
-        );
+        ];
     }
 }
 

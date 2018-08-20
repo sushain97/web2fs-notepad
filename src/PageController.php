@@ -21,7 +21,7 @@ class PageController extends AbstractController
             throw new HttpException(500, "Unable to allocate new note: {$e->getMessage()}.");
         }
 
-        return $this->redirectToRoute('show_note', array('id' => $id));
+        return $this->redirectToRoute('show_note', ['id' => $id]);
     }
 
     /**
@@ -58,13 +58,17 @@ class PageController extends AbstractController
             $note = new Note($id, $currentVersion, time(), '');
         }
 
+        $data = [
+            'note' => $note->serialize(),
+            'currentVersion' => $currentVersion,
+        ];
+
         if (strpos($userAgent, 'curl') === 0) {
             return new Response($content);
+        } else if ($request->getAcceptableContentTypes() === 'application/json') {
+            return $this->json($data);
         } else {
-            return $this->render('index.html.php', array(
-                'note' => $note->serialize(),
-                'currentVersion' => $currentVersion,
-            ));
+            return $this->render('index.html.php', $data);
         }
     }
 
