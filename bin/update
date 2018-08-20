@@ -4,7 +4,7 @@ set -eux
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-if [[ -z "$CIRCLE_TOKEN" ]]; then
+if [ -z "${CIRCLE_TOKEN:-}" ]; then
     echo 'Please set the CIRCLE_TOKEN environment variable. See https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token.';
     exit 1;
 fi
