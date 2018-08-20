@@ -6,6 +6,3 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 yarn lint
 ./vendor/bin/phpcs
-
-# TODO: Add + run Jest tests (with coverage?)
-# TODO: Add + run phpunit tests (with coverage?)

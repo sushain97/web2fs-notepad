@@ -36,9 +36,6 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 
-// TODO: new format rendering (markdeep, code along with existing plain text) with lazy load(?)
-// TODO: refresh props instead of window.location.href replace
-
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
 // built up so we only buffer UPDATE_MAX_WAIT_MS of updates.
@@ -384,7 +381,7 @@ class App extends React.Component<IAppProps, IAppState> {
               inline={true}
               helperText={
                 <>
-                  Must be unique and match the pattern <Code>[A-z0-9_-]+</Code>
+                  Must be unique and match the pat+ run Jest tests (with ctern <Code>[A-z0-9_-]+</Code>
                 </>
               }
             >

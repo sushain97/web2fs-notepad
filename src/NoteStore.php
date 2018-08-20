@@ -144,8 +144,6 @@ class NoteStore
 
     public function generateNewId(): string
     {
-        // TODO: generate a human readable id instead
-
         $attempts = 1;
         do {
             if ($attempts >= self::MAX_ID_SELECTION_ATTEMPTS) {

@@ -13,7 +13,6 @@
                 currentVersion: <?php echo $currentVersion ?>,
             };
         </script>
-        <!-- TODO: add a favicon -->
     </head>
     <body>
         <div id="app"></div>
