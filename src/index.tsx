@@ -312,7 +312,10 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private renderHistoryMenu() {
-    const { history } = this.state;
+    const {
+      history,
+      note: { version },
+    } = this.state;
 
     let content;
     if (history == null) {
@@ -323,6 +326,7 @@ class App extends React.Component<IAppProps, IAppState> {
       content = history.map(({ modificationTime, size }, i) => (
         <MenuItem
           key={i}
+          active={i + 1 === version}
           text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
           label={fileSize(size)}
           onClick={this.historyMenuItemClickHandler(i + 1)}
