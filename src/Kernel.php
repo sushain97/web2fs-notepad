@@ -13,7 +13,21 @@ class Kernel extends BaseKernel
 {
     use MicroKernelTrait;
 
+    private $manifest;
+
     const CONFIG_EXTS = '.{php,xml,yaml,yml}';
+
+    public function __construct(...$args)
+    {
+        parent::__construct(...$args);
+
+        $manifestPath = $this->getProjectDir().'/public/assets/manifest.json';
+        if (file_exists($manifestPath)) {
+            $this->manifest = json_decode(file_get_contents($manifestPath), true);
+        } else {
+            $this->manifest = [];
+        }
+    }
 
     public function getProjectDir(): string
     {
@@ -28,6 +42,11 @@ class Kernel extends BaseKernel
     public function getLogDir(): string
     {
         return $this->getProjectDir().'/var/log';
+    }
+
+    public function getAssetPath(string $asset)
+    {
+        return '/assets/'.$this->manifest[$asset];
     }
 
     public function registerBundles()

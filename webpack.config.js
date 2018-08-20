@@ -3,17 +3,16 @@ require('dotenv').config();
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const WebpackAssetsManifest = require('webpack-assets-manifest');
 
-const PUBLIC = path.resolve(__dirname, 'public');
-
-// TODO: investigate Symfony's built-in Webpack support
+const ASSETS_PATH = path.resolve(__dirname, 'public', 'assets');
 
 module.exports = {
     mode: process.env.APP_ENV == 'dev' ? 'development' : 'production',
     entry: './src/index.tsx',
     output: {
-        filename: 'bundle.js',
-        path: PUBLIC,
+        filename: 'bundle.[contenthash].js',
+        path: ASSETS_PATH,
     },
     devtool: 'eval',
     resolve: {
@@ -47,8 +46,8 @@ module.exports = {
     },
     plugins: [
         new MiniCssExtractPlugin({
-            filename: 'bundle.css',
-            path: PUBLIC,
+            filename: 'bundle.[contenthash].css',
+            path: ASSETS_PATH,
         }),
         new OptimizeCssAssetsPlugin({
             cssProcessor: require('cssnano'),
@@ -58,6 +57,7 @@ module.exports = {
                 },
             },
             canPrint: true,
-        })
+        }),
+        new WebpackAssetsManifest(),
     ],
 };

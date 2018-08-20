@@ -6,7 +6,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="author" content="Sushain K. Cherivirala">
-        <link rel="stylesheet" href="/bundle.css"/>
+        <link rel="stylesheet" href="<?php echo $kernel->getAssetPath('main.css') ?>"/>
         <script type="text/javascript">
             window.CONTEXT = {
                 note: <?php echo json_encode($note) ?>,
@@ -16,6 +16,6 @@
     </head>
     <body>
         <div id="app"></div>
-        <script type="text/javascript" src="/bundle.js"></script>
+        <script type="text/javascript" src="<?php echo $kernel->getAssetPath('main.js') ?>"></script>
     </body>
 </html>

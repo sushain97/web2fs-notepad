@@ -1,4 +1,5 @@
 <?php
+
 namespace App;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -6,6 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class PageController extends AbstractController
@@ -33,7 +35,7 @@ class PageController extends AbstractController
      *     defaults={"version"=null}
      * )
      */
-    public function showNote(string $id, ?int $version, NoteStore $store): Response
+    public function showNote(string $id, ?int $version, NoteStore $store, KernelInterface $kernel): Response
     {
         $request = Request::createFromGlobals();
         $userAgent = $request->headers->get('User-Agent');
@@ -68,7 +70,7 @@ class PageController extends AbstractController
         } elseif ($request->getAcceptableContentTypes()[0] === 'application/json') {
             return $this->json($data);
         } else {
-            return $this->render('index.html.php', $data);
+            return $this->render('index.html.php', $data + ['kernel' => $kernel]);
         }
     }
 

@@ -3,8 +3,5 @@
 /vendor/
 /.web-server-pid
 /node_modules/
-/public/
+/public/assets
 /yarn-error.log
-
-!/public/index.php
-!/public/.htaccess
