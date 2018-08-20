@@ -19,3 +19,6 @@ dist_url=$(echo "$artifacts" | jq -r '.[] | select(.path=="home/circleci/web2fs-
 wget "$dist_url?circle-token=$CIRCLE_TOKEN" -O dist.tar.gz
 tar -xvf dist.tar.gz
 rm dist.tar.gz
+
+./bin/console cache:clear
+echo 'Updated!'
