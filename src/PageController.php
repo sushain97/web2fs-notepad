@@ -65,7 +65,7 @@ class PageController extends AbstractController
 
         if (strpos($userAgent, 'curl') === 0) {
             return new Response($content);
-        } else if ($request->getAcceptableContentTypes() === 'application/json') {
+        } else if ($request->getAcceptableContentTypes()[0] === 'application/json') {
             return $this->json($data);
         } else {
             return $this->render('index.html.php', $data);

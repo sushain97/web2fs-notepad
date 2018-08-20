@@ -5,7 +5,6 @@ import './index.scss';
 
 import {
   Alert,
-  AnchorButton,
   Button,
   ButtonGroup,
   Callout,
@@ -82,55 +81,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private renameForm: React.RefObject<HTMLFormElement>;
   private renameInput: React.RefObject<HTMLInputElement>;
   private updateFailedToastKey?: string;
-
-  private updateNote = debounce(
-    async () => {
-      try {
-        const { note, content } = this.state;
-        const { id } = note;
-
-        if (this.cancelTokenSource) {
-          this.cancelTokenSource.cancel();
-        }
-
-        this.cancelTokenSource = axios.CancelToken.source();
-
-        this.setState({ updating: true });
-        const { data: updatedNote } = await axios.post<INote>(
-          `/${id}`,
-          `text=${encodeURIComponent(content)}`,
-          {
-            cancelToken: this.cancelTokenSource.token,
-          },
-        );
-
-        delete this.cancelTokenSource;
-        this.setState({
-          currentVersion: updatedNote.version,
-          note: updatedNote,
-          updating: false,
-        });
-        window.history.pushState(null, '', `/${id}/${updatedNote.version}`);
-      } catch (error) {
-        if (!axios.isCancel(error)) {
-          this.updateFailedToastKey = AppToaster.show(
-            {
-              icon: IconNames.WARNING_SIGN,
-              intent: Intent.WARNING,
-              message: `Update Failed: ${error}`,
-            },
-            this.updateFailedToastKey,
-          );
-        }
-
-        this.setState({
-          updating: false,
-        });
-      }
-    },
-    UPDATE_DEBOUNCE_MS,
-    { maxWait: UPDATE_MAX_WAIT_MS },
-  );
+  private updateNoteDebounced: () => void;
 
   public constructor(props: IAppProps) {
     super(props);
@@ -148,6 +99,10 @@ class App extends React.Component<IAppProps, IAppState> {
 
     this.renameForm = React.createRef();
     this.renameInput = React.createRef();
+
+    this.updateNoteDebounced = debounce(this.updateNote, UPDATE_DEBOUNCE_MS, {
+      maxWait: UPDATE_MAX_WAIT_MS,
+    });
   }
 
   public componentDidMount() {
@@ -216,7 +171,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private handleContentChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     const { value: content } = event.currentTarget;
-    this.setState({ content }, this.updateNote);
+    this.setState({ content }, this.updateNoteDebounced);
   };
 
   private handleContentKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -281,9 +236,7 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleRename = async (ev?: React.FormEvent) => {
-    const {
-      note: { id },
-    } = this.state;
+    const { id, version } = this.state.note;
     const form = this.renameForm.current!;
 
     if (ev) {
@@ -294,13 +247,19 @@ class App extends React.Component<IAppProps, IAppState> {
       try {
         const newId = this.renameInput.current!.value;
         await axios.post(`/${id}/rename`, `newId=${encodeURIComponent(newId)}`);
-        window.location.href = `/${newId}`;
+
+        this.setState({
+          note: { ...this.state.note, id: newId },
+        });
+        window.history.pushState(null, '', `/${newId}${version ? `/${version}` : ''}`);
       } catch (error) {
         AppToaster.show({
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
           message: `Rename Failed: ${error}`,
         });
+      } finally {
+        this.setState({ renameDialogOpen: false });
       }
     } else {
       // We use this minor hack to trigger the native form validation UI
@@ -326,6 +285,16 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
+  private handleViewLatestButtonClick = () => {
+    this.showNoteVersion(this.state.currentVersion);
+  };
+
+  private historyMenuItemClickHandler = (version: number) => {
+    return () => {
+      this.showNoteVersion(version);
+    };
+  };
+
   private renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
     return (
       <Alert
@@ -343,10 +312,7 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private renderHistoryMenu() {
-    const {
-      history,
-      note: { id },
-    } = this.state;
+    const { history } = this.state;
 
     let content;
     if (history == null) {
@@ -359,7 +325,7 @@ class App extends React.Component<IAppProps, IAppState> {
           key={i}
           text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
           label={fileSize(size)}
-          href={`/${id}/${i + 1}`}
+          onClick={this.historyMenuItemClickHandler(i + 1)}
         />
       ));
     }
@@ -381,7 +347,7 @@ class App extends React.Component<IAppProps, IAppState> {
               inline={true}
               helperText={
                 <>
-                  Must be unique and match the pat+ run Jest tests (with ctern <Code>[A-z0-9_-]+</Code>
+                  Must be unique and match the pattern <Code>[A-z0-9_-]+</Code>
                 </>
               }
             >
@@ -415,7 +381,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private renderStatusBar({
     currentVersion,
-    note: { id, version, modificationTime },
+    note: { version, modificationTime },
     mode,
     updating,
   }: IAppState) {
@@ -440,10 +406,10 @@ class App extends React.Component<IAppProps, IAppState> {
           </Popover>
           {disabled && (
             <Tooltip content={'View latest'} position={Position.TOP}>
-              <AnchorButton
+              <Button
                 className="view-latest-button"
                 icon={IconNames.UPDATED}
-                href={`/${id}/${currentVersion}`}
+                onClick={this.handleViewLatestButtonClick}
               />
             </Tooltip>
           )}
@@ -504,6 +470,79 @@ class App extends React.Component<IAppProps, IAppState> {
       />
     );
   }
+
+  private async showNoteVersion(version: number) {
+    try {
+      const {
+        content: currentContent,
+        note: { id, content },
+      } = this.state;
+
+      if (currentContent !== content) {
+        this.updateNote();
+      }
+
+      const {
+        data: { note },
+      } = await axios.get<{ note: INote }>(`/${id}/${version}`);
+      this.setState({
+        content: note.content,
+        note,
+      });
+      window.history.pushState(null, '', `/${id}/${version}`);
+    } catch (error) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: `Fetching hustory failed: ${error}`,
+      });
+    }
+  }
+
+  private updateNote = async () => {
+    try {
+      const { note, content } = this.state;
+      const { id } = note;
+
+      if (this.cancelTokenSource) {
+        this.cancelTokenSource.cancel();
+      }
+
+      this.cancelTokenSource = axios.CancelToken.source();
+
+      this.setState({ updating: true });
+      const { data: updatedNote } = await axios.post<INote>(
+        `/${id}`,
+        `text=${encodeURIComponent(content)}`,
+        {
+          cancelToken: this.cancelTokenSource.token,
+        },
+      );
+
+      delete this.cancelTokenSource;
+      this.setState({
+        currentVersion: updatedNote.version,
+        note: updatedNote,
+        updating: false,
+      });
+      window.history.pushState(null, '', `/${id}/${updatedNote.version}`);
+    } catch (error) {
+      if (!axios.isCancel(error)) {
+        this.updateFailedToastKey = AppToaster.show(
+          {
+            icon: IconNames.WARNING_SIGN,
+            intent: Intent.WARNING,
+            message: `Update Failed: ${error}`,
+          },
+          this.updateFailedToastKey,
+        );
+      }
+
+      this.setState({
+        updating: false,
+      });
+    }
+  };
 }
 
 ReactDOM.render(<App {...(window as any).CONTEXT} />, document.getElementById('app'));
