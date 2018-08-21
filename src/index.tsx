@@ -285,13 +285,13 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleViewLatestButtonClick = () => {
-    this.showNoteVersion(this.state.currentVersion);
+  private handleViewLatestButtonClick = (ev: React.MouseEvent<HTMLElement>) => {
+    this.showNoteVersion(this.state.currentVersion, ev.metaKey);
   };
 
   private historyMenuItemClickHandler = (version: number) => {
-    return () => {
-      this.showNoteVersion(version);
+    return (ev: React.MouseEvent<HTMLElement>) => {
+      this.showNoteVersion(version, ev.metaKey);
     };
   };
 
@@ -474,31 +474,35 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private async showNoteVersion(version: number) {
-    try {
-      const {
-        content: currentContent,
-        note: { id, content },
-      } = this.state;
+  private async showNoteVersion(version: number, newWindow: boolean) {
+    const {
+      content: currentContent,
+      note: { id, content },
+    } = this.state;
 
-      if (currentContent !== content) {
-        this.updateNote();
+    if (newWindow) {
+      window.open(`/${this.state.note.id}/${version}`);
+    } else {
+      try {
+        if (currentContent !== content) {
+          this.updateNote();
+        }
+
+        const {
+          data: { note },
+        } = await axios.get<{ note: INote }>(`/${id}/${version}`);
+        this.setState({
+          content: note.content,
+          note,
+        });
+        window.history.pushState(null, '', `/${id}/${version}`);
+      } catch (error) {
+        AppToaster.show({
+          icon: IconNames.WARNING_SIGN,
+          intent: Intent.WARNING,
+          message: `Fetching hustory failed: ${error}`,
+        });
       }
-
-      const {
-        data: { note },
-      } = await axios.get<{ note: INote }>(`/${id}/${version}`);
-      this.setState({
-        content: note.content,
-        note,
-      });
-      window.history.pushState(null, '', `/${id}/${version}`);
-    } catch (error) {
-      AppToaster.show({
-        icon: IconNames.WARNING_SIGN,
-        intent: Intent.WARNING,
-        message: `Fetching hustory failed: ${error}`,
-      });
     }
   }
 
