@@ -462,7 +462,6 @@ class App extends React.Component<IAppProps, IAppState> {
     return (
       <TextArea
         inputRef={this.contentRefHandler}
-        intent={Intent.PRIMARY}
         value={content}
         title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
         onChange={disabled ? undefined : this.handleContentChange}
