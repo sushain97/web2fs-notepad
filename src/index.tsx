@@ -38,8 +38,8 @@ import * as store from 'store/dist/store.modern'; // tslint:disable-line no-subm
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
 // built up so we only buffer UPDATE_MAX_WAIT_MS of updates.
-const UPDATE_DEBOUNCE_MS = 2000;
-const UPDATE_MAX_WAIT_MS = 10000;
+const UPDATE_DEBOUNCE_MS = 5000;
+const UPDATE_MAX_WAIT_MS = 15000;
 
 type Mode = 'light' | 'dark';
 
