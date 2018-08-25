@@ -334,7 +334,7 @@ class App extends React.Component<IAppProps, IAppState> {
       ));
     }
 
-    return <Menu>{content}</Menu>;
+    return <Menu className="version-history-menu">{content}</Menu>;
   }
 
   private renderRenameDialog({ renameDialogOpen }: IAppState) {

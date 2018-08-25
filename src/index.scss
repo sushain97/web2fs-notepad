@@ -54,3 +54,8 @@ body {
         margin: 0 $pt-grid-size 0 0;
     }
 }
+
+.version-history-menu {
+    max-height: 75vh;
+    overflow-y: auto;
+}
