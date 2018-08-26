@@ -55,6 +55,10 @@ module.exports = {
             }
         ],
     },
+    performance: {
+        maxEntrypointSize: 1.5E9,
+        maxAssetSize: 1.25E9,
+    },
     plugins: [
         new CleanWebpackPlugin([ASSETS_PATH]),
         new MiniCssExtractPlugin({
