@@ -4,6 +4,7 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 const ASSETS_PATH = path.resolve(__dirname, 'public', 'assets');
 
@@ -45,6 +46,7 @@ module.exports = {
         ],
     },
     plugins: [
+        new CleanWebpackPlugin([ASSETS_PATH]),
         new MiniCssExtractPlugin({
             filename: 'bundle.[contenthash].css',
             path: ASSETS_PATH,
