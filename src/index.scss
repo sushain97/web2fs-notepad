@@ -22,6 +22,10 @@ body {
     }
 }
 
+.content-input {
+    resize: none;
+}
+
 .split-content-area {
     display: flex;
     height: 100%;
@@ -38,10 +42,6 @@ body {
             height: 100%;
         }
     }
-}
-
-.content-input {
-    resize: none;
 }
 
 .status-bar {
