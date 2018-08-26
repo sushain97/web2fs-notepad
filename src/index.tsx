@@ -220,7 +220,7 @@ class App extends React.Component<IAppProps, IAppState> {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
-        message: `Fetching hustory failed: ${error}`,
+        message: `Fetching history failed: ${error}`,
       });
     }
   };
@@ -500,7 +500,7 @@ class App extends React.Component<IAppProps, IAppState> {
         AppToaster.show({
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
-          message: `Fetching hustory failed: ${error}`,
+          message: `Fetching history failed: ${error}`,
         });
       }
     }
