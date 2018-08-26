@@ -360,7 +360,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     import(/* webpackChunkName: "markdown-it" */ 'markdown-it')
       .then(md => {
-        this.MarkdownIt = md.default({
+        this.MarkdownIt = (md.default || md)({
           linkify: true,
           typographer: true,
         });
