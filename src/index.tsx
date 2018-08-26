@@ -160,6 +160,8 @@ class App extends React.Component<IAppProps, IAppState> {
         icon={IconNames.TRASH}
         onCancel={this.handleNoteDeletionCancel}
         onConfirm={this.deleteNote}
+        canEscapeKeyCancel={true}
+        canOutsideClickCancel={true}
       >
         Are you sure you want to delete this note and all associated versions?
       </Alert>
