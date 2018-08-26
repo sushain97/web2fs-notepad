@@ -32,7 +32,7 @@ class PageController extends AbstractController
      *     name="show_note",
      *     methods={"GET"},
      *     requirements={"id"="[A-z0-9_-]+", "version"="\d+"},
-     *     defaults={"version"=null}
+     *     defaults={"version"=null},
      * )
      */
     public function showNote(string $id, ?int $version, NoteStore $store, KernelInterface $kernel): Response
@@ -72,6 +72,39 @@ class PageController extends AbstractController
         } else {
             return $this->render('index.html.php', $data + ['kernel' => $kernel]);
         }
+    }
+
+    /**
+     * @Route("/{id}/{type}", name="show_plaintext_note", methods={"GET"}, requirements={"id"="[A-z0-9_-]+", "type"="raw|plaintext|plainText"})
+     */
+    public function showPlainTextNote(string $id, NoteStore $store): Response
+    {
+        $hasNote = $store->hasNote($id);
+        if (!$hasNote) {
+            throw $this->createNotFoundException("Note does not exist: $id.");
+        }
+
+        return new Response($store->getNote($id)->content);
+    }
+
+    /**
+     * @Route(
+     *   "/{id}/{version}/{type}",
+     *   name="show_plaintext_note_version",
+     *   methods={"GET"},
+     *   requirements={"id"="[A-z0-9_-]+", "version"="\d+", "type"="raw|plaintext|plainText"}
+     * )
+     */
+    public function showPlainTextNoteVersion(string $id, int $version, NoteStore $store): Response
+    {
+        $hasNote = $store->hasNote($id);
+        if (!$hasNote) {
+            throw $this->createNotFoundException("Note does not exist: $id.");
+        } elseif ($version !== null && !$store->hasNoteVersion($id, $version)) {
+            throw $this->createNotFoundException("Version does not exist: $version.");
+        }
+
+        return new Response($store->getNote($id, $version)->content);
     }
 
     /**
