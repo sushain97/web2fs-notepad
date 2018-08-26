@@ -8,7 +8,7 @@ const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
-const SRC_PATH = path.resolve(__dirname, 'src');
+const SRC_PATH = path.resolve(__dirname, 'src', 'scripts');
 const ASSETS_PATH = path.resolve(__dirname, 'public', 'assets');
 
 module.exports = {

@@ -1,7 +1,4 @@
-import '@blueprintjs/core/lib/css/blueprint.css'; // tslint:disable-line no-submodule-imports
-import '@blueprintjs/icons/lib/css/blueprint-icons.css'; // tslint:disable-line no-submodule-imports
-import 'normalize.css';
-import './index.scss';
+import '../styles/index.scss';
 
 import {
   Alert,

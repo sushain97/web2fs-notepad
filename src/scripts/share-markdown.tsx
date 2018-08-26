@@ -1,4 +1,4 @@
-import './share.scss';
+import '../styles/share.scss';
 
 import { Classes } from '@blueprintjs/core';
 import MarkdownIt from 'markdown-it';
