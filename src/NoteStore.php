@@ -131,12 +131,18 @@ class NoteStore
         return $time;
     }
 
+    private function getVersions(string $id): array
+    {
+        $versions = array_diff(scandir($this->getNoteVersionDataDir($id)), ['.', '..']);
+        sort($versions, SORT_NUMERIC);
+        return $versions;
+    }
+
     public function getCurrentNoteVersion(string $id): int
     {
         if ($this->hasNote($id)) {
-            $versions = scandir($this->getNoteVersionDataDir($id));
-            rsort($versions, 1);
-            return intval($versions[0]);
+            $versions = $this->getVersions($id);
+            return intval(end($versions));
         } else {
             return self::INITIAL_VERSION;
         }
@@ -240,14 +246,15 @@ class NoteStore
 
     public function getNoteHistory(string $id): array
     {
+        $versions = $this->getVersions($id);
         $versionDataDir = $this->getNoteVersionDataDir($id);
 
         $history = array_map(
-            function ($version): NoteHistoryEntry {
-                $stat = stat($version);
+            function ($version) use ($versionDataDir): NoteHistoryEntry {
+                $stat = stat($versionDataDir.$version);
                 return new NoteHistoryEntry($stat['mtime'], $stat['size']);
             },
-            glob("$versionDataDir/*")
+            $versions
         );
 
         return $history;
