@@ -68,7 +68,7 @@ class NoteStore
     const INITIAL_VERSION = 1;
     private const MAX_ID_SELECTION_ATTEMPTS = 10;
     private const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
-    private const DATA_DIR_MODE = 0744;
+    private const DATA_DIR_MODE = 0755;
     private const DATA_MODE = 0644;
 
     private $logger;
