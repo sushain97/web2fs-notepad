@@ -2,8 +2,8 @@
     "compilerOptions": {
         "outDir": "./public",
         "target": "es6",
-        "module": "commonjs",
-        "removeComments": true,
+        "module": "esnext",
+        "moduleResolution": "node",
         "sourceMap": true,
         "jsx": "react",
         "allowSyntheticDefaultImports": true,

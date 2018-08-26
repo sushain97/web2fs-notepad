@@ -12,6 +12,8 @@ module.exports = {
     entry: './src/index.tsx',
     output: {
         filename: 'bundle.[contenthash].js',
+        chunkFilename: "bundle.[name].[contenthash].chunk.js",
+        publicPath: '/assets/',
         path: ASSETS_PATH,
     },
     devtool: 'eval',

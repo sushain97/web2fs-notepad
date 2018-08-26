@@ -32,7 +32,7 @@ import { IconNames } from '@blueprintjs/icons';
 import axios, { CancelTokenSource } from 'axios';
 import { fileSize } from 'humanize-plus';
 import { debounce, startCase } from 'lodash-es';
-import * as MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
@@ -94,7 +94,7 @@ const AppToaster = Toaster.create();
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement | null;
-  private MarkdownIt: MarkdownIt.MarkdownIt;
+  private MarkdownIt?: ReturnType<typeof MarkdownIt>;
   private renameForm: React.RefObject<HTMLFormElement>;
   private renameInput: React.RefObject<HTMLInputElement>;
   private updateFailedToastKey?: string;
@@ -104,11 +104,13 @@ class App extends React.Component<IAppProps, IAppState> {
     super(props);
 
     const { note, currentVersion } = props;
+    const contentMode =
+      store.get(note.id, { mode: ContentMode.PlainText }).mode || ContentMode.PlainText;
+
     this.state = {
       confirmDeleteAlertOpen: false,
       content: note.content,
-      contentMode:
-        store.get(note.id, { mode: ContentMode.PlainText }).mode || ContentMode.PlainText,
+      contentMode,
       currentVersion,
       note,
       renameDialogOpen: false,
@@ -122,7 +124,10 @@ class App extends React.Component<IAppProps, IAppState> {
     this.updateNoteDebounced = debounce(this.updateNote, UPDATE_DEBOUNCE_MS, {
       maxWait: UPDATE_MAX_WAIT_MS,
     });
-    this.MarkdownIt = MarkdownIt({ linkify: true, typographer: true });
+
+    if (contentMode === ContentMode.Markdown) {
+      this.loadMarkdownRenderer();
+    }
   }
 
   public componentDidMount() {
@@ -348,6 +353,28 @@ class App extends React.Component<IAppProps, IAppState> {
     };
   };
 
+  private loadMarkdownRenderer() {
+    if (this.MarkdownIt) {
+      return;
+    }
+
+    import(/* webpackChunkName: "markdown-it" */ 'markdown-it')
+      .then(md => {
+        this.MarkdownIt = md.default({
+          linkify: true,
+          typographer: true,
+        });
+        this.forceUpdate();
+      })
+      .catch(error => {
+        AppToaster.show({
+          icon: IconNames.WARNING_SIGN,
+          intent: Intent.WARNING,
+          message: `Fetching markdown renderer failed: ${error}`,
+        });
+      });
+  }
+
   private renderContent({ content, contentMode, currentVersion, note: { version } }: IAppState) {
     const disabled = version !== currentVersion;
 
@@ -366,14 +393,29 @@ class App extends React.Component<IAppProps, IAppState> {
     );
 
     if (contentMode === ContentMode.Markdown) {
-      return (
-        <div className="split-content-area">
-          <div className="content-input-container">{textArea}</div>
-          <Divider />
+      let output;
+      if (this.MarkdownIt) {
+        output = (
           <div
             className={`${Classes.RUNNING_TEXT} content-output-container`}
             dangerouslySetInnerHTML={{ __html: this.MarkdownIt.render(content) }}
           />
+        );
+      } else {
+        this.loadMarkdownRenderer();
+
+        output = (
+          <div className="content-output-container">
+            <NonIdealState icon={<Spinner />} title="Loading Markdown Renderer" />
+          </div>
+        );
+      }
+
+      return (
+        <div className="split-content-area">
+          <div className="content-input-container">{textArea}</div>
+          <Divider />
+          {output}
         </div>
       );
     } else {
