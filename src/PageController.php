@@ -12,6 +12,15 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class PageController extends AbstractController
 {
+    private function renderHTML(array $context, string $bundle, string $title, KernelInterface $kernel): Response {
+        return $this->render('index.html.php', [
+            'kernel' => $kernel,
+            'context' => $context,
+            'bundle' => $bundle,
+            'title' => $title,
+        ]);
+    }
+
     /**
      * @Route("/", name="new_note", methods={"GET"})
      */
@@ -70,32 +79,36 @@ class PageController extends AbstractController
         } elseif ($request->getAcceptableContentTypes()[0] === 'application/json') {
             return $this->json($data);
         } else {
-            return $this->render('index.html.php', $data + ['kernel' => $kernel]);
+            return $this->renderHTML($data, 'index', $id, $kernel);
         }
     }
 
     /**
-     * @Route("/{id}/{type}", name="show_plaintext_note", methods={"GET"}, requirements={"id"="[A-z0-9_-]+", "type"="raw|plaintext|plainText"})
+     * @Route("/{id}/{type}", name="show_shared_note", methods={"GET"}, requirements={"id"="[A-z0-9_-]+", "type"="raw|plaintext|plainText|markdown"})
      */
-    public function showPlainTextNote(string $id, NoteStore $store): Response
+    public function showSharedNote(string $id, NoteStore $store, string $type, KernelInterface $kernel): Response
     {
         $hasNote = $store->hasNote($id);
         if (!$hasNote) {
             throw $this->createNotFoundException("Note does not exist: $id.");
         }
 
-        return new Response($store->getNote($id)->content);
+        $bundle = $type === 'markdown' ? 'share-markdown' : 'share-plaintext';
+        $context = [
+            'content' => $store->getNote($id)->content,
+        ];
+        return $this->renderHTML($context, $bundle, $id, $kernel);
     }
 
     /**
      * @Route(
      *   "/{id}/{version}/{type}",
-     *   name="show_plaintext_note_version",
+     *   name="show_shared_note_version",
      *   methods={"GET"},
-     *   requirements={"id"="[A-z0-9_-]+", "version"="\d+", "type"="raw|plaintext|plainText"}
+     *   requirements={"id"="[A-z0-9_-]+", "version"="\d+", "type"="raw|plaintext|plainText|markdown"}
      * )
      */
-    public function showPlainTextNoteVersion(string $id, int $version, NoteStore $store): Response
+    public function showSharedNoteVersion(string $id, int $version, string $type, NoteStore $store, KernelInterface $kernel): Response
     {
         $hasNote = $store->hasNote($id);
         if (!$hasNote) {
@@ -104,7 +117,11 @@ class PageController extends AbstractController
             throw $this->createNotFoundException("Version does not exist: $version.");
         }
 
-        return new Response($store->getNote($id, $version)->content);
+        $bundle = $type === 'markdown' ? 'share-markdown' : 'share-plaintext';
+        $context = [
+            'content' => $store->getNote($id, $version)->content,
+        ];
+        return $this->renderHTML($context, $bundle, "${id}v${version}", $kernel);
     }
 
     /**

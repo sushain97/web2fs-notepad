@@ -345,6 +345,39 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
+  private handleShareButtonClick = () => {
+    const textArea = document.createElement('textarea');
+    textArea.value = `${window.location.href}/${this.state.contentMode.toLowerCase()}`;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    let error;
+    try {
+      if (!document.execCommand('copy')) {
+        error = 'Unknown failure';
+      }
+    } catch (err) {
+      error = err.toString();
+    }
+
+    if (error) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: `Failed to copy share link: ${error}`,
+      });
+    } else {
+      AppToaster.show({
+        icon: IconNames.CLIPBOARD,
+        intent: Intent.SUCCESS,
+        message: 'Copied share link to clipboard',
+      });
+    }
+
+    document.body.removeChild(textArea);
+  };
+
   private handleViewLatestButtonClick = (ev: React.MouseEvent<HTMLElement>) => {
     this.showNoteVersion(this.state.currentVersion, ev.metaKey);
   };
@@ -579,6 +612,9 @@ class App extends React.Component<IAppProps, IAppState> {
             </Tooltip>
             <Tooltip content="Download" position={Position.TOP}>
               <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
+            </Tooltip>
+            <Tooltip content="Share Link" position={Position.TOP}>
+              <Button icon={IconNames.LINK} onClick={this.handleShareButtonClick} />
             </Tooltip>
             <Tooltip content="Delete" position={Position.TOP}>
               <Button

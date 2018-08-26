@@ -1,0 +1,11 @@
+@import '~@blueprintjs/core/lib/css/blueprint.css';
+@import '~@blueprintjs/core/lib/scss/variables.scss';
+@import '~normalize.css';
+
+body {
+    background-color: $light-gray5;
+}
+
+#app {
+    margin: $pt-grid-size;
+}
