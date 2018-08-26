@@ -22,6 +22,24 @@ body {
     }
 }
 
+.split-content-area {
+    display: flex;
+    height: 100%;
+
+    .#{$ns}-divider {
+        margin: 0 $pt-grid-size;
+    }
+
+    .content-input-container, .content-output-container {
+        flex-basis: 50%;
+        height: 100%;
+
+        .content-input {
+            height: 100%;
+        }
+    }
+}
+
 .content-input {
     resize: none;
 }
