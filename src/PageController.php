@@ -12,7 +12,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class PageController extends AbstractController
 {
-    private function renderHTML(array $context, string $bundle, string $title, KernelInterface $kernel): Response {
+    private function renderHTML(array $context, string $bundle, string $title, KernelInterface $kernel): Response
+    {
         return $this->render('index.html.php', [
             'kernel' => $kernel,
             'context' => $context,
@@ -84,7 +85,15 @@ class PageController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/{type}", name="show_shared_note", methods={"GET"}, requirements={"id"="[A-z0-9_-]+", "type"="raw|plaintext|plainText|markdown"})
+     * @Route(
+     *   "/{id}/{type}",
+     *   name="show_shared_note",
+     *   methods={"GET"},
+     *   requirements={
+     *     "id"="[A-z0-9_-]+",
+     *     "type"="raw|plaintext|plainText|markdown",
+     *   },
+     * )
      */
     public function showSharedNote(string $id, NoteStore $store, string $type, KernelInterface $kernel): Response
     {
@@ -108,8 +117,13 @@ class PageController extends AbstractController
      *   requirements={"id"="[A-z0-9_-]+", "version"="\d+", "type"="raw|plaintext|plainText|markdown"}
      * )
      */
-    public function showSharedNoteVersion(string $id, int $version, string $type, NoteStore $store, KernelInterface $kernel): Response
-    {
+    public function showSharedNoteVersion(
+        string $id,
+        int $version,
+        string $type,
+        NoteStore $store,
+        KernelInterface $kernel
+    ): Response {
         $hasNote = $store->hasNote($id);
         if (!$hasNote) {
             throw $this->createNotFoundException("Note does not exist: $id.");
