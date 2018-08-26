@@ -11,6 +11,7 @@ import {
   Classes,
   Code,
   Dialog,
+  Divider,
   FocusStyleManager,
   FormGroup,
   H5,
@@ -30,7 +31,8 @@ import {
 import { IconNames } from '@blueprintjs/icons';
 import axios, { CancelTokenSource } from 'axios';
 import { fileSize } from 'humanize-plus';
-import { debounce } from 'lodash-es';
+import { debounce, startCase } from 'lodash-es';
+import MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
@@ -41,7 +43,20 @@ import * as store from 'store/dist/store.modern'; // tslint:disable-line no-subm
 const UPDATE_DEBOUNCE_MS = 5000;
 const UPDATE_MAX_WAIT_MS = 15000;
 
-type Mode = 'light' | 'dark';
+enum UIMode {
+  Light = 'Light',
+  Dark = 'Dark',
+}
+
+enum ContentMode {
+  PlainText = 'PlainText',
+  Markdown = 'Markdown',
+}
+
+const ContentModeExtensions = {
+  [ContentMode.PlainText]: 'txt',
+  [ContentMode.Markdown]: 'md',
+};
 
 interface INote {
   content: string;
@@ -63,11 +78,12 @@ interface IAppProps {
 interface IAppState {
   confirmDeleteAlertOpen: boolean;
   content: string;
+  contentMode: ContentMode;
   currentVersion: number;
   history?: INoteVersionEntry[];
-  mode: Mode;
   note: INote;
   renameDialogOpen: boolean;
+  uiMode: UIMode;
   updating: boolean;
 }
 
@@ -78,6 +94,7 @@ const AppToaster = Toaster.create();
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement | null;
+  private MarkdownIt?: ReturnType<typeof MarkdownIt>;
   private renameForm: React.RefObject<HTMLFormElement>;
   private renameInput: React.RefObject<HTMLInputElement>;
   private updateFailedToastKey?: string;
@@ -87,13 +104,17 @@ class App extends React.Component<IAppProps, IAppState> {
     super(props);
 
     const { note, currentVersion } = props;
+    const contentMode =
+      store.get(note.id, { mode: ContentMode.PlainText }).mode || ContentMode.PlainText;
+
     this.state = {
       confirmDeleteAlertOpen: false,
       content: note.content,
+      contentMode,
       currentVersion,
-      mode: store.get('mode', 'light'),
       note,
       renameDialogOpen: false,
+      uiMode: store.get('mode', UIMode.Light),
       updating: false,
     };
 
@@ -103,6 +124,10 @@ class App extends React.Component<IAppProps, IAppState> {
     this.updateNoteDebounced = debounce(this.updateNote, UPDATE_DEBOUNCE_MS, {
       maxWait: UPDATE_MAX_WAIT_MS,
     });
+
+    if (contentMode === ContentMode.Markdown) {
+      this.loadMarkdownRenderer();
+    }
   }
 
   public componentDidMount() {
@@ -117,14 +142,41 @@ class App extends React.Component<IAppProps, IAppState> {
 
   public render() {
     return (
-      <div id="container" className={this.state.mode === 'dark' ? Classes.DARK : undefined}>
-        {this.renderTextArea(this.state)}
+      <div id="container" className={this.state.uiMode === UIMode.Dark ? Classes.DARK : undefined}>
+        {this.renderContent(this.state)}
         {this.renderStatusBar(this.state)}
         {this.renderDeleteAlert(this.state)}
         {this.renderRenameDialog(this.state)}
       </div>
     );
   }
+  public renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
+    return (
+      <Alert
+        isOpen={confirmDeleteAlertOpen}
+        intent={Intent.DANGER}
+        confirmButtonText="Delete"
+        cancelButtonText="Cancel"
+        icon={IconNames.TRASH}
+        onCancel={this.handleNoteDeletionCancel}
+        onConfirm={this.deleteNote}
+      >
+        Are you sure you want to delete this note and all associated versions?
+      </Alert>
+    );
+  }
+
+  private contentModeChangeHandler = (mode: ContentMode) => {
+    return () => {
+      const { id } = this.props.note;
+
+      this.setState({ contentMode: mode });
+      store.set(id, {
+        ...store.get(id, {}),
+        mode,
+      });
+    };
+  };
 
   private contentRefHandler = (ref: HTMLTextAreaElement | null) => {
     this.contentRef = ref;
@@ -193,9 +245,12 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleDownloadButtonClick = () => {
-    const { content, id, version } = this.state.note;
-    const filename = `${id}_${version}.txt`;
+    const {
+      contentMode,
+      note: { content, id, version },
+    } = this.state;
 
+    const filename = `${id}_${version}.${ContentModeExtensions[contentMode]}`;
     const blob = new Blob([content], { type: 'text/plain' });
     if (window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, filename);
@@ -226,9 +281,9 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleModeToggle = () => {
-    const mode = this.state.mode === 'light' ? 'dark' : 'light';
-    this.setState({ mode });
-    store.set('mode', mode);
+    const uiMode = this.state.uiMode === UIMode.Light ? UIMode.Dark : UIMode.Light;
+    this.setState({ uiMode });
+    store.set('mode', uiMode);
   };
 
   private handleNoteDeletionCancel = () => {
@@ -278,7 +333,10 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private handleSelectionChange = () => {
     if (this.contentRef) {
-      store.set(this.props.note.id, {
+      const { id } = this.props.note;
+
+      store.set(id, {
+        ...store.get(id, {}),
         selectionEnd: this.contentRef.selectionEnd,
         selectionStart: this.contentRef.selectionStart,
       });
@@ -295,19 +353,90 @@ class App extends React.Component<IAppProps, IAppState> {
     };
   };
 
-  private renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
+  private loadMarkdownRenderer() {
+    if (this.MarkdownIt) {
+      return;
+    }
+
+    import(/* webpackChunkName: "markdown-it" */ 'markdown-it')
+      .then(md => {
+        this.MarkdownIt = (md.default || md)({
+          linkify: true,
+          typographer: true,
+        });
+        this.forceUpdate();
+      })
+      .catch(error => {
+        AppToaster.show({
+          icon: IconNames.WARNING_SIGN,
+          intent: Intent.WARNING,
+          message: `Fetching markdown renderer failed: ${error}`,
+        });
+      });
+  }
+
+  private renderContent({ content, contentMode, currentVersion, note: { version } }: IAppState) {
+    const disabled = version !== currentVersion;
+
+    const textArea = (
+      <TextArea
+        inputRef={this.contentRefHandler}
+        value={content}
+        title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
+        onChange={disabled ? undefined : this.handleContentChange}
+        onKeyDown={disabled ? undefined : this.handleContentKeyDown}
+        fill={true}
+        autoFocus={true}
+        className="content-input"
+        readOnly={disabled}
+      />
+    );
+
+    if (contentMode === ContentMode.Markdown) {
+      let output;
+      if (this.MarkdownIt) {
+        output = (
+          <div
+            className={`${Classes.RUNNING_TEXT} content-output-container`}
+            dangerouslySetInnerHTML={{ __html: this.MarkdownIt.render(content) }}
+          />
+        );
+      } else {
+        this.loadMarkdownRenderer();
+
+        output = (
+          <div className="content-output-container">
+            <NonIdealState icon={<Spinner />} title="Loading Markdown Renderer" />
+          </div>
+        );
+      }
+
+      return (
+        <div className="split-content-area">
+          <div className="content-input-container">{textArea}</div>
+          <Divider />
+          {output}
+        </div>
+      );
+    } else {
+      return textArea;
+    }
+  }
+
+  private renderContentModeMenu() {
+    const { contentMode } = this.state;
+
     return (
-      <Alert
-        isOpen={confirmDeleteAlertOpen}
-        intent={Intent.DANGER}
-        confirmButtonText="Delete"
-        cancelButtonText="Cancel"
-        icon={IconNames.TRASH}
-        onCancel={this.handleNoteDeletionCancel}
-        onConfirm={this.deleteNote}
-      >
-        Are you sure you want to delete this note and all associated versions?
-      </Alert>
+      <Menu>
+        {Object.keys(ContentMode).map(mode => (
+          <MenuItem
+            text={startCase(mode)}
+            key={mode}
+            active={contentMode === ContentMode[mode as keyof typeof ContentMode]}
+            onClick={this.contentModeChangeHandler(mode as ContentMode)}
+          />
+        ))}
+      </Menu>
     );
   }
 
@@ -386,7 +515,8 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderStatusBar({
     currentVersion,
     note: { version, modificationTime },
-    mode,
+    uiMode,
+    contentMode,
     updating,
   }: IAppState) {
     const disabled = version !== currentVersion;
@@ -428,12 +558,17 @@ class App extends React.Component<IAppProps, IAppState> {
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
           <ButtonGroup>
+            <Popover position={Position.TOP} content={this.renderContentModeMenu()}>
+              <Button rightIcon={IconNames.CARET_UP} icon={IconNames.STYLE}>
+                {startCase(contentMode)}
+              </Button>
+            </Popover>
             <Tooltip
-              content={mode === 'light' ? 'Dark Mode' : 'Light Mode'}
+              content={uiMode === UIMode.Light ? 'Dark Mode' : 'Light Mode'}
               position={Position.TOP}
             >
               <Button
-                icon={mode === 'light' ? IconNames.MOON : IconNames.FLASH}
+                icon={uiMode === UIMode.Light ? IconNames.MOON : IconNames.FLASH}
                 onClick={this.handleModeToggle}
               />
             </Tooltip>
@@ -453,24 +588,6 @@ class App extends React.Component<IAppProps, IAppState> {
           </ButtonGroup>
         </div>
       </div>
-    );
-  }
-
-  private renderTextArea({ content, currentVersion, note: { version } }: IAppState) {
-    const disabled = version !== currentVersion;
-
-    return (
-      <TextArea
-        inputRef={this.contentRefHandler}
-        value={content}
-        title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
-        onChange={disabled ? undefined : this.handleContentChange}
-        onKeyDown={disabled ? undefined : this.handleContentKeyDown}
-        fill={true}
-        autoFocus={true}
-        className="content-input"
-        readOnly={disabled}
-      />
     );
   }
 

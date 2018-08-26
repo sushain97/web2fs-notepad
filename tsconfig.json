@@ -2,7 +2,8 @@
     "compilerOptions": {
         "outDir": "./public",
         "target": "es2017",
-        "module": "commonjs",
+        "module": "esnext",
+        "moduleResolution": "node",
         "removeComments": true,
         "sourceMap": true,
         "jsx": "react",
