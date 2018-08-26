@@ -40,10 +40,14 @@ body {
     .content-input-container, .content-output-container {
         flex-basis: 50%;
         height: 100%;
+    }
 
-        .content-input {
-            height: 100%;
-        }
+    .content-input {
+        height: 100%;
+    }
+
+    .content-output-container {
+        overflow: auto;
     }
 }
 
