@@ -3,6 +3,8 @@
 @import '~@blueprintjs/core/lib/scss/variables.scss';
 @import '~normalize.css';
 
+@import './code.scss';
+
 $content-status-bar-spacing: 0.75rem;
 
 body {
@@ -48,6 +50,7 @@ body {
 
     .content-output-container {
         overflow: auto;
+        margin: 0;
     }
 }
 
@@ -80,7 +83,7 @@ body {
     }
 }
 
-.version-history-menu {
+.version-history-menu, .language-menu {
     max-height: 75vh;
     overflow-y: auto;
 }

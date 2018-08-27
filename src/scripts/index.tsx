@@ -18,15 +18,19 @@ import {
   MenuItem,
   NonIdealState,
   Popover,
+  PopoverInteractionKind,
   Position,
+  Pre,
   Spinner,
   Tag,
   TextArea,
   Toaster,
   Tooltip,
 } from '@blueprintjs/core';
-import { IconNames } from '@blueprintjs/icons';
+import { IconName, IconNames } from '@blueprintjs/icons';
 import axios, { CancelTokenSource } from 'axios';
+import classNames from 'classnames';
+import HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
 import { debounce, startCase } from 'lodash-es';
 import MarkdownIt from 'markdown-it';
@@ -40,19 +44,21 @@ import * as store from 'store/dist/store.modern'; // tslint:disable-line no-subm
 const UPDATE_DEBOUNCE_MS = 5000;
 const UPDATE_MAX_WAIT_MS = 15000;
 
-enum UIMode {
+enum Mode {
   Light = 'Light',
   Dark = 'Dark',
 }
 
-enum ContentMode {
+enum Format {
   PlainText = 'PlainText',
   Markdown = 'Markdown',
+  Code = 'Code',
 }
 
-const ContentModeExtensions = {
-  [ContentMode.PlainText]: 'txt',
-  [ContentMode.Markdown]: 'md',
+const FormatExtensions = {
+  [Format.PlainText]: 'txt',
+  [Format.Markdown]: 'md',
+  [Format.Code]: 'code',
 };
 
 interface INote {
@@ -75,12 +81,13 @@ interface IAppProps {
 interface IAppState {
   confirmDeleteAlertOpen: boolean;
   content: string;
-  contentMode: ContentMode;
   currentVersion: number;
+  format: Format;
   history?: INoteVersionEntry[];
+  mode: Mode;
   note: INote;
   renameDialogOpen: boolean;
-  uiMode: UIMode;
+  selectedLanguage?: string;
   updating: boolean;
 }
 
@@ -91,6 +98,7 @@ const AppToaster = Toaster.create();
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement | null;
+  private HighlightJs?: typeof HighlightJs;
   private MarkdownIt?: ReturnType<typeof MarkdownIt>;
   private renameForm: React.RefObject<HTMLFormElement>;
   private renameInput: React.RefObject<HTMLInputElement>;
@@ -101,17 +109,19 @@ class App extends React.Component<IAppProps, IAppState> {
     super(props);
 
     const { note, currentVersion } = props;
-    const contentMode =
-      store.get(note.id, { mode: ContentMode.PlainText }).mode || ContentMode.PlainText;
+
+    const noteSettings = store.get(note.id, { format: Format.PlainText });
+    const format = noteSettings.format || Format.PlainText;
 
     this.state = {
       confirmDeleteAlertOpen: false,
       content: note.content,
-      contentMode,
       currentVersion,
+      format,
+      mode: store.get('mode', Mode.Light),
       note,
       renameDialogOpen: false,
-      uiMode: store.get('mode', UIMode.Light),
+      selectedLanguage: noteSettings.language,
       updating: false,
     };
 
@@ -122,8 +132,10 @@ class App extends React.Component<IAppProps, IAppState> {
       maxWait: UPDATE_MAX_WAIT_MS,
     });
 
-    if (contentMode === ContentMode.Markdown) {
+    if (format === Format.Markdown) {
       this.loadMarkdownRenderer();
+    } else if (format === Format.Code) {
+      this.loadCodeRenderer();
     }
   }
 
@@ -139,7 +151,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   public render() {
     return (
-      <div id="container" className={this.state.uiMode === UIMode.Dark ? Classes.DARK : undefined}>
+      <div id="container" className={classNames({ [Classes.DARK]: this.state.mode === Mode.Dark })}>
         {this.renderContent(this.state)}
         {this.renderStatusBar(this.state)}
         {this.renderDeleteAlert(this.state)}
@@ -165,18 +177,6 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private contentModeChangeHandler = (mode: ContentMode) => {
-    return () => {
-      const { id } = this.props.note;
-
-      this.setState({ contentMode: mode });
-      store.set(id, {
-        ...store.get(id, {}),
-        mode,
-      });
-    };
-  };
-
   private contentRefHandler = (ref: HTMLTextAreaElement | null) => {
     this.contentRef = ref;
 
@@ -201,13 +201,38 @@ class App extends React.Component<IAppProps, IAppState> {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
-        message: `Delete Failed: ${error}`,
+        message: `Deleting note failed: ${error}`,
       });
     }
   };
 
+  private formatChangeHandler = (format: Format) => {
+    return () => {
+      const { id } = this.props.note;
+
+      this.setState({ format });
+      store.set(id, {
+        ...store.get(id, {}),
+        format,
+      });
+    };
+  };
+
   private handelRenameCancel = () => {
     this.setState({ renameDialogOpen: false });
+  };
+
+  private handleAutoDetectLanguage = () => {
+    this.loadCodeRenderer((highlightJs: typeof HighlightJs) => {
+      const {
+        content,
+        note: { id },
+      } = this.state;
+
+      const { language } = highlightJs.highlightAuto(content);
+      this.setState({ selectedLanguage: language, format: Format.Code });
+      store.set(id, { ...store.get('id'), language });
+    });
   };
 
   private handleBeforeUnload = (ev: BeforeUnloadEvent) => {
@@ -245,11 +270,20 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private handleDownloadButtonClick = () => {
     const {
-      contentMode,
+      format,
       note: { content, id, version },
+      selectedLanguage,
     } = this.state;
 
-    const filename = `${id}_${version}.${ContentModeExtensions[contentMode]}`;
+    let extension = FormatExtensions[format];
+    if (format === Format.Code && selectedLanguage && this.HighlightJs) {
+      extension = [
+        ...(this.HighlightJs.getLanguage(selectedLanguage).aliases || []),
+        selectedLanguage,
+      ].sort((a, b) => a.length - b.length)[0];
+    }
+
+    const filename = `${id}_${version}.${extension}`;
     const blob = new Blob([content], { type: 'text/plain' });
     if (window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, filename);
@@ -280,9 +314,9 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleModeToggle = () => {
-    const uiMode = this.state.uiMode === UIMode.Light ? UIMode.Dark : UIMode.Light;
-    this.setState({ uiMode });
-    store.set('mode', uiMode);
+    const mode = this.state.mode === Mode.Light ? Mode.Dark : Mode.Light;
+    this.setState({ mode });
+    store.set('mode', mode);
   };
 
   private handleNoteDeletionCancel = () => {
@@ -310,7 +344,7 @@ class App extends React.Component<IAppProps, IAppState> {
         AppToaster.show({
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
-          message: `Rename Failed: ${error}`,
+          message: `Renaming note failed: ${error}`,
         });
       } finally {
         this.setState({ renameDialogOpen: false });
@@ -343,8 +377,20 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleShareButtonClick = () => {
+    const { format, selectedLanguage, mode } = this.state;
+
+    const urlParts = [window.location.href];
+    if (format === Format.Code && selectedLanguage) {
+      urlParts.push(`${format.toLowerCase()}-${selectedLanguage}`);
+    } else {
+      urlParts.push(format.toLowerCase());
+    }
+    if (mode === Mode.Dark) {
+      urlParts.push(mode.toLowerCase());
+    }
+
     const textArea = document.createElement('textarea');
-    textArea.value = `${window.location.href}/${this.state.contentMode.toLowerCase()}`;
+    textArea.value = urlParts.join('/');
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
@@ -362,13 +408,13 @@ class App extends React.Component<IAppProps, IAppState> {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
-        message: `Failed to copy share link: ${error}`,
+        message: `Copying share link failed: ${error}.`,
       });
     } else {
       AppToaster.show({
         icon: IconNames.CLIPBOARD,
         intent: Intent.SUCCESS,
-        message: 'Copied share link to clipboard',
+        message: 'Copied share link to clipboard.',
       });
     }
 
@@ -383,6 +429,37 @@ class App extends React.Component<IAppProps, IAppState> {
     return (ev: React.MouseEvent<HTMLElement>) => {
       this.showNoteVersion(version, ev.metaKey);
     };
+  };
+
+  private languageSelectedHandler = (selectedLanguage: string) => {
+    return () => this.setState({ selectedLanguage, format: Format.Code });
+  };
+
+  private loadCodeRenderer = (callback?: (highlightJs: typeof HighlightJs) => void) => {
+    if (this.HighlightJs) {
+      if (callback) {
+        callback(this.HighlightJs);
+      }
+      return;
+    }
+
+    import(/* webpackChunkName: "highlight-js" */ 'highlight.js')
+      .then(hljs => {
+        this.HighlightJs = hljs.default || hljs;
+
+        if (callback) {
+          callback(this.HighlightJs);
+        } else {
+          this.forceUpdate();
+        }
+      })
+      .catch(error => {
+        AppToaster.show({
+          icon: IconNames.WARNING_SIGN,
+          intent: Intent.WARNING,
+          message: `Fetching code renderer failed: ${error}.`,
+        });
+      });
   };
 
   private loadMarkdownRenderer() {
@@ -402,12 +479,49 @@ class App extends React.Component<IAppProps, IAppState> {
         AppToaster.show({
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
-          message: `Fetching markdown renderer failed: ${error}`,
+          message: `Fetching markdown renderer failed: ${error}.`,
         });
       });
   }
 
-  private renderContent({ content, contentMode, currentVersion, note: { version } }: IAppState) {
+  private renderCodeMenuItems() {
+    if (this.HighlightJs) {
+      const { selectedLanguage } = this.state;
+
+      return (
+        <>
+          <MenuItem text="Auto Detect" onClick={this.handleAutoDetectLanguage} />
+          {...this.HighlightJs.listLanguages().map(language => (
+            <MenuItem
+              text={startCase(language)}
+              key={language}
+              active={selectedLanguage === language}
+              onClick={this.languageSelectedHandler(language)}
+            />
+          ))}
+        </>
+      );
+    } else {
+      return (
+        <>
+          <MenuItem text="Auto Detect" onClick={this.handleAutoDetectLanguage} />
+          <MenuItem
+            text="Loading languages.."
+            disabled={true}
+            labelElement={<Spinner size={20} />}
+          />
+        </>
+      );
+    }
+  }
+
+  private renderContent({
+    content,
+    format,
+    currentVersion,
+    selectedLanguage,
+    note: { version },
+  }: IAppState) {
     const disabled = version !== currentVersion;
 
     const textArea = (
@@ -419,28 +533,52 @@ class App extends React.Component<IAppProps, IAppState> {
         onKeyDown={disabled ? undefined : this.handleContentKeyDown}
         fill={true}
         autoFocus={true}
-        className="content-input"
+        className={classNames('content-input', {
+          [Classes.MONOSPACE_TEXT]: format === Format.Markdown || format === Format.Code,
+        })}
         readOnly={disabled}
       />
     );
 
-    if (contentMode === ContentMode.Markdown) {
+    if (format === Format.Markdown || format === Format.Code) {
       let output;
-      if (this.MarkdownIt) {
-        output = (
-          <div
-            className={`${Classes.RUNNING_TEXT} content-output-container`}
-            dangerouslySetInnerHTML={{ __html: this.MarkdownIt.render(content) }}
-          />
-        );
-      } else {
-        this.loadMarkdownRenderer();
 
-        output = (
-          <div className="content-output-container">
-            <NonIdealState icon={<Spinner />} title="Loading Markdown Renderer" />
-          </div>
-        );
+      if (format === Format.Markdown) {
+        if (this.MarkdownIt) {
+          output = (
+            <div
+              className={classNames(Classes.RUNNING_TEXT, 'content-output-container')}
+              dangerouslySetInnerHTML={{ __html: this.MarkdownIt.render(content) }}
+            />
+          );
+        } else {
+          this.loadMarkdownRenderer();
+
+          output = (
+            <div className="content-output-container">
+              <NonIdealState icon={<Spinner />} title="Loading Markdown Renderer" />
+            </div>
+          );
+        }
+      } else if (format === Format.Code) {
+        if (this.HighlightJs && selectedLanguage) {
+          output = (
+            <Pre
+              className={classNames(Classes.RUNNING_TEXT, 'content-output-container')}
+              dangerouslySetInnerHTML={{
+                __html: this.HighlightJs.highlight(selectedLanguage, content, true).value,
+              }}
+            />
+          );
+        } else {
+          this.loadCodeRenderer();
+
+          output = (
+            <div className="content-output-container">
+              <NonIdealState icon={<Spinner />} title="Loading Code Renderer" />
+            </div>
+          );
+        }
       }
 
       return (
@@ -455,22 +593,51 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   }
 
-  private renderContentModeMenu() {
-    const { contentMode } = this.state;
+  private renderFormatMenu = () => {
+    const { format } = this.state;
 
     return (
       <Menu>
-        {Object.keys(ContentMode).map(mode => (
-          <MenuItem
-            text={startCase(mode)}
-            key={mode}
-            active={contentMode === ContentMode[mode as keyof typeof ContentMode]}
-            onClick={this.contentModeChangeHandler(mode as ContentMode)}
-          />
-        ))}
+        {Object.keys(Format).map(fmt => {
+          let icon: IconName;
+          switch (fmt) {
+            case Format.PlainText:
+              icon = IconNames.DOCUMENT;
+              break;
+            case Format.Markdown:
+              icon = IconNames.STYLE;
+              break;
+            case Format.Code:
+              icon = IconNames.CODE;
+              break;
+            default:
+              throw new Error(`Invalid format: ${fmt}`);
+          }
+
+          return (
+            <MenuItem
+              icon={icon}
+              text={startCase(fmt)}
+              key={fmt}
+              active={format === Format[fmt as keyof typeof Format]}
+              onClick={this.formatChangeHandler(fmt as Format)}
+              popoverProps={
+                fmt === Format.Code
+                  ? {
+                      hoverOpenDelay: 250,
+                      onOpening: () => this.loadCodeRenderer(),
+                      popoverClassName: 'language-menu',
+                    }
+                  : undefined
+              }
+            >
+              {fmt === Format.Code ? this.renderCodeMenuItems() : null}
+            </MenuItem>
+          );
+        })}
       </Menu>
     );
-  }
+  };
 
   private renderHistoryMenu() {
     const {
@@ -547,8 +714,9 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderStatusBar({
     currentVersion,
     note: { version, modificationTime },
-    uiMode,
-    contentMode,
+    mode,
+    format,
+    selectedLanguage,
     updating,
   }: IAppState) {
     const disabled = version !== currentVersion;
@@ -590,17 +758,21 @@ class App extends React.Component<IAppProps, IAppState> {
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
           <ButtonGroup>
-            <Popover position={Position.TOP} content={this.renderContentModeMenu()}>
-              <Button rightIcon={IconNames.CARET_UP} icon={IconNames.STYLE}>
-                {startCase(contentMode)}
+            <Popover position={Position.TOP} content={this.renderFormatMenu()}>
+              <Button rightIcon={IconNames.CARET_UP} icon={IconNames.PRESENTATION}>
+                {`${startCase(format)}${
+                  format === Format.Code && selectedLanguage
+                    ? ` (${startCase(selectedLanguage)})`
+                    : ''
+                }`}
               </Button>
             </Popover>
             <Tooltip
-              content={uiMode === UIMode.Light ? 'Dark Mode' : 'Light Mode'}
+              content={mode === Mode.Light ? 'Dark Mode' : 'Light Mode'}
               position={Position.TOP}
             >
               <Button
-                icon={uiMode === UIMode.Light ? IconNames.MOON : IconNames.FLASH}
+                icon={mode === Mode.Light ? IconNames.MOON : IconNames.FLASH}
                 onClick={this.handleModeToggle}
               />
             </Tooltip>
@@ -652,7 +824,7 @@ class App extends React.Component<IAppProps, IAppState> {
         AppToaster.show({
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
-          message: `Fetching history failed: ${error}`,
+          message: `Fetching history failed: ${error}.`,
         });
       }
     }
@@ -691,7 +863,7 @@ class App extends React.Component<IAppProps, IAppState> {
           {
             icon: IconNames.WARNING_SIGN,
             intent: Intent.WARNING,
-            message: `Update Failed: ${error}`,
+            message: `Updating note failed: ${error}.`,
           },
           this.updateFailedToastKey,
         );
