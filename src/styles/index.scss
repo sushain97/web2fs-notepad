@@ -101,10 +101,10 @@ body {
         flex-direction: column;
         flex-wrap: wrap;
         height: 65vh;
+        overflow: auto;
 
         li {
             flex-basis: 0;
-            flex-grow: 1;
         }
     }
 }
