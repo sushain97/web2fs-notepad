@@ -110,7 +110,7 @@ class PageController extends AbstractController
         }
 
         $language = null;
-        if ($format == 'markdown') {
+        if ($format === 'markdown') {
             $bundle = 'share-markdown';
         } elseif (strpos($format, 'code') === 0) {
             $bundle = 'share-code';
@@ -158,7 +158,7 @@ class PageController extends AbstractController
         }
 
         $language = null;
-        if ($format == 'markdown') {
+        if ($format === 'markdown') {
             $bundle = 'share-markdown';
         } elseif (strpos($format, 'code') === 0) {
             $bundle = 'share-code';
