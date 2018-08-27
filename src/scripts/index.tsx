@@ -597,20 +597,11 @@ class App extends React.Component<IAppProps, IAppState> {
     return (
       <Menu>
         {Object.keys(Format).map(fmt => {
-          let icon: IconName;
-          switch (fmt) {
-            case Format.PlainText:
-              icon = IconNames.DOCUMENT;
-              break;
-            case Format.Markdown:
-              icon = IconNames.STYLE;
-              break;
-            case Format.Code:
-              icon = IconNames.CODE;
-              break;
-            default:
-              throw new Error(`Invalid format: ${fmt}`);
-          }
+          const icon = {
+            [Format.PlainText]: IconNames.DOCUMENT,
+            [Format.Markdown]: IconNames.STYLE,
+            [Format.Code]: IconNames.CODE,
+          }[fmt as Format] as IconName;
 
           return (
             <MenuItem
@@ -640,12 +631,15 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderHistoryMenu() {
     const {
       history,
+      currentVersion,
       note: { version },
     } = this.state;
 
     let content;
     if (history == null) {
-      content = <MenuItem text={<NonIdealState icon={<Spinner />} />} />;
+      content = [...Array(currentVersion).keys()].map(i => (
+        <MenuItem key={i} className={Classes.SKELETON} disabled={true} text={`v${i}`} />
+      ));
     } else if (history.length === 0) {
       content = <MenuItem text="Unsaved." />;
     } else {
