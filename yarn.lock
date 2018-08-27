@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@blueprintjs/core@^3.3.0":
+"@blueprintjs/core@^3.1.0", "@blueprintjs/core@^3.3.0":
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/@blueprintjs/core/-/core-3.4.0.tgz#cf5a61fb8288d8a58b892c7005d999c944d30521"
   dependencies:
@@ -21,6 +21,14 @@
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@blueprintjs/icons/-/icons-3.0.0.tgz#2eed041dd52c9feed2758ca526f4505911813a31"
   dependencies:
+    classnames "^2.2"
+    tslib "^1.9.0"
+
+"@blueprintjs/select@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@blueprintjs/select/-/select-3.1.0.tgz#5ec50aa31cc852ff90fd1d3666c00b6c32c408ba"
+  dependencies:
+    "@blueprintjs/core" "^3.1.0"
     classnames "^2.2"
     tslib "^1.9.0"
 

@@ -84,7 +84,27 @@ body {
     }
 }
 
-.version-history-menu, .language-menu {
+.version-history-menu {
     max-height: 75vh;
     overflow-y: auto;
+}
+
+.select-language-dialog {
+    width: 70vw;
+
+    .search-languages-input {
+        margin-bottom: $pt-grid-size * 2;
+    }
+
+    .languages {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        height: 65vh;
+
+        li {
+            flex-basis: 0;
+            flex-grow: 1;
+        }
+    }
 }

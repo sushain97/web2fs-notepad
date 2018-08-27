@@ -13,12 +13,12 @@ import {
   FormGroup,
   H5,
   Icon,
+  InputGroup,
   Intent,
   Menu,
   MenuItem,
   NonIdealState,
   Popover,
-  PopoverInteractionKind,
   Position,
   Pre,
   Spinner,
@@ -28,11 +28,17 @@ import {
   Tooltip,
 } from '@blueprintjs/core';
 import { IconName, IconNames } from '@blueprintjs/icons';
+import {
+  IItemListRendererProps,
+  IItemRendererProps,
+  IQueryListRendererProps,
+  QueryList,
+} from '@blueprintjs/select';
 import axios, { CancelTokenSource } from 'axios';
 import classNames from 'classnames';
 import HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
-import { debounce, startCase } from 'lodash-es';
+import { debounce, sortBy, startCase } from 'lodash-es';
 import MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -89,7 +95,12 @@ interface IAppState {
   note: INote;
   renameDialogOpen: boolean;
   selectedLanguage?: string;
+  selectLanguageDialogOpen: boolean;
   updating: boolean;
+}
+
+interface ILanguage extends HighlightJs.IMode {
+  name: string;
 }
 
 FocusStyleManager.onlyShowFocusOnTabs();
@@ -100,6 +111,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement | null;
   private HighlightJs?: typeof HighlightJs;
+  private languages?: ILanguage[];
   private MarkdownIt?: ReturnType<typeof MarkdownIt>;
   private renameForm: React.RefObject<HTMLFormElement>;
   private renameInput: React.RefObject<HTMLInputElement>;
@@ -122,6 +134,7 @@ class App extends React.Component<IAppProps, IAppState> {
       mode: store.get('mode', Mode.Light),
       note,
       renameDialogOpen: false,
+      selectLanguageDialogOpen: false,
       selectedLanguage: noteSettings.language,
       updating: false,
     };
@@ -157,24 +170,8 @@ class App extends React.Component<IAppProps, IAppState> {
         {this.renderStatusBar(this.state)}
         {this.renderDeleteAlert(this.state)}
         {this.renderRenameDialog(this.state)}
+        {this.renderSelectLanguageDialog(this.state)}
       </div>
-    );
-  }
-  public renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
-    return (
-      <Alert
-        isOpen={confirmDeleteAlertOpen}
-        intent={Intent.DANGER}
-        confirmButtonText="Delete"
-        cancelButtonText="Cancel"
-        icon={IconNames.TRASH}
-        onCancel={this.handleNoteDeletionCancel}
-        onConfirm={this.deleteNote}
-        canEscapeKeyCancel={true}
-        canOutsideClickCancel={true}
-      >
-        Are you sure you want to delete this note and all associated versions?
-      </Alert>
     );
   }
 
@@ -211,11 +208,15 @@ class App extends React.Component<IAppProps, IAppState> {
     return () => {
       const { id } = this.props.note;
 
-      this.setState({ format });
-      store.set(id, {
-        ...store.get(id, {}),
-        format,
-      });
+      if (format === Format.Code) {
+        this.setState({ selectLanguageDialogOpen: true });
+      } else {
+        this.setState({ format });
+        store.set(id, {
+          ...store.get(id, {}),
+          format,
+        });
+      }
     };
   };
 
@@ -224,6 +225,11 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleAutoDetectLanguage = () => {
+    this.setState({
+      format: Format.Code,
+      selectLanguageDialogOpen: false,
+    });
+
     this.loadCodeRenderer((highlightJs: typeof HighlightJs) => {
       const {
         content,
@@ -231,8 +237,10 @@ class App extends React.Component<IAppProps, IAppState> {
       } = this.state;
 
       const { language } = highlightJs.highlightAuto(content);
-      this.setState({ selectedLanguage: language, format: Format.Code });
-      store.set(id, { ...store.get('id'), language });
+      this.setState({
+        selectedLanguage: language,
+      });
+      store.set(id, { ...store.get('id'), language, format: Format.Code });
     });
   };
 
@@ -314,6 +322,14 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
+  private handleLanguageSelected = ({ name }: ILanguage) => {
+    this.setState({
+      format: Format.Code,
+      selectLanguageDialogOpen: false,
+      selectedLanguage: name,
+    });
+  };
+
   private handleModeToggle = () => {
     const mode = this.state.mode === Mode.Light ? Mode.Dark : Mode.Light;
     this.setState({ mode });
@@ -377,6 +393,14 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
+  private handleSelectLanguageClose = () => {
+    this.setState({ selectLanguageDialogOpen: false });
+  };
+
+  private handleSelectLanguageDialogOpening = () => {
+    this.loadCodeRenderer();
+  };
+
   private handleShareButtonClick = () => {
     const { format, selectedLanguage, mode } = this.state;
 
@@ -432,11 +456,15 @@ class App extends React.Component<IAppProps, IAppState> {
     };
   };
 
-  private languageSelectedHandler = (selectedLanguage: string) => {
-    return () => this.setState({ selectedLanguage, format: Format.Code });
-  };
+  private languagePredicate(query: string, { name, aliases }: ILanguage) {
+    const lowerQuery = query.toLowerCase();
+    return (
+      name.toLowerCase().includes(lowerQuery) ||
+      (aliases || []).some(alias => alias.toLowerCase().includes(lowerQuery))
+    );
+  }
 
-  private loadCodeRenderer = (callback?: (highlightJs: typeof HighlightJs) => void) => {
+  private loadCodeRenderer = (callback?: ((highlightJs: typeof HighlightJs) => void)) => {
     if (this.HighlightJs) {
       if (callback) {
         callback(this.HighlightJs);
@@ -447,6 +475,10 @@ class App extends React.Component<IAppProps, IAppState> {
     import(/* webpackChunkName: "highlight-js" */ 'highlight.js')
       .then(hljs => {
         this.HighlightJs = hljs.default || hljs;
+        this.languages = this.HighlightJs.listLanguages().map(name => ({
+          name,
+          ...this.HighlightJs!.getLanguage(name),
+        }));
 
         if (callback) {
           callback(this.HighlightJs);
@@ -480,37 +512,6 @@ class App extends React.Component<IAppProps, IAppState> {
           message: `Fetching markdown renderer failed: ${error}.`,
         });
       });
-  }
-
-  private renderCodeMenuItems() {
-    if (this.HighlightJs) {
-      const { selectedLanguage } = this.state;
-
-      return (
-        <>
-          <MenuItem text="Auto Detect" onClick={this.handleAutoDetectLanguage} />
-          {...this.HighlightJs.listLanguages().map(language => (
-            <MenuItem
-              text={startCase(language)}
-              key={language}
-              active={selectedLanguage === language}
-              onClick={this.languageSelectedHandler(language)}
-            />
-          ))}
-        </>
-      );
-    } else {
-      return (
-        <>
-          <MenuItem text="Auto Detect" onClick={this.handleAutoDetectLanguage} />
-          <MenuItem
-            text="Loading languages.."
-            disabled={true}
-            labelElement={<Spinner size={20} />}
-          />
-        </>
-      );
-    }
   }
 
   private renderContent({
@@ -559,15 +560,23 @@ class App extends React.Component<IAppProps, IAppState> {
           );
         }
       } else if (format === Format.Code) {
-        if (this.HighlightJs && selectedLanguage) {
-          output = (
-            <Pre
-              className={classNames(Classes.RUNNING_TEXT, 'content-output-container')}
-              dangerouslySetInnerHTML={{
-                __html: this.HighlightJs.highlight(selectedLanguage, content, true).value,
-              }}
-            />
-          );
+        if (this.HighlightJs) {
+          if (selectedLanguage) {
+            output = (
+              <Pre
+                className={classNames(Classes.RUNNING_TEXT, 'content-output-container')}
+                dangerouslySetInnerHTML={{
+                  __html: this.HighlightJs.highlight(selectedLanguage, content, true).value,
+                }}
+              />
+            );
+          } else {
+            output = (
+              <div className="content-output-container">
+                <NonIdealState icon={<Spinner />} title="Detecting Language" />
+              </div>
+            );
+          }
         } else {
           this.loadCodeRenderer();
 
@@ -591,6 +600,24 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   }
 
+  private renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
+    return (
+      <Alert
+        isOpen={confirmDeleteAlertOpen}
+        intent={Intent.DANGER}
+        confirmButtonText="Delete"
+        cancelButtonText="Cancel"
+        icon={IconNames.TRASH}
+        onCancel={this.handleNoteDeletionCancel}
+        onConfirm={this.deleteNote}
+        canEscapeKeyCancel={true}
+        canOutsideClickCancel={true}
+      >
+        Are you sure you want to delete this note and all associated versions?
+      </Alert>
+    );
+  }
+
   private renderFormatMenu = () => {
     const { format } = this.state;
 
@@ -610,18 +637,7 @@ class App extends React.Component<IAppProps, IAppState> {
               key={fmt}
               active={format === Format[fmt as keyof typeof Format]}
               onClick={this.formatChangeHandler(fmt as Format)}
-              popoverProps={
-                fmt === Format.Code
-                  ? {
-                      hoverOpenDelay: 250,
-                      onOpening: () => this.loadCodeRenderer(),
-                      popoverClassName: 'language-menu',
-                    }
-                  : undefined
-              }
-            >
-              {fmt === Format.Code ? this.renderCodeMenuItems() : null}
-            </MenuItem>
+            />
           );
         })}
       </Menu>
@@ -657,13 +673,49 @@ class App extends React.Component<IAppProps, IAppState> {
     return <Menu className="version-history-menu">{content}</Menu>;
   }
 
-  private renderRenameDialog({ renameDialogOpen }: IAppState) {
+  private renderLanguage(
+    { name }: ILanguage,
+    { modifiers: { active }, handleClick }: IItemRendererProps,
+  ) {
+    return <MenuItem active={active} onClick={handleClick} key={name} text={startCase(name)} />;
+  }
+
+  private renderLanguages({ filteredItems, renderItem }: IItemListRendererProps<ILanguage>) {
+    return <Menu className="languages">{filteredItems.map(renderItem)}</Menu>;
+  }
+
+  private renderLanguagesQueryList({
+    itemList,
+    handleQueryChange,
+    query,
+    handleKeyDown,
+    handleKeyUp,
+  }: IQueryListRendererProps<ILanguage>) {
+    return (
+      <div onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
+        <InputGroup
+          leftIcon={IconNames.SEARCH}
+          type="search"
+          placeholder="Search languages"
+          className={classNames(Classes.FILL, 'search-languages-input')}
+          onChange={handleQueryChange}
+          value={query}
+          round={true}
+          autoFocus={true}
+        />
+        {itemList}
+      </div>
+    );
+  }
+
+  private renderRenameDialog({ renameDialogOpen, mode }: IAppState) {
     return (
       <Dialog
         isOpen={renameDialogOpen}
         title="Rename Note"
         icon={IconNames.EDIT}
         onClose={this.handelRenameCancel}
+        className={classNames({ [Classes.DARK]: mode === Mode.Dark })}
       >
         <div className={Classes.DIALOG_BODY}>
           <form ref={this.renameForm} onSubmit={this.handleRename}>
@@ -696,6 +748,46 @@ class App extends React.Component<IAppProps, IAppState> {
               onClick={this.handleRename}
             >
               Rename
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    );
+  }
+
+  private renderSelectLanguageDialog({
+    selectedLanguage,
+    selectLanguageDialogOpen,
+    mode,
+  }: IAppState) {
+    return (
+      <Dialog
+        isOpen={selectLanguageDialogOpen}
+        title="Select Language"
+        icon={IconNames.CODE}
+        onClose={this.handleSelectLanguageClose}
+        onOpening={this.handleSelectLanguageDialogOpening}
+        className={classNames('select-language-dialog', { [Classes.DARK]: mode === Mode.Dark })}
+      >
+        <div className={Classes.DIALOG_BODY}>
+          {this.HighlightJs ? (
+            <QueryList
+              renderer={this.renderLanguagesQueryList}
+              items={sortBy(this.languages!, 'name')}
+              itemRenderer={this.renderLanguage}
+              onItemSelect={this.handleLanguageSelected}
+              itemPredicate={this.languagePredicate}
+              itemListRenderer={this.renderLanguages}
+            />
+          ) : (
+            <NonIdealState icon={<Spinner />} title={'Loading Languages'} />
+          )}
+        </div>
+        <div className={Classes.DIALOG_FOOTER}>
+          <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+            <Button onClick={this.handleSelectLanguageClose}>Cancel</Button>
+            <Button onClick={this.handleAutoDetectLanguage} intent={Intent.PRIMARY}>
+              Auto Detect
             </Button>
           </div>
         </div>
@@ -752,11 +844,22 @@ class App extends React.Component<IAppProps, IAppState> {
           <ButtonGroup>
             <Popover position={Position.TOP} content={this.renderFormatMenu()}>
               <Button rightIcon={IconNames.CARET_UP} icon={IconNames.PRESENTATION}>
-                {`${startCase(format)}${
-                  format === Format.Code && selectedLanguage
-                    ? ` (${startCase(selectedLanguage)})`
-                    : ''
-                }`}
+                <>
+                  {startCase(format)}
+                  {format === Format.Code ? (
+                    <>
+                      {' ('}
+                      {selectedLanguage ? (
+                        startCase(selectedLanguage)
+                      ) : (
+                        <span className={Classes.SKELETON}>...</span>
+                      )}
+                      {')'}
+                    </>
+                  ) : (
+                    ''
+                  )}
+                </>
               </Button>
             </Popover>
             <Tooltip
