@@ -1,4 +1,8 @@
 import '../styles/share.scss';
 
-const { content } = (window as any).CONTEXT;
+import { Classes } from '@blueprintjs/core';
+
+const { content, mode } = (window as any).CONTEXT;
+
 document.getElementById('app')!.innerText = content;
+document.body.setAttribute('class', mode === 'dark' ? Classes.DARK : '');

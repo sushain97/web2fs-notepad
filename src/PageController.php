@@ -86,41 +86,67 @@ class PageController extends AbstractController
 
     /**
      * @Route(
-     *   "/{id}/{type}",
+     *   "/{id}/{format}/{mode}",
      *   name="show_shared_note",
      *   methods={"GET"},
      *   requirements={
      *     "id"="[A-z0-9_-]+",
-     *     "type"="raw|plaintext|plainText|markdown",
+     *     "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
+     *     "mode"="light|dark",
      *   },
+     *   defaults={"mode"="light"},
      * )
      */
-    public function showSharedNote(string $id, NoteStore $store, string $type, KernelInterface $kernel): Response
-    {
+    public function showSharedNote(
+        string $id,
+        NoteStore $store,
+        string $format,
+        string $mode,
+        KernelInterface $kernel
+    ): Response {
         $hasNote = $store->hasNote($id);
         if (!$hasNote) {
             throw $this->createNotFoundException("Note does not exist: $id.");
         }
 
-        $bundle = $type === 'markdown' ? 'share-markdown' : 'share-plaintext';
+        $language = null;
+        if ($format == 'markdown') {
+            $bundle = 'share-markdown';
+        } elseif (strpos($format, 'code') === 0) {
+            $bundle = 'share-code';
+            $maybeLanguage = explode('-', $format);
+            $language = count($maybeLanguage) > 1 ? $maybeLanguage[1] : null;
+        } else {
+            $bundle = 'share-plaintext';
+        }
         $context = [
+            'mode' => $mode,
             'content' => $store->getNote($id)->content,
+            'language' => $language,
         ];
+
         return $this->renderHTML($context, $bundle, $id, $kernel);
     }
 
     /**
      * @Route(
-     *   "/{id}/{version}/{type}",
+     *   "/{id}/{version}/{format}/{mode}",
      *   name="show_shared_note_version",
      *   methods={"GET"},
-     *   requirements={"id"="[A-z0-9_-]+", "version"="\d+", "type"="raw|plaintext|plainText|markdown"}
+     *   requirements={
+     *     "id"="[A-z0-9_-]+",
+     *     "version"="\d+",
+     *     "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
+     *     "mode"="light|dark",
+     *   },
+     *   defaults={"mode"="light"},
      * )
      */
     public function showSharedNoteVersion(
         string $id,
         int $version,
-        string $type,
+        string $format,
+        string $mode,
         NoteStore $store,
         KernelInterface $kernel
     ): Response {
@@ -131,10 +157,22 @@ class PageController extends AbstractController
             throw $this->createNotFoundException("Version does not exist: $version.");
         }
 
-        $bundle = $type === 'markdown' ? 'share-markdown' : 'share-plaintext';
+        $language = null;
+        if ($format == 'markdown') {
+            $bundle = 'share-markdown';
+        } elseif (strpos($format, 'code') === 0) {
+            $bundle = 'share-code';
+            $maybeLanguage = explode('-', $format);
+            $language = count($maybeLanguage) > 1 ? $maybeLanguage[1] : null;
+        } else {
+            $bundle = 'share-plaintext';
+        }
         $context = [
+            'mode' => $mode,
             'content' => $store->getNote($id, $version)->content,
+            'language' => $language,
         ];
+
         return $this->renderHTML($context, $bundle, "${id}v${version}", $kernel);
     }
 

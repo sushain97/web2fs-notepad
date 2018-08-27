@@ -4,6 +4,10 @@
 
 body {
     background-color: $light-gray5;
+
+    &.#{$ns}-dark {
+        background-color: $dark-gray4;
+    }
 }
 
 #app {
