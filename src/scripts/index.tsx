@@ -555,7 +555,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
           output = (
             <div className="content-output-container">
-              <NonIdealState icon={<Spinner />} title="Loading Markdown Renderer" />
+              <NonIdealState icon={<Spinner />} title="Loading Markdown Renderer…" />
             </div>
           );
         }
@@ -573,7 +573,7 @@ class App extends React.Component<IAppProps, IAppState> {
           } else {
             output = (
               <div className="content-output-container">
-                <NonIdealState icon={<Spinner />} title="Detecting Language" />
+                <NonIdealState icon={<Spinner />} title="Detecting Language…" />
               </div>
             );
           }
@@ -582,7 +582,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
           output = (
             <div className="content-output-container">
-              <NonIdealState icon={<Spinner />} title="Loading Code Renderer" />
+              <NonIdealState icon={<Spinner />} title="Loading Code Renderer…" />
             </div>
           );
         }
@@ -780,7 +780,7 @@ class App extends React.Component<IAppProps, IAppState> {
               itemListRenderer={this.renderLanguages}
             />
           ) : (
-            <NonIdealState icon={<Spinner />} title={'Loading Languages'} />
+            <NonIdealState icon={<Spinner />} title={'Loading Languages…'} />
           )}
         </div>
         <div className={Classes.DIALOG_FOOTER}>
