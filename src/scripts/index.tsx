@@ -37,6 +37,7 @@ import MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
+import setupMarkdown from './setup-markdown';
 
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
@@ -469,10 +470,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     import(/* webpackChunkName: "markdown-it" */ 'markdown-it')
       .then(md => {
-        this.MarkdownIt = (md.default || md)({
-          linkify: true,
-          typographer: true,
-        });
+        this.MarkdownIt = setupMarkdown(md.default || md);
         this.forceUpdate();
       })
       .catch(error => {
@@ -547,7 +545,7 @@ class App extends React.Component<IAppProps, IAppState> {
         if (this.MarkdownIt) {
           output = (
             <div
-              className={classNames(Classes.RUNNING_TEXT, 'content-output-container')}
+              className={classNames(Classes.RUNNING_TEXT, 'content-output-container', 'markdown')}
               dangerouslySetInnerHTML={{ __html: this.MarkdownIt.render(content) }}
             />
           );
