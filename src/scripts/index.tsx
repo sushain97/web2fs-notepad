@@ -2,6 +2,7 @@ import '../styles/index.scss';
 
 import {
   Alert,
+  AnchorButton,
   Button,
   ButtonGroup,
   Callout,
@@ -136,7 +137,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
-  private updateNoteDebounced: () => void;
+  private updateNoteDebounced: ReturnType<typeof debounce>;
 
   public constructor(props: IAppProps) {
     super(props);
@@ -808,7 +809,8 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private renderStatusBar({
     currentVersion,
-    note: { version, modificationTime },
+    note: { version, modificationTime, content },
+    content: currentContent,
     mode,
     format,
     selectedLanguage,
@@ -816,6 +818,7 @@ class App extends React.Component<IAppProps, IAppState> {
     monospace,
   }: IAppState) {
     const disabled = version !== currentVersion;
+    const saved = currentContent === content;
 
     return (
       <div className="status-bar">
@@ -826,20 +829,27 @@ class App extends React.Component<IAppProps, IAppState> {
             position={Position.TOP_LEFT}
           >
             <Tag
-              icon={updating ? <Spinner size={20} /> : IconNames.SAVED}
+              icon={
+                updating ? <Spinner size={20} /> : saved ? IconNames.SAVED : IconNames.DOCUMENT_OPEN
+              }
               minimal={true}
               large={true}
               interactive={true}
+              className="version-tag"
             >
               Version {version} of {currentVersion}
             </Tag>
           </Popover>
-          {disabled && (
-            <Tooltip content={'View latest'} position={Position.TOP}>
-              <Button
-                className="view-latest-button"
-                icon={IconNames.UPDATED}
-                onClick={this.handleViewLatestButtonClick}
+          {disabled ? (
+            <Tooltip content="View latest" position={Position.TOP}>
+              <Button icon={IconNames.UPDATED} onClick={this.handleViewLatestButtonClick} />
+            </Tooltip>
+          ) : (
+            <Tooltip content="Save" position={Position.TOP}>
+              <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
+                icon={IconNames.FLOPPY_DISK}
+                onClick={this.updateNote}
+                disabled={saved || updating}
               />
             </Tooltip>
           )}
@@ -954,6 +964,7 @@ class App extends React.Component<IAppProps, IAppState> {
         content,
       } = this.state;
 
+      this.updateNoteDebounced.cancel();
       if (this.cancelTokenSource) {
         this.cancelTokenSource.cancel();
       }
@@ -964,9 +975,7 @@ class App extends React.Component<IAppProps, IAppState> {
       const { data: updatedNote } = await axios.post<INote>(
         `/${id}`,
         `text=${encodeURIComponent(content)}`,
-        {
-          cancelToken: this.cancelTokenSource.token,
-        },
+        { cancelToken: this.cancelTokenSource.token },
       );
 
       delete this.cancelTokenSource;

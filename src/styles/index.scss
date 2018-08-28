@@ -63,8 +63,8 @@ body {
     .status-bar-history {
         display: flex;
 
-        .view-latest-button {
-            margin-left: $pt-grid-size;
+        .version-tag {
+            margin-right: $pt-grid-size;
         }
     }
 }
