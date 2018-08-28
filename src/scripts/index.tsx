@@ -535,7 +535,7 @@ class App extends React.Component<IAppProps, IAppState> {
     monospace,
     note: { version },
   }: IAppState) {
-    const disabled = version !== currentVersion;
+    const disabled = currentVersion !== null && version !== currentVersion;
 
     const textArea = (
       <TextArea
