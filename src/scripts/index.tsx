@@ -666,7 +666,13 @@ class App extends React.Component<IAppProps, IAppState> {
     let content;
     if (history == null) {
       content = [...Array(currentVersion).keys()].map(i => (
-        <MenuItem key={i} className={Classes.SKELETON} disabled={true} text={`v${i}`} />
+        <MenuItem
+          key={i}
+          className={Classes.SKELETON}
+          disabled={true}
+          text={`v${i} - ${new Date().toLocaleString()}`}
+          label="0 bytes"
+        />
       ));
     } else {
       content = history.map(({ modificationTime, size }, i) => (
