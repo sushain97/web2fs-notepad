@@ -88,7 +88,7 @@ interface ILanguage extends HighlightJs.IMode {
 interface IAppState {
   confirmDeleteAlertOpen: boolean;
   content: string;
-  currentVersion: number;
+  currentVersion: number | null;
   format: Format;
   history?: INoteVersionEntry[];
   language?: string;
@@ -470,7 +470,7 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleViewLatestButtonClick = (ev: React.MouseEvent<HTMLElement>) => {
-    this.showNoteVersion(this.state.currentVersion, ev.metaKey);
+    this.showNoteVersion(this.state.currentVersion!, ev.metaKey);
   };
 
   private historyMenuItemClickHandler = (version: number) => {
@@ -668,8 +668,6 @@ class App extends React.Component<IAppProps, IAppState> {
       content = [...Array(currentVersion).keys()].map(i => (
         <MenuItem key={i} className={Classes.SKELETON} disabled={true} text={`v${i}`} />
       ));
-    } else if (history.length === 0) {
-      content = <MenuItem text="Unsaved." />;
     } else {
       content = history.map(({ modificationTime, size }, i) => (
         <MenuItem
@@ -813,50 +811,60 @@ class App extends React.Component<IAppProps, IAppState> {
     updating,
     monospace,
   }: IAppState) {
-    const disabled = version !== currentVersion;
-    const saved = currentContent === content;
+    const saved = currentVersion !== null;
+    const old = saved && version !== currentVersion;
+    const updated = saved && currentContent === content;
 
     return (
       <div className="status-bar">
         <div className="status-bar-history">
           <Popover
-            content={this.renderHistoryMenu()}
+            content={saved ? this.renderHistoryMenu() : undefined}
             onOpening={this.handleHistoryPopoverOpening}
             position={Position.TOP_LEFT}
           >
             <Tag
               icon={
-                updating ? <Spinner size={20} /> : saved ? IconNames.SAVED : IconNames.DOCUMENT_OPEN
+                updating ? (
+                  <Spinner size={20} />
+                ) : updated ? (
+                  IconNames.SAVED
+                ) : (
+                  IconNames.DOCUMENT_OPEN
+                )
               }
               minimal={true}
               large={true}
-              interactive={true}
+              interactive={saved}
               className="version-tag"
             >
-              Version {version} of {currentVersion}
+              {saved ? `Version ${version} of ${currentVersion}` : 'Unsaved'}
             </Tag>
           </Popover>
-          {disabled ? (
+          {old ? (
             <Tooltip content="View latest" position={Position.TOP}>
               <Button icon={IconNames.UPDATED} onClick={this.handleViewLatestButtonClick} />
             </Tooltip>
           ) : (
-            <Tooltip content="Save" position={Position.TOP}>
+            <Tooltip
+              content={updating ? 'Saving' : saved ? 'Saved' : 'Save'}
+              position={Position.TOP}
+            >
               <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
                 icon={IconNames.FLOPPY_DISK}
                 onClick={this.updateNote}
-                disabled={saved || updating}
+                disabled={updated || updating}
               />
             </Tooltip>
           )}
         </div>
         <div>
           <Callout
-            intent={disabled ? Intent.WARNING : undefined}
-            icon={disabled ? <Icon icon={IconNames.WARNING_SIGN} /> : null} // manually inserted in order to control sizing
+            intent={old ? Intent.WARNING : undefined}
+            icon={old ? <Icon icon={IconNames.WARNING_SIGN} /> : null} // manually inserted in order to control sizing
             className="status-bar-callout"
           >
-            {disabled && <H5>Editing disabled for old version</H5>}
+            {old && <H5>Editing disabled for old version</H5>}
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
           <ButtonGroup>

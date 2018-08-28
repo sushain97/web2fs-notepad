@@ -66,8 +66,8 @@ class PageController extends AbstractController
         } else {
             // We don't actually persist a note to the filesystem to imitate lazy
             // saving and avoid saving a bunch of empty files.
-            $currentVersion = NoteStore::INITIAL_VERSION;
-            $note = new Note($id, $currentVersion, time(), '');
+            $currentVersion = null;
+            $note = new Note($id, NoteStore::INITIAL_VERSION, time(), '');
         }
 
         $data = [
