@@ -842,21 +842,24 @@ class App extends React.Component<IAppProps, IAppState> {
     return (
       <div className="status-bar">
         <div className="status-bar-history">
+          <Tooltip
+            content={updating ? 'Saving' : updated ? 'Saved' : 'Save'}
+            position={Position.TOP}
+          >
+            <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
+              icon={IconNames.FLOPPY_DISK}
+              loading={updating}
+              onClick={this.updateNote}
+              disabled={updated || old}
+            />
+          </Tooltip>
           <Popover
             content={saved ? this.renderHistoryMenu() : undefined}
             onOpening={this.handleHistoryPopoverOpening}
             position={Position.TOP_LEFT}
           >
             <Tag
-              icon={
-                updating ? (
-                  <Spinner size={20} />
-                ) : updated ? (
-                  IconNames.SAVED
-                ) : (
-                  IconNames.DOCUMENT_OPEN
-                )
-              }
+              icon={updated ? IconNames.SAVED : IconNames.OUTDATED}
               minimal={true}
               large={true}
               interactive={saved}
@@ -865,20 +868,9 @@ class App extends React.Component<IAppProps, IAppState> {
               {saved ? `Version ${version} of ${currentVersion}` : 'Unsaved'}
             </Tag>
           </Popover>
-          {old ? (
+          {old && (
             <Tooltip content="View latest" position={Position.TOP}>
-              <Button icon={IconNames.UPDATED} onClick={this.handleViewLatestButtonClick} />
-            </Tooltip>
-          ) : (
-            <Tooltip
-              content={updating ? 'Saving' : saved ? 'Saved' : 'Save'}
-              position={Position.TOP}
-            >
-              <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
-                icon={IconNames.FLOPPY_DISK}
-                onClick={this.updateNote}
-                disabled={updated || updating}
-              />
+              <Button icon={IconNames.FAST_FORWARD} onClick={this.handleViewLatestButtonClick} />
             </Tooltip>
           )}
         </div>
