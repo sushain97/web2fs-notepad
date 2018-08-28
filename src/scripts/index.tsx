@@ -986,23 +986,28 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private updateNote = async () => {
+    const {
+      note: { id, content },
+      content: currentContent,
+      currentVersion,
+    } = this.state;
+
+    this.updateNoteDebounced.cancel();
+    if (this.cancelTokenSource) {
+      this.cancelTokenSource.cancel();
+    }
+
+    if (currentContent === content && currentVersion !== null) {
+      return;
+    }
+
     try {
-      const {
-        note: { id },
-        content,
-      } = this.state;
-
-      this.updateNoteDebounced.cancel();
-      if (this.cancelTokenSource) {
-        this.cancelTokenSource.cancel();
-      }
-
       this.cancelTokenSource = axios.CancelToken.source();
 
       this.setState({ updating: true });
       const { data: updatedNote } = await axios.post<INote>(
         `/${id}`,
-        `text=${encodeURIComponent(content)}`,
+        `text=${encodeURIComponent(currentContent)}`,
         { cancelToken: this.cancelTokenSource.token },
       );
 
