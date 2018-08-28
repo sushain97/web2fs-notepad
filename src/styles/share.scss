@@ -4,6 +4,7 @@
 
 body {
     background-color: $light-gray5;
+    margin: $pt-grid-size;
 
     &.#{$ns}-dark {
         background-color: $dark-gray4;
@@ -11,5 +12,6 @@ body {
 }
 
 #app {
-    margin: $pt-grid-size;
+    overflow: auto;
+    min-width: 100%;
 }
