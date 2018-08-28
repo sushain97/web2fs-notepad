@@ -40,7 +40,7 @@ import classNames from 'classnames';
 import * as HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
 import * as LocalForage from 'localforage';
-import { debounce, sortBy, startCase } from 'lodash-es';
+import { debounce, pick, sortBy, startCase } from 'lodash-es';
 import * as MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -81,10 +81,32 @@ interface INoteVersionEntry {
   size: number;
 }
 
-interface INoteSettings {
-  format?: Format;
+interface ILanguage extends HighlightJs.IMode {
+  name: string;
+}
+
+interface IAppState {
+  confirmDeleteAlertOpen: boolean;
+  content: string;
+  currentVersion: number;
+  format: Format;
+  history?: INoteVersionEntry[];
   language?: string;
-  monospace?: boolean;
+  mode: Mode;
+  monospace: boolean;
+  note: INote;
+  renameDialogOpen: boolean;
+  selectLanguageDialogOpen: boolean;
+  updating: boolean;
+}
+
+const NOTE_SETTINGS_STATE_PROPERTIES: Array<'format' | 'language' | 'monospace'> = [
+  'format',
+  'language',
+  'monospace',
+];
+
+interface INoteSettings extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[0]>> {
   selectionEnd?: number;
   selectionStart?: number;
 }
@@ -101,25 +123,6 @@ interface IPageContext {
 interface IAppProps extends IPageContext {
   noteSettings: INoteSettings | null;
   settings: ISettings;
-}
-
-interface IAppState {
-  confirmDeleteAlertOpen: boolean;
-  content: string;
-  currentVersion: number;
-  format: Format;
-  history?: INoteVersionEntry[];
-  mode: Mode;
-  monospace: boolean;
-  note: INote;
-  renameDialogOpen: boolean;
-  selectedLanguage?: string;
-  selectLanguageDialogOpen: boolean;
-  updating: boolean;
-}
-
-interface ILanguage extends HighlightJs.IMode {
-  name: string;
 }
 
 FocusStyleManager.onlyShowFocusOnTabs();
@@ -155,12 +158,12 @@ class App extends React.Component<IAppProps, IAppState> {
       content: note.content,
       currentVersion,
       format,
+      language: noteSettings == null ? undefined : noteSettings.language,
       mode: (settings && settings.mode) || Mode.Light,
       monospace,
       note,
       renameDialogOpen: false,
       selectLanguageDialogOpen: false,
-      selectedLanguage: noteSettings == null ? undefined : noteSettings.language,
       updating: false,
     };
 
@@ -178,6 +181,12 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentDidMount() {
     document.addEventListener('selectionchange', this.handleSelectionChange);
     window.addEventListener('beforeunload', this.handleBeforeUnload);
+  }
+
+  public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
+    if (prevState.format !== this.state.format || prevState.monospace !== this.state.monospace) {
+      this.updateNoteSettings();
+    }
   }
 
   public componentWillUnmount() {
@@ -233,7 +242,6 @@ class App extends React.Component<IAppProps, IAppState> {
         this.setState({ selectLanguageDialogOpen: true });
       } else {
         this.setState({ format });
-        this.updateNoteSettings({ format });
       }
     };
   };
@@ -252,11 +260,6 @@ class App extends React.Component<IAppProps, IAppState> {
 
     const { language } = this.HighlightJs!.highlightAuto(this.state.content);
     this.setState({
-      monospace: true,
-      selectedLanguage: language,
-    });
-    this.updateNoteSettings({
-      format: Format.Code,
       language,
       monospace: true,
     });
@@ -299,15 +302,14 @@ class App extends React.Component<IAppProps, IAppState> {
     const {
       format,
       note: { content, id, version },
-      selectedLanguage,
+      language,
     } = this.state;
 
     let extension = FormatExtensions[format];
-    if (format === Format.Code && selectedLanguage && this.HighlightJs) {
-      extension = [
-        ...(this.HighlightJs.getLanguage(selectedLanguage).aliases || []),
-        selectedLanguage,
-      ].sort((a, b) => a.length - b.length)[0];
+    if (format === Format.Code && language && this.HighlightJs) {
+      extension = [...(this.HighlightJs.getLanguage(language).aliases || []), language].sort(
+        (a, b) => a.length - b.length,
+      )[0];
     }
 
     const filename = `${id}_${version}.${extension}`;
@@ -343,14 +345,9 @@ class App extends React.Component<IAppProps, IAppState> {
   private handleLanguageSelected = ({ name }: ILanguage) => {
     this.setState({
       format: Format.Code,
-      monospace: true,
-      selectLanguageDialogOpen: false,
-      selectedLanguage: name,
-    });
-    this.updateNoteSettings({
-      format: Format.Code,
       language: name,
       monospace: true,
+      selectLanguageDialogOpen: false,
     });
   };
 
@@ -363,7 +360,6 @@ class App extends React.Component<IAppProps, IAppState> {
   private handleMonospaceButtonClick = () => {
     const { monospace } = this.state;
     this.setState({ monospace: !monospace });
-    this.updateNoteSettings({ monospace: !monospace });
   };
 
   private handleNoteDeletionCancel = () => {
@@ -429,11 +425,11 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleShareButtonClick = () => {
-    const { format, selectedLanguage, mode } = this.state;
+    const { format, language, mode } = this.state;
 
     const urlParts = [window.location.href];
-    if (format === Format.Code && selectedLanguage) {
-      urlParts.push(`${format.toLowerCase()}-${selectedLanguage}`);
+    if (format === Format.Code && language) {
+      urlParts.push(`${format.toLowerCase()}-${language}`);
     } else {
       urlParts.push(format.toLowerCase());
     }
@@ -535,7 +531,7 @@ class App extends React.Component<IAppProps, IAppState> {
     content,
     format,
     currentVersion,
-    selectedLanguage,
+    language,
     monospace,
     note: { version },
   }: IAppState) {
@@ -579,12 +575,12 @@ class App extends React.Component<IAppProps, IAppState> {
         }
       } else if (format === Format.Code) {
         if (this.HighlightJs) {
-          if (selectedLanguage) {
+          if (language) {
             output = (
               <Pre
                 className={classNames(Classes.RUNNING_TEXT, 'content-output-container')}
                 dangerouslySetInnerHTML={{
-                  __html: this.HighlightJs.highlight(selectedLanguage, content, true).value,
+                  __html: this.HighlightJs.highlight(language, content, true).value,
                 }}
               />
             );
@@ -813,7 +809,7 @@ class App extends React.Component<IAppProps, IAppState> {
     content: currentContent,
     mode,
     format,
-    selectedLanguage,
+    language,
     updating,
     monospace,
   }: IAppState) {
@@ -871,8 +867,8 @@ class App extends React.Component<IAppProps, IAppState> {
                   {format === Format.Code ? (
                     <>
                       {' ('}
-                      {selectedLanguage ? (
-                        startCase(selectedLanguage)
+                      {language ? (
+                        startCase(language)
                       ) : (
                         <span className={Classes.SKELETON}>...</span>
                       )}
@@ -1003,10 +999,11 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private async updateNoteSettings(settings: Partial<INoteSettings>) {
+  private async updateNoteSettings(settings?: Partial<INoteSettings>) {
     const { id } = this.state.note;
     await NotesSettingStore.setItem(id, {
-      ...((await NotesSettingStore.getItem(id)) || {}),
+      ...(await NotesSettingStore.getItem(id)),
+      ...pick(this.state, NOTE_SETTINGS_STATE_PROPERTIES),
       ...settings,
     });
   }
