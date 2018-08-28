@@ -17,6 +17,8 @@ fi
 artifacts=$(curl -s "https://circleci.com/api/v1.1/project/github/sushain97/web2fs-notepad/$1/artifacts?circle-token=$CIRCLE_TOKEN")
 dist_url=$(echo "$artifacts" | jq -r '.[] | select(.path=="home/circleci/web2fs-notepad/dist.tar.gz") | .["url"]')
 wget "$dist_url?circle-token=$CIRCLE_TOKEN" -O dist.tar.gz
+
+rm -rfv public/assets
 tar -xvf dist.tar.gz
 rm dist.tar.gz
 
