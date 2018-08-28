@@ -275,9 +275,15 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleContentChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
-    const { value: content } = event.currentTarget;
-    this.setState({ content }, this.updateNoteDebounced);
+  private handleContentChange = ({
+    currentTarget: { value },
+  }: React.FormEvent<HTMLTextAreaElement>) => {
+    const { currentVersion, updating } = this.state;
+
+    this.setState(
+      { content: value },
+      currentVersion === null && !updating ? this.updateNote : this.updateNoteDebounced,
+    );
   };
 
   private handleContentKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
