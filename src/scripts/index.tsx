@@ -92,6 +92,7 @@ interface IAppState {
   format: Format;
   history?: INoteVersionEntry[];
   mode: Mode;
+  monospace: boolean;
   note: INote;
   renameDialogOpen: boolean;
   selectedLanguage?: string;
@@ -125,6 +126,8 @@ class App extends React.Component<IAppProps, IAppState> {
 
     const noteSettings = store.get(note.id, { format: Format.PlainText });
     const format = noteSettings.format || Format.PlainText;
+    const monospace =
+      noteSettings.monospace === true || (noteSettings.monospace == null && format === Format.Code);
 
     this.state = {
       confirmDeleteAlertOpen: false,
@@ -132,6 +135,7 @@ class App extends React.Component<IAppProps, IAppState> {
       currentVersion,
       format,
       mode: store.get('mode', Mode.Light),
+      monospace,
       note,
       renameDialogOpen: false,
       selectLanguageDialogOpen: false,
@@ -206,16 +210,11 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private formatChangeHandler = (format: Format) => {
     return () => {
-      const { id } = this.props.note;
-
       if (format === Format.Code) {
         this.setState({ selectLanguageDialogOpen: true });
       } else {
         this.setState({ format });
-        store.set(id, {
-          ...store.get(id, {}),
-          format,
-        });
+        this.updateNoteSettings({ format });
       }
     };
   };
@@ -231,16 +230,18 @@ class App extends React.Component<IAppProps, IAppState> {
     });
 
     this.loadCodeRenderer((highlightJs: typeof HighlightJs) => {
-      const {
-        content,
-        note: { id },
-      } = this.state;
+      const { content } = this.state;
 
       const { language } = highlightJs.highlightAuto(content);
       this.setState({
+        monospace: true,
         selectedLanguage: language,
       });
-      store.set(id, { ...store.get('id'), language, format: Format.Code });
+      this.updateNoteSettings({
+        format: Format.Code,
+        language,
+        monospace: true,
+      });
     });
   };
 
@@ -325,8 +326,14 @@ class App extends React.Component<IAppProps, IAppState> {
   private handleLanguageSelected = ({ name }: ILanguage) => {
     this.setState({
       format: Format.Code,
+      monospace: true,
       selectLanguageDialogOpen: false,
       selectedLanguage: name,
+    });
+    this.updateNoteSettings({
+      format: Format.Code,
+      language: name,
+      monospace: true,
     });
   };
 
@@ -334,6 +341,12 @@ class App extends React.Component<IAppProps, IAppState> {
     const mode = this.state.mode === Mode.Light ? Mode.Dark : Mode.Light;
     this.setState({ mode });
     store.set('mode', mode);
+  };
+
+  private handleMonospaceButtonClick = () => {
+    const { monospace } = this.state;
+    this.setState({ monospace: !monospace });
+    this.updateNoteSettings({ monospace: !monospace });
   };
 
   private handleNoteDeletionCancel = () => {
@@ -383,10 +396,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private handleSelectionChange = () => {
     if (this.contentRef) {
-      const { id } = this.props.note;
-
-      store.set(id, {
-        ...store.get(id, {}),
+      this.updateNoteSettings({
         selectionEnd: this.contentRef.selectionEnd,
         selectionStart: this.contentRef.selectionStart,
       });
@@ -519,6 +529,7 @@ class App extends React.Component<IAppProps, IAppState> {
     format,
     currentVersion,
     selectedLanguage,
+    monospace,
     note: { version },
   }: IAppState) {
     const disabled = version !== currentVersion;
@@ -533,7 +544,7 @@ class App extends React.Component<IAppProps, IAppState> {
         fill={true}
         autoFocus={true}
         className={classNames('content-input', {
-          [Classes.MONOSPACE_TEXT]: format === Format.Markdown || format === Format.Code,
+          [Classes.MONOSPACE_TEXT]: monospace,
         })}
         readOnly={disabled}
       />
@@ -755,11 +766,7 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderSelectLanguageDialog({
-    selectedLanguage,
-    selectLanguageDialogOpen,
-    mode,
-  }: IAppState) {
+  private renderSelectLanguageDialog({ selectLanguageDialogOpen, mode }: IAppState) {
     return (
       <Dialog
         isOpen={selectLanguageDialogOpen}
@@ -802,6 +809,7 @@ class App extends React.Component<IAppProps, IAppState> {
     format,
     selectedLanguage,
     updating,
+    monospace,
   }: IAppState) {
     const disabled = version !== currentVersion;
 
@@ -869,6 +877,16 @@ class App extends React.Component<IAppProps, IAppState> {
               <Button
                 icon={mode === Mode.Light ? IconNames.MOON : IconNames.FLASH}
                 onClick={this.handleModeToggle}
+              />
+            </Tooltip>
+            <Tooltip
+              content={`${monospace ? 'Disable' : 'Enable'} Monospace`}
+              position={Position.TOP}
+            >
+              <Button
+                icon={IconNames.FONT}
+                onClick={this.handleMonospaceButtonClick}
+                active={monospace}
               />
             </Tooltip>
             <Tooltip content="Rename" position={Position.TOP}>
@@ -969,6 +987,14 @@ class App extends React.Component<IAppProps, IAppState> {
       });
     }
   };
+
+  private updateNoteSettings(settings: {}) {
+    const { id } = this.state.note;
+    store.set(id, {
+      ...store.get(id, {}),
+      ...settings,
+    });
+  }
 }
 
 ReactDOM.render(<App {...(window as any).CONTEXT} />, document.getElementById('app'));
