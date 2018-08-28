@@ -5,6 +5,13 @@
         margin-top: 0;
     }
 
+    // Blueprint's default styling of <pre><code> needs tweaking
+    pre > code {
+        background: initial !important;
+        box-shadow: initial !important;
+        color: inherit !important;
+    }
+
     .header-anchor {
         color: $gray4;
 
