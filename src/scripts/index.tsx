@@ -40,7 +40,7 @@ import classNames from 'classnames';
 import * as HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
 import * as LocalForage from 'localforage';
-import { debounce, pick, sortBy, startCase } from 'lodash-es';
+import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
 import * as MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -430,32 +430,46 @@ class App extends React.Component<IAppProps, IAppState> {
     this.loadCodeRenderer();
   };
 
-  private handleShareButtonClick = () => {
-    const { format, language, mode } = this.state;
+  private handleShareButtonClick = async () => {
+    const { format, language, mode, content, note } = this.state;
 
-    const urlParts = [window.location.href];
-    if (format === Format.Code && language) {
-      urlParts.push(`${format.toLowerCase()}-${language}`);
-    } else {
-      urlParts.push(format.toLowerCase());
-    }
-    if (mode === Mode.Dark) {
-      urlParts.push(mode.toLowerCase());
+    if (navigator.clipboard) {
+      // The await here will break a later document.execCommand('copy') so
+      // we only force update a dirty note before sharing if we have access
+      // to the new async Clipboard API.
+      if (note.content !== content) {
+        await this.updateNote();
+      }
     }
 
-    const textArea = document.createElement('textarea');
-    textArea.value = urlParts.join('/');
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
+    const url = compact([
+      window.location.href,
+      `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
+      mode === Mode.Dark && mode.toLowerCase(),
+    ]).join('/');
 
     let error;
+    let textArea;
     try {
-      if (!document.execCommand('copy')) {
-        error = 'Unknown failure';
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        if (!document.execCommand('copy')) {
+          error = 'Unknown failure';
+        }
       }
     } catch (err) {
       error = err.toString();
+    } finally {
+      if (textArea) {
+        document.body.removeChild(textArea);
+      }
     }
 
     if (error) {
@@ -471,8 +485,6 @@ class App extends React.Component<IAppProps, IAppState> {
         message: 'Copied share link to clipboard.',
       });
     }
-
-    document.body.removeChild(textArea);
   };
 
   private handleViewLatestButtonClick = (ev: React.MouseEvent<HTMLElement>) => {

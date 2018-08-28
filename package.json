@@ -33,6 +33,7 @@
   "devDependencies": {
     "@blueprintjs/tslint-config": "^1.5.0",
     "@types/classnames": "^2.2.6",
+    "@types/dom-clipboard-api": "^1.0.0",
     "@types/highlight.js": "^9.12.3",
     "@types/humanize-plus": "^1.8.0",
     "@types/lodash-es": "^4.17.1",
