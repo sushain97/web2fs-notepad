@@ -4,9 +4,11 @@ import '../styles/share.scss';
 import { Classes } from '@blueprintjs/core';
 import classNames from 'classnames';
 import MarkdownIt from 'markdown-it';
+import MarkdownItAnchor from 'markdown-it-anchor';
 import setupMarkdown from './setup-markdown';
 
 const markdownIt = setupMarkdown(MarkdownIt);
+markdownIt.use(MarkdownItAnchor, { permalink: true });
 
 const { content, mode } = (window as any).CONTEXT;
 const app = document.getElementById('app')!;

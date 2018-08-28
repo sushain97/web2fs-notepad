@@ -14,12 +14,15 @@ export default (md: typeof MarkdownIt) => {
       return self.renderToken(tokens, idx, options);
     });
   markdownIt.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-    const attrIndex = tokens[idx].attrIndex('target');
+    const href = tokens[idx].attrGet('href');
 
-    if (attrIndex < 0) {
-      tokens[idx].attrPush(['target', '_blank']);
-    } else {
-      tokens[idx].attrs[attrIndex][1] = '_blank';
+    if (href && !href.startsWith('#')) {
+      const attrIndex = tokens[idx].attrIndex('target');
+      if (attrIndex < 0) {
+        tokens[idx].attrPush(['target', '_blank']);
+      } else {
+        tokens[idx].attrs[attrIndex][1] = '_blank';
+      }
     }
 
     return defaultLinkRenderer(tokens, idx, options, env, self);

@@ -1,5 +1,24 @@
+@import '~@blueprintjs/core/lib/scss/variables.scss';
+
 .markdown {
     :first-child {
         margin-top: 0;
+    }
+
+    .header-anchor {
+        color: $gray4;
+
+        .#{$ns}-dark & {
+            color: $gray1;
+        }
+
+        &:hover {
+            color: $gray5;
+            text-decoration: none;
+
+            .#{$ns}-dark & {
+                color: $gray2;
+            }
+        }
     }
 }
