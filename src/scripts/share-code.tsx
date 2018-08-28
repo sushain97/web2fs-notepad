@@ -16,6 +16,7 @@ if (language) {
 
 const app = document.getElementById('app')!;
 app.setAttribute('style', 'white-space: pre');
+app.setAttribute('class', Classes.CODE_BLOCK);
 document.body.setAttribute(
   'class',
   classNames(Classes.MONOSPACE_TEXT, { [Classes.DARK]: mode === 'dark' }),
