@@ -38,11 +38,11 @@ import axios, { CancelTokenSource } from 'axios';
 import classNames from 'classnames';
 import * as HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
+import * as LocalForage from 'localforage';
 import { debounce, sortBy, startCase } from 'lodash-es';
 import * as MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
 import setupMarkdown from './setup-markdown';
 
 // We want to ensure that versions are somewhat meaningful by debouncing
@@ -80,9 +80,26 @@ interface INoteVersionEntry {
   size: number;
 }
 
-interface IAppProps {
+interface INoteSettings {
+  format?: Format;
+  language?: string;
+  monospace?: boolean;
+  selectionEnd?: number;
+  selectionStart?: number;
+}
+
+interface ISettings {
+  mode: Mode | null;
+}
+
+interface IPageContext {
   currentVersion: number;
   note: INote;
+}
+
+interface IAppProps extends IPageContext {
+  noteSettings: INoteSettings | null;
+  settings: ISettings;
 }
 
 interface IAppState {
@@ -107,6 +124,8 @@ interface ILanguage extends HighlightJs.IMode {
 FocusStyleManager.onlyShowFocusOnTabs();
 
 const AppToaster = Toaster.create();
+const SettingsStore = LocalForage.createInstance({ name: 'global' });
+const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
@@ -114,37 +133,35 @@ class App extends React.Component<IAppProps, IAppState> {
   private HighlightJs?: typeof HighlightJs;
   private languages?: ILanguage[];
   private MarkdownIt?: ReturnType<typeof MarkdownIt>;
-  private renameForm: React.RefObject<HTMLFormElement>;
-  private renameInput: React.RefObject<HTMLInputElement>;
+  private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
+  private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private updateNoteDebounced: () => void;
 
   public constructor(props: IAppProps) {
     super(props);
 
-    const { note, currentVersion } = props;
+    const { note, currentVersion, noteSettings, settings } = props;
 
-    const noteSettings = store.get(note.id, { format: Format.PlainText });
-    const format = noteSettings.format || Format.PlainText;
+    const format = (noteSettings && noteSettings.format) || Format.PlainText;
     const monospace =
-      noteSettings.monospace === true || (noteSettings.monospace == null && format === Format.Code);
+      (noteSettings && noteSettings.monospace === true) ||
+      (noteSettings && noteSettings.monospace == null && format === Format.Code) ||
+      false;
 
     this.state = {
       confirmDeleteAlertOpen: false,
       content: note.content,
       currentVersion,
       format,
-      mode: store.get('mode', Mode.Light),
+      mode: (settings && settings.mode) || Mode.Light,
       monospace,
       note,
       renameDialogOpen: false,
       selectLanguageDialogOpen: false,
-      selectedLanguage: noteSettings.language,
+      selectedLanguage: noteSettings == null ? undefined : noteSettings.language,
       updating: false,
     };
-
-    this.renameForm = React.createRef();
-    this.renameInput = React.createRef();
 
     this.updateNoteDebounced = debounce(this.updateNote, UPDATE_DEBOUNCE_MS, {
       maxWait: UPDATE_MAX_WAIT_MS,
@@ -179,11 +196,12 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private contentRefHandler = (ref: HTMLTextAreaElement | null) => {
+  private contentRefHandler = async (ref: HTMLTextAreaElement | null) => {
     this.contentRef = ref;
 
     if (this.contentRef) {
-      const { selectionStart = null, selectionEnd = null } = store.get(this.props.note.id) || {};
+      const { selectionStart = null, selectionEnd = null } =
+        (await NotesSettingStore.getItem<INoteSettings>(this.props.note.id)) || {};
 
       if (selectionStart != null) {
         this.contentRef.selectionStart = selectionStart;
@@ -338,7 +356,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private handleModeToggle = () => {
     const mode = this.state.mode === Mode.Light ? Mode.Dark : Mode.Light;
     this.setState({ mode });
-    store.set('mode', mode);
+    SettingsStore.setItem('mode', mode);
   };
 
   private handleMonospaceButtonClick = () => {
@@ -976,13 +994,21 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private updateNoteSettings(settings: {}) {
+  private async updateNoteSettings(settings: Partial<INoteSettings>) {
     const { id } = this.state.note;
-    store.set(id, {
-      ...store.get(id, {}),
+    await NotesSettingStore.setItem(id, {
+      ...((await NotesSettingStore.getItem(id)) || {}),
       ...settings,
     });
   }
 }
 
-ReactDOM.render(<App {...(window as any).CONTEXT} />, document.getElementById('app'));
+(async () => {
+  const context: IPageContext = (window as any).CONTEXT;
+  const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
+  const settings = { mode: (await SettingsStore.getItem<string>('mode')) as Mode };
+  ReactDOM.render(
+    <App {...{ ...context, settings, noteSettings }} />,
+    document.getElementById('app'),
+  );
+})();

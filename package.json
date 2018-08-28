@@ -22,13 +22,13 @@
     "classnames": "^2.2.6",
     "highlight.js": "^9.12.0",
     "humanize-plus": "^1.8.2",
+    "localforage": "^1.7.2",
     "lodash-es": "^4.17.10",
     "markdown-it": "^8.4.2",
     "markdown-it-anchor": "^5.0.2",
     "normalize.css": "^8.0.0",
     "react": "^16.4.2",
-    "react-dom": "^16.4.2",
-    "store": "^2.0.12"
+    "react-dom": "^16.4.2"
   },
   "devDependencies": {
     "@blueprintjs/tslint-config": "^1.5.0",
@@ -40,7 +40,6 @@
     "@types/markdown-it-anchor": "^4.0.1",
     "@types/react": "^16.4.11",
     "@types/react-dom": "^16.0.7",
-    "@types/store": "^2.0.0",
     "clean-webpack-plugin": "^0.1.19",
     "css-loader": "^1.0.0",
     "dotenv": "^6.0.0",
