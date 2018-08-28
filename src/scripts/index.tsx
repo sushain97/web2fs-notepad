@@ -36,10 +36,10 @@ import {
 } from '@blueprintjs/select';
 import axios, { CancelTokenSource } from 'axios';
 import classNames from 'classnames';
-import HighlightJs from 'highlight.js';
+import * as HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
 import { debounce, sortBy, startCase } from 'lodash-es';
-import MarkdownIt from 'markdown-it';
+import * as MarkdownIt from 'markdown-it';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as store from 'store/dist/store.modern'; // tslint:disable-line no-submodule-imports
@@ -223,25 +223,23 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ renameDialogOpen: false });
   };
 
-  private handleAutoDetectLanguage = () => {
+  private handleAutoDetectLanguage = async () => {
     this.setState({
       format: Format.Code,
       selectLanguageDialogOpen: false,
     });
 
-    this.loadCodeRenderer((highlightJs: typeof HighlightJs) => {
-      const { content } = this.state;
+    await this.loadCodeRenderer();
 
-      const { language } = highlightJs.highlightAuto(content);
-      this.setState({
-        monospace: true,
-        selectedLanguage: language,
-      });
-      this.updateNoteSettings({
-        format: Format.Code,
-        language,
-        monospace: true,
-      });
+    const { language } = this.HighlightJs!.highlightAuto(this.state.content);
+    this.setState({
+      monospace: true,
+      selectedLanguage: language,
+    });
+    this.updateNoteSettings({
+      format: Format.Code,
+      language,
+      monospace: true,
     });
   };
 
@@ -474,54 +472,44 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private loadCodeRenderer = (callback?: ((highlightJs: typeof HighlightJs) => void)) => {
+  private loadCodeRenderer = async () => {
     if (this.HighlightJs) {
-      if (callback) {
-        callback(this.HighlightJs);
-      }
       return;
     }
 
-    import(/* webpackChunkName: "highlight-js" */ 'highlight.js')
-      .then(hljs => {
-        this.HighlightJs = hljs.default || hljs;
-        this.languages = this.HighlightJs.listLanguages().map(name => ({
-          name,
-          ...this.HighlightJs!.getLanguage(name),
-        }));
-
-        if (callback) {
-          callback(this.HighlightJs);
-        } else {
-          this.forceUpdate();
-        }
-      })
-      .catch(error => {
-        AppToaster.show({
-          icon: IconNames.WARNING_SIGN,
-          intent: Intent.WARNING,
-          message: `Fetching code renderer failed: ${error}.`,
-        });
+    try {
+      const hljs = await import(/* webpackChunkName: "highlight-js" */ 'highlight.js');
+      this.HighlightJs = ((hljs as any).default as typeof HighlightJs | undefined) || hljs;
+      this.languages = this.HighlightJs.listLanguages().map(name => ({
+        name,
+        ...this.HighlightJs!.getLanguage(name),
+      }));
+      this.forceUpdate();
+    } catch (error) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: `Fetching code renderer failed: ${error}.`,
       });
+    }
   };
 
-  private loadMarkdownRenderer() {
+  private async loadMarkdownRenderer() {
     if (this.MarkdownIt) {
       return;
     }
 
-    import(/* webpackChunkName: "markdown-it" */ 'markdown-it')
-      .then(md => {
-        this.MarkdownIt = setupMarkdown(md.default || md);
-        this.forceUpdate();
-      })
-      .catch(error => {
-        AppToaster.show({
-          icon: IconNames.WARNING_SIGN,
-          intent: Intent.WARNING,
-          message: `Fetching markdown renderer failed: ${error}.`,
-        });
+    try {
+      const md = await import(/* webpackChunkName: "markdown-it" */ 'markdown-it');
+      this.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
+      this.forceUpdate();
+    } catch (error) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: `Fetching markdown renderer failed: ${error}.`,
       });
+    }
   }
 
   private renderContent({
@@ -630,24 +618,22 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private renderFormatMenu = () => {
-    const { format } = this.state;
-
     return (
       <Menu>
-        {Object.keys(Format).map(fmt => {
+        {Object.keys(Format).map(format => {
           const icon = {
             [Format.PlainText]: IconNames.DOCUMENT,
             [Format.Markdown]: IconNames.STYLE,
             [Format.Code]: IconNames.CODE,
-          }[fmt as Format] as IconName;
+          }[format as Format] as IconName;
 
           return (
             <MenuItem
               icon={icon}
-              text={startCase(fmt)}
-              key={fmt}
-              active={format === Format[fmt as keyof typeof Format]}
-              onClick={this.formatChangeHandler(fmt as Format)}
+              text={startCase(format)}
+              key={format}
+              active={this.state.format === Format[format as keyof typeof Format]}
+              onClick={this.formatChangeHandler(format as Format)}
             />
           );
         })}
@@ -945,8 +931,10 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private updateNote = async () => {
     try {
-      const { note, content } = this.state;
-      const { id } = note;
+      const {
+        note: { id },
+        content,
+      } = this.state;
 
       if (this.cancelTokenSource) {
         this.cancelTokenSource.cancel();

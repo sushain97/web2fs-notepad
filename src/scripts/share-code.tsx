@@ -3,7 +3,7 @@ import '../styles/share.scss';
 
 import { Classes } from '@blueprintjs/core';
 import classNames from 'classnames';
-import HighlightJs from 'highlight.js';
+import * as HighlightJs from 'highlight.js';
 
 const { content, language, mode } = (window as any).CONTEXT;
 

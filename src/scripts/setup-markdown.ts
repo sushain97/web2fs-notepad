@@ -1,6 +1,6 @@
 import { Classes } from '@blueprintjs/core';
 import classNames from 'classnames';
-import MarkdownIt from 'markdown-it';
+import * as MarkdownIt from 'markdown-it';
 
 export default (md: typeof MarkdownIt) => {
   const markdownIt = md({
