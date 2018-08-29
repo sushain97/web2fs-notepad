@@ -1,31 +1,31 @@
 @import '~@blueprintjs/core/lib/scss/variables.scss';
 
 .markdown {
-    :first-child {
-        margin-top: 0;
+  :first-child {
+    margin-top: 0;
+  }
+
+  // Blueprint's default styling of <pre><code> needs tweaking
+  pre > code {
+    background: initial !important;
+    box-shadow: initial !important;
+    color: inherit !important;
+  }
+
+  .header-anchor {
+    color: $gray4;
+
+    .#{$ns}-dark & {
+      color: $gray1;
     }
 
-    // Blueprint's default styling of <pre><code> needs tweaking
-    pre > code {
-        background: initial !important;
-        box-shadow: initial !important;
-        color: inherit !important;
+    &:hover {
+      color: $gray5;
+      text-decoration: none;
+
+      .#{$ns}-dark & {
+        color: $gray2;
+      }
     }
-
-    .header-anchor {
-        color: $gray4;
-
-        .#{$ns}-dark & {
-            color: $gray1;
-        }
-
-        &:hover {
-            color: $gray5;
-            text-decoration: none;
-
-            .#{$ns}-dark & {
-                color: $gray2;
-            }
-        }
-    }
+  }
 }

@@ -1,18 +1,18 @@
 {
-    "defaultSeverity": "error",
-    "extends": [
-        "tslint:latest",
-        "tslint-react",
-        "tslint-eslint-rules",
-        "@blueprintjs/tslint-config/blueprint-rules",
-        "tslint-config-prettier"
-    ],
-    "rules": {
-        "member-ordering": {
-            "options": {
-                "alphabetize": true,
-                "order": "instance-sandwich"
-            }
-        }
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:latest",
+    "tslint-react",
+    "tslint-eslint-rules",
+    "@blueprintjs/tslint-config/blueprint-rules",
+    "tslint-config-prettier"
+  ],
+  "rules": {
+    "member-ordering": {
+      "options": {
+        "alphabetize": true,
+        "order": "instance-sandwich"
+      }
     }
+  }
 }

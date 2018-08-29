@@ -3,15 +3,15 @@
 @import '~normalize.css';
 
 body {
-    background-color: $light-gray5;
-    margin: $pt-grid-size;
+  background-color: $light-gray5;
+  margin: $pt-grid-size;
 
-    &.#{$ns}-dark {
-        background-color: $dark-gray4;
-    }
+  &.#{$ns}-dark {
+    background-color: $dark-gray4;
+  }
 }
 
 #app {
-    overflow: auto;
-    min-width: 100%;
+  overflow: auto;
+  min-width: 100%;
 }
