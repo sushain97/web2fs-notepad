@@ -81,7 +81,7 @@ body {
 
     .#{$ns}-heading {
       display: inline-block;
-      margin: 0 $pt-grid-size 0 0;
+      margin: 0 $pt-grid-size 0 $pt-grid-size * 2.5;
     }
 
     @media (max-width: 576px) {
