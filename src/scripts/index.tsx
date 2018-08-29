@@ -17,9 +17,11 @@ import {
   InputGroup,
   Intent,
   Menu,
+  MenuDivider,
   MenuItem,
   NonIdealState,
   Popover,
+  PopoverInteractionKind,
   Position,
   Pre,
   Spinner,
@@ -431,65 +433,6 @@ class App extends React.Component<IAppProps, IAppState> {
     this.loadCodeRenderer();
   };
 
-  private handleShareButtonClick = async () => {
-    const { format, language, mode, content, note } = this.state;
-
-    if (navigator.clipboard) {
-      // The await here will break a later document.execCommand('copy') so
-      // we only force update a dirty note before sharing if we have access
-      // to the new async Clipboard API.
-      if (note.content !== content) {
-        await this.updateNote();
-      }
-    }
-
-    const url = compact([
-      `${window.location.protocol}/`,
-      punycode.toUnicode(window.location.host),
-      window.location.pathname.substr(1),
-      `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
-      mode === Mode.Dark && mode.toLowerCase(),
-    ]).join('/');
-
-    let error;
-    let textArea;
-    try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
-      } else {
-        textArea = document.createElement('textarea');
-        textArea.value = url;
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        if (!document.execCommand('copy')) {
-          error = 'Unknown failure';
-        }
-      }
-    } catch (err) {
-      error = err.toString();
-    } finally {
-      if (textArea) {
-        document.body.removeChild(textArea);
-      }
-    }
-
-    if (error) {
-      AppToaster.show({
-        icon: IconNames.WARNING_SIGN,
-        intent: Intent.WARNING,
-        message: `Copying share link failed: ${error}.`,
-      });
-    } else {
-      AppToaster.show({
-        icon: IconNames.CLIPBOARD,
-        intent: Intent.SUCCESS,
-        message: 'Copied share link to clipboard.',
-      });
-    }
-  };
-
   private handleViewLatestButtonClick = (ev: React.MouseEvent<HTMLElement>) => {
     this.showNoteVersion(this.state.currentVersion!, ev.metaKey);
   };
@@ -828,6 +771,25 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
+  private renderShareMenu() {
+    return (
+      <Menu>
+        <MenuDivider title="Share Version" />
+        <MenuItem
+          text="Current"
+          label={`v${this.state.note.version}`}
+          onClick={this.shareHandler(true)}
+          icon={IconNames.HISTORY}
+        />
+        <MenuItem
+          text="Latest"
+          onClick={this.shareHandler(false)}
+          icon={IconNames.AUTOMATIC_UPDATES}
+        />
+      </Menu>
+    );
+  }
+
   private renderStatusBar({
     currentVersion,
     note: { version, modificationTime, content },
@@ -932,9 +894,14 @@ class App extends React.Component<IAppProps, IAppState> {
             <Tooltip content="Download" position={Position.TOP}>
               <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
             </Tooltip>
-            <Tooltip content="Share Link" position={Position.TOP}>
-              <Button icon={IconNames.LINK} onClick={this.handleShareButtonClick} />
-            </Tooltip>
+            <Popover
+              content={this.renderShareMenu()}
+              interactionKind={PopoverInteractionKind.HOVER}
+              position={Position.TOP}
+              hoverCloseDelay={200}
+            >
+              <Button icon={IconNames.LINK} onClick={this.shareHandler(true)} />
+            </Popover>
             <Tooltip content="Delete" position={Position.TOP}>
               <Button
                 icon={IconNames.TRASH}
@@ -947,6 +914,73 @@ class App extends React.Component<IAppProps, IAppState> {
       </div>
     );
   }
+
+  private shareHandler = (pinned: boolean) => {
+    return async () => {
+      if (navigator.clipboard) {
+        // The await here will break a later document.execCommand('copy') so
+        // we only force update a dirty note before sharing if we have access
+        // to the new async Clipboard API.
+        if (this.state.note.content !== this.state.content) {
+          await this.updateNote();
+        }
+      }
+
+      const {
+        format,
+        language,
+        mode,
+        note: { id, version },
+      } = this.state;
+
+      const url = compact([
+        `${window.location.protocol}/`,
+        punycode.toUnicode(window.location.host),
+        id,
+        pinned ? version : null,
+        `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
+        mode === Mode.Dark && mode.toLowerCase(),
+      ]).join('/');
+
+      let error;
+      let textArea;
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(url);
+        } else {
+          textArea = document.createElement('textarea');
+          textArea.value = url;
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          if (!document.execCommand('copy')) {
+            error = 'Unknown failure';
+          }
+        }
+      } catch (err) {
+        error = err.toString();
+      } finally {
+        if (textArea) {
+          document.body.removeChild(textArea);
+        }
+      }
+
+      if (error) {
+        AppToaster.show({
+          icon: IconNames.WARNING_SIGN,
+          intent: Intent.WARNING,
+          message: `Copying share link failed: ${error}.`,
+        });
+      } else {
+        AppToaster.show({
+          icon: IconNames.CLIPBOARD,
+          intent: Intent.SUCCESS,
+          message: 'Copied share link to clipboard.',
+        });
+      }
+    };
+  };
 
   private async showNoteVersion(version: number, newWindow: boolean) {
     const {
