@@ -22,6 +22,16 @@ class PageController extends AbstractController
         ]);
     }
 
+    private function ensureNoteVersionExists(NoteStore $store, string $id, ?int $version): void
+    {
+        $hasNote = $store->hasNote($id);
+        if (!$hasNote) {
+            throw $this->createNotFoundException("Note does not exist: $id.");
+        } elseif ($version !== null && !$store->hasNoteVersion($id, $version)) {
+            throw $this->createNotFoundException("Version does not exist: $version.");
+        }
+    }
+
     /**
      * @Route("/", name="new_note", methods={"GET"})
      */
@@ -52,12 +62,8 @@ class PageController extends AbstractController
 
         $hasNote = $store->hasNote($id);
 
-        if ($version !== null && !$store->hasNoteVersion($id, $version)) {
-            if ($hasNote) {
-                throw $this->createNotFoundException("Version does not exist: $version.");
-            } else {
-                throw $this->createNotFoundException("Note does not exist: $id.");
-            }
+        if ($version !== null) {
+            $this->ensureNoteVersionExists($store, $id, $version);
         }
 
         if ($hasNote) {
@@ -104,10 +110,7 @@ class PageController extends AbstractController
         string $mode,
         KernelInterface $kernel
     ): Response {
-        $hasNote = $store->hasNote($id);
-        if (!$hasNote) {
-            throw $this->createNotFoundException("Note does not exist: $id.");
-        }
+        $this->ensureNoteVersionExists($store, $id, null);
 
         $language = null;
         if ($format === 'markdown') {
@@ -150,12 +153,7 @@ class PageController extends AbstractController
         NoteStore $store,
         KernelInterface $kernel
     ): Response {
-        $hasNote = $store->hasNote($id);
-        if (!$hasNote) {
-            throw $this->createNotFoundException("Note does not exist: $id.");
-        } elseif ($version !== null && !$store->hasNoteVersion($id, $version)) {
-            throw $this->createNotFoundException("Version does not exist: $version.");
-        }
+        $this->ensureNoteVersionExists($store, $id, $version);
 
         $language = null;
         if ($format === 'markdown') {

@@ -80,10 +80,10 @@ class NoteStore
         $this->kernel = $kernel;
 
         if (!is_dir($this->getDataDir())) {
-            mkdir($this->getDataDir(), DATA_MODE, true);
+            mkdir($this->getDataDir(), self::DATA_MODE, true);
         }
         if (!is_dir($this->getVersionDataDir())) {
-            mkdir($this->getVersionDataDir(), DATA_DIR_MODE, true);
+            mkdir($this->getVersionDataDir(), self::DATA_DIR_MODE, true);
         }
     }
 
@@ -238,6 +238,8 @@ class NoteStore
 
     public function deleteNote(string $id): void
     {
+        $this->logger->info("Deleting note $id.");
+
         unlink($this->getNoteContentPath($id));
         $versionDataDir = $this->getNoteVersionDataDir($id);
         array_map('unlink', glob("$versionDataDir/*"));
@@ -265,6 +267,8 @@ class NoteStore
         if ($this->hasNote($newId)) {
             throw new \NoteAlreadyExists("Refusing to overwrite $newId content.");
         }
+
+        $this->logger->info("Renaming note $id to $newId.");
 
         $versionDataDir = $this->getNoteVersionDataDir($id);
         $newVersionDataDir = $this->getNoteVersionDataDir($newId);
