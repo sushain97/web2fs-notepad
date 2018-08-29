@@ -949,9 +949,9 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private shareHandler = (pinned: boolean) => {
     return async () => {
-      const { note, content, format, mode, language, readOnly } = this.state;
+      const { note, content, format, mode, language, readOnly, currentVersion } = this.state;
 
-      if (note.content !== content) {
+      if (note.content !== content || currentVersion === null) {
         await this.updateNote();
       }
 
