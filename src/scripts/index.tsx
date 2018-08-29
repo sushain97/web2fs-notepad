@@ -1002,7 +1002,12 @@ class App extends React.Component<IAppProps, IAppState> {
         AppToaster.show({
           icon: IconNames.CLIPBOARD,
           intent: Intent.SUCCESS,
-          message: 'Copied share link to clipboard.',
+          message: compact([
+            'Copied',
+            pinned && 'pinned',
+            readOnly && 'read-only',
+            'share link to clipboard.',
+          ]).join(' '),
         });
       }
     };
