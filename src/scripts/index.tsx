@@ -25,6 +25,7 @@ import {
   Position,
   Pre,
   Spinner,
+  Switch,
   Tag,
   TextArea,
   Toaster,
@@ -98,6 +99,7 @@ interface IAppState {
   mode: Mode;
   monospace: boolean;
   note: INote;
+  readOnly: boolean;
   renameDialogOpen: boolean;
   selectLanguageDialogOpen: boolean;
   updating: boolean;
@@ -140,6 +142,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private HighlightJs?: typeof HighlightJs;
   private languages?: ILanguage[];
   private MarkdownIt?: ReturnType<typeof MarkdownIt>;
+  private readOnlySwitch: React.RefObject<HTMLInputElement> = React.createRef();
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
@@ -165,6 +168,7 @@ class App extends React.Component<IAppProps, IAppState> {
       mode: (settings && settings.mode) || Mode.Light,
       monospace,
       note,
+      readOnly: true,
       renameDialogOpen: false,
       selectLanguageDialogOpen: false,
       updating: false,
@@ -373,6 +377,10 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private handleNoteDeletionCancel = () => {
     this.setState({ confirmDeleteAlertOpen: false });
+  };
+
+  private handleReadOnlyShareToggle = () => {
+    this.setState({ readOnly: !this.state.readOnly });
   };
 
   private handleRename = async (ev?: React.FormEvent) => {
@@ -772,16 +780,39 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private renderShareMenu() {
-    // TODO: add switch for readOnly attr
+    const {
+      readOnly,
+      note: { version },
+      currentVersion,
+    } = this.state;
 
     return (
       <Menu>
-        <MenuDivider title="Share Read-Only" />
-        <MenuItem text="Latest" onClick={this.shareHandler()} icon={IconNames.AUTOMATIC_UPDATES} />
+        <MenuDivider
+          title={
+            <div className="share-menu-header">
+              Share
+              <Divider />
+              <Switch
+                className="share-menu-switch"
+                label="Read-only"
+                checked={readOnly}
+                onChange={this.handleReadOnlyShareToggle}
+                inline={true}
+              />
+            </div>
+          }
+        />
+        <MenuItem
+          text="Latest"
+          label={currentVersion === version ? '(default)' : undefined}
+          onClick={this.shareHandler(false)}
+          icon={IconNames.AUTOMATIC_UPDATES}
+        />
         <MenuItem
           text="Current"
-          label={`v${this.state.note.version}`}
-          onClick={this.shareHandler({ pinned: true })}
+          label={`v${version}`}
+          onClick={this.shareHandler(true)}
           icon={IconNames.HISTORY}
         />
       </Menu>
@@ -898,7 +929,10 @@ class App extends React.Component<IAppProps, IAppState> {
               position={Position.TOP}
               hoverCloseDelay={200}
             >
-              <Button icon={IconNames.LINK} onClick={this.shareHandler()} />
+              <Button
+                icon={IconNames.LINK}
+                onClick={this.shareHandler(currentVersion !== version)}
+              />
             </Popover>
             <Tooltip content="Delete" position={Position.TOP}>
               <Button
@@ -913,10 +947,9 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private shareHandler = (options?: { pinned?: boolean; readOnly?: boolean }) => {
+  private shareHandler = (pinned: boolean) => {
     return async () => {
-      const { pinned = true, readOnly = true } = options || {};
-      const { note, content, format, mode, language } = this.state;
+      const { note, content, format, mode, language, readOnly } = this.state;
 
       if (note.content !== content) {
         await this.updateNote();
