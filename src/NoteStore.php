@@ -322,7 +322,6 @@ class NoteStore
     {
         $this->logger->info("Fetching shared note $id.");
 
-        // TODO: test broken symlink (to deleted note)
         $sharedSymlinkPath = $this->getSharedDataDir().$id;
         $realContentPath = readlink($sharedSymlinkPath);
         $file = fopen($realContentPath, 'r');

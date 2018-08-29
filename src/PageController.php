@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class PageController extends AbstractController
 {
-    private function renderHTML(array $context, string $bundle, string $title, KernelInterface $kernel): Response
+    private function renderHTML(KernelInterface $kernel, array $context, string $bundle, ?string $title = null): Response
     {
         return $this->render('index.html.php', [
             'kernel' => $kernel,
@@ -104,7 +104,7 @@ class PageController extends AbstractController
         } elseif ($request->getAcceptableContentTypes()[0] === 'application/json') {
             return $this->json($data);
         } else {
-            return $this->renderHTML($data, 'index', $id, $kernel);
+            return $this->renderHTML($kernel, $data, 'index', $id);
         }
     }
 
@@ -157,7 +157,7 @@ class PageController extends AbstractController
             'language' => $language,
         ];
 
-        return $this->renderHTML($context, $bundle, $id, $kernel);
+        return $this->renderHTML($kernel, $context, $bundle);
     }
 
     /**
@@ -190,7 +190,7 @@ class PageController extends AbstractController
             'language' => $language,
         ];
 
-        return $this->renderHTML($context, $bundle, $id, $kernel);
+        return $this->renderHTML($kernel, $context, $bundle, $id);
     }
 
     /**
@@ -223,7 +223,7 @@ class PageController extends AbstractController
             'language' => $language,
         ];
 
-        return $this->renderHTML($context, $bundle, $id, $kernel);
+        return $this->renderHTML($kernel, $context, $bundle, $id);
     }
 
     /**
