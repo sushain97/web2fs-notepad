@@ -173,7 +173,7 @@ class PageController extends AbstractController
             'language' => $language,
         ];
 
-        return $this->renderHTML($context, $bundle, "${id}v${version}", $kernel);
+        return $this->renderHTML($context, $bundle, "${id} v${version}", $kernel);
     }
 
     /**
