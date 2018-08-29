@@ -27,6 +27,7 @@
     "markdown-it": "^8.4.2",
     "markdown-it-anchor": "^5.0.2",
     "normalize.css": "^8.0.0",
+    "punycode.js": "^2.1.0",
     "react": "^16.4.2",
     "react-dom": "^16.4.2"
   },

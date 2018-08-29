@@ -42,6 +42,7 @@ import { fileSize } from 'humanize-plus';
 import * as LocalForage from 'localforage';
 import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
 import * as MarkdownIt from 'markdown-it';
+import * as punycode from 'punycode';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import setupMarkdown from './setup-markdown';
@@ -443,7 +444,9 @@ class App extends React.Component<IAppProps, IAppState> {
     }
 
     const url = compact([
-      window.location.href,
+      `${window.location.protocol}/`,
+      punycode.toUnicode(window.location.host),
+      window.location.pathname.substr(1),
       `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
       mode === Mode.Dark && mode.toLowerCase(),
     ]).join('/');
