@@ -22,7 +22,7 @@ class PageController extends AbstractController
         ]);
     }
 
-    private function ensureNoteVersionExists(NoteStore $store, string $id, ?int $version): void
+    private function ensureNoteVersionExists(NoteStore $store, string $id, ?int $version = null): void
     {
         $hasNote = $store->hasNote($id);
         if (!$hasNote) {
@@ -31,6 +31,24 @@ class PageController extends AbstractController
             throw $this->createNotFoundException("Version does not exist: $version.");
         }
     }
+
+    private function extractFormatLanguageAndShareBundle(string $format): array
+    {
+        $language = null;
+        if ($format === 'markdown') {
+            $bundle = 'share-markdown';
+        } elseif (strpos($format, 'code') === 0) {
+            $bundle = 'share-code';
+            $maybeLanguage = explode('-', $format);
+            $language = count($maybeLanguage) > 1 ? $maybeLanguage[1] : null;
+        } else {
+            $bundle = 'share-plaintext';
+        }
+
+        return [$language, $bundle];
+    }
+
+    // TODO: switch routes to something YAML or less ridiculously repetitive
 
     /**
      * @Route("/", name="new_note", methods={"GET"})
@@ -90,38 +108,82 @@ class PageController extends AbstractController
         }
     }
 
+    // TODO: create reserved ids or ensure these don't get saved naturally
+
     /**
      * @Route(
-     *   "/{id}/{format}/{mode}",
-     *   name="show_shared_note",
-     *   methods={"GET"},
-     *   requirements={
-     *     "id"="[A-z0-9_-]+",
-     *     "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
-     *     "mode"="light|dark",
-     *   },
-     *   defaults={"mode"="light"},
+     *     "/share/{id}/{version}",
+     *     name="share_note",
+     *     methods={"POST"},
+     *     requirements={"id"="[A-z0-9_-]+", "version"="\d+"},
+     *     defaults={"version"=null},
      * )
      */
-    public function showSharedNote(
+    public function shareNote(string $id, ?int $version, NoteStore $store): Response
+    {
+        $this->ensureNoteVersionExists($store, $id, $version);
+        $sharedId = $store->shareNote($id, $version);
+        return new Response($sharedId);
+    }
+
+    /**
+     * @Route(
+     *     "/shared/{id}/{format}/{mode}",
+     *     name="show_readonly_shared_note",
+     *     methods={"GET"},
+     *     requirements={
+     *       "id"="@[A-z0-9]{6}",
+     *       "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
+     *       "mode"="light|dark",
+     *     },
+     *     defaults={"format"="plaintext", "mode"="light"},
+     * )
+     */
+    public function showReadonlySharedNote(
         string $id,
         NoteStore $store,
         string $format,
         string $mode,
         KernelInterface $kernel
     ): Response {
-        $this->ensureNoteVersionExists($store, $id, null);
-
-        $language = null;
-        if ($format === 'markdown') {
-            $bundle = 'share-markdown';
-        } elseif (strpos($format, 'code') === 0) {
-            $bundle = 'share-code';
-            $maybeLanguage = explode('-', $format);
-            $language = count($maybeLanguage) > 1 ? $maybeLanguage[1] : null;
-        } else {
-            $bundle = 'share-plaintext';
+        if (!$store->hasSharedNote($id)) {
+            throw $this->createNotFoundException("Shared note does not exist: $id.");
         }
+
+        [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
+        $context = [
+            'mode' => $mode,
+            'content' => $store->getSharedNoteContent($id),
+            'language' => $language,
+        ];
+
+        return $this->renderHTML($context, $bundle, $id, $kernel);
+    }
+
+    /**
+     * @Route(
+     *     "/shared/{id}/{format}/{mode}",
+     *     name="show_shared_note",
+     *     methods={"GET"},
+     *     requirements={
+     *       "id"="[A-z0-9_-]+",
+     *       "version"="\d+",
+     *       "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
+     *       "mode"="light|dark",
+     *     },
+     *     defaults={"format"="plaintext", "mode"="light"},
+     * )
+     */
+    public function showSharedNote(
+        string $id,
+        string $format,
+        string $mode,
+        NoteStore $store,
+        KernelInterface $kernel
+    ): Response {
+        $this->ensureNoteVersionExists($store, $id);
+
+        [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
         $context = [
             'mode' => $mode,
             'content' => $store->getNote($id)->content,
@@ -133,16 +195,15 @@ class PageController extends AbstractController
 
     /**
      * @Route(
-     *   "/{id}/{version}/{format}/{mode}",
-     *   name="show_shared_note_version",
-     *   methods={"GET"},
-     *   requirements={
-     *     "id"="[A-z0-9_-]+",
-     *     "version"="\d+",
-     *     "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
-     *     "mode"="light|dark",
-     *   },
-     *   defaults={"mode"="light"},
+     *     "/shared/{id}/{version}/{format}/{mode}",
+     *     name="show_shared_note_version",
+     *     methods={"GET"},
+     *     requirements={
+     *       "id"="[A-z0-9_-]+",
+     *       "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
+     *       "mode"="light|dark",
+     *     },
+     *     defaults={"format"="plaintext", "mode"="light"},
      * )
      */
     public function showSharedNoteVersion(
@@ -155,23 +216,14 @@ class PageController extends AbstractController
     ): Response {
         $this->ensureNoteVersionExists($store, $id, $version);
 
-        $language = null;
-        if ($format === 'markdown') {
-            $bundle = 'share-markdown';
-        } elseif (strpos($format, 'code') === 0) {
-            $bundle = 'share-code';
-            $maybeLanguage = explode('-', $format);
-            $language = count($maybeLanguage) > 1 ? $maybeLanguage[1] : null;
-        } else {
-            $bundle = 'share-plaintext';
-        }
+        [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
         $context = [
             'mode' => $mode,
             'content' => $store->getNote($id, $version)->content,
             'language' => $language,
         ];
 
-        return $this->renderHTML($context, $bundle, "${id} v${version}", $kernel);
+        return $this->renderHTML($context, $bundle, $id, $kernel);
     }
 
     /**

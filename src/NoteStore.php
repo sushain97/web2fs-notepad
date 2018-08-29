@@ -85,6 +85,9 @@ class NoteStore
         if (!is_dir($this->getVersionDataDir())) {
             mkdir($this->getVersionDataDir(), self::DATA_DIR_MODE, true);
         }
+        if (!is_dir($this->getSharedDataDir())) {
+            mkdir($this->getSharedDataDir(), self::DATA_DIR_MODE, true);
+        }
     }
 
     private function getDataDir(): string
@@ -95,6 +98,11 @@ class NoteStore
     private function getVersionDataDir(): string
     {
         return $this->getDataDir().'_versions/';
+    }
+
+    private function getSharedDataDir(): string
+    {
+        return $this->getDataDir().'_shared/';
     }
 
     private function getNoteVersionDataDir(string $id): string
@@ -183,7 +191,7 @@ class NoteStore
         $file = fopen($path, 'r');
         if (flock($file, LOCK_SH)) {
             $fileSize = filesize($path);
-            $content = $fileSize == 0 ? '' : fread($file, filesize($path));
+            $content = $fileSize == 0 ? '' : fread($file, $fileSize);
             if ($content === false) {
                 flock($file, LOCK_UN);
                 throw new \Exception('Unable to load note.');
@@ -277,5 +285,59 @@ class NoteStore
         $contentPath = $this->getNoteContentPath($id);
         $newContentPath = $this->getNoteContentPath($newId);
         rename($contentPath, $newContentPath);
+    }
+
+    public function shareNote(string $id, ?int $version = null): string
+    {
+        $this->logger->info("Sharing note $id at version $version.");
+
+        $attempts = 1;
+        do {
+            if ($attempts >= self::MAX_ID_SELECTION_ATTEMPTS) {
+                throw new MaxIdSelectionAttemptsExceeded("Gave up after $attempts attempts.");
+            }
+
+            $attempts++;
+            $sharedId = '@'.substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), -6);
+        } while ($sharedId == null || $this->hasSharedNote($sharedId));
+
+        $this->logger->info("Generated note shared id: $sharedId.");
+
+        $sharedSymlinkPath = $this->getSharedDataDir().$sharedId;
+        if ($version === null) {
+            symlink($this->getNoteContentPath($id), $sharedSymlinkPath);
+        } else {
+            symlink($this->getNoteContentPath($id, $version), $sharedSymlinkPath);
+        }
+
+        return $sharedId;
+    }
+
+    public function hasSharedNote(string $id): bool
+    {
+        return file_exists($this->getSharedDataDir().$id);
+    }
+
+    public function getSharedNoteContent(string $id): string
+    {
+        $this->logger->info("Fetching shared note $id.");
+
+        // TODO: test broken symlink (to deleted note)
+        $sharedSymlinkPath = $this->getSharedDataDir().$id;
+        $realContentPath = readlink($sharedSymlinkPath);
+        $file = fopen($realContentPath, 'r');
+        if (flock($file, LOCK_SH)) {
+            $fileSize = filesize($realContentPath);
+            $content = $fileSize == 0 ? '' : fread($file, $fileSize);
+            if ($content === false) {
+                flock($file, LOCK_UN);
+                throw new \Exception('Unable to load note.');
+            }
+            flock($file, LOCK_UN);
+        } else {
+            throw new \Exception('Unable to secure file lock');
+        }
+
+        return $content;
     }
 }

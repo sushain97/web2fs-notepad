@@ -772,19 +772,17 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private renderShareMenu() {
+    // TODO: add switch for readOnly attr
+
     return (
       <Menu>
-        <MenuDivider title="Share Version" />
+        <MenuDivider title="Share Read-Only" />
+        <MenuItem text="Latest" onClick={this.shareHandler()} icon={IconNames.AUTOMATIC_UPDATES} />
         <MenuItem
           text="Current"
           label={`v${this.state.note.version}`}
-          onClick={this.shareHandler(true)}
+          onClick={this.shareHandler({ pinned: true })}
           icon={IconNames.HISTORY}
-        />
-        <MenuItem
-          text="Latest"
-          onClick={this.shareHandler(false)}
-          icon={IconNames.AUTOMATIC_UPDATES}
         />
       </Menu>
     );
@@ -900,7 +898,7 @@ class App extends React.Component<IAppProps, IAppState> {
               position={Position.TOP}
               hoverCloseDelay={200}
             >
-              <Button icon={IconNames.LINK} onClick={this.shareHandler(true)} />
+              <Button icon={IconNames.LINK} onClick={this.shareHandler()} />
             </Popover>
             <Tooltip content="Delete" position={Position.TOP}>
               <Button
@@ -915,30 +913,24 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private shareHandler = (pinned: boolean) => {
+  private shareHandler = (options?: { pinned?: boolean; readOnly?: boolean }) => {
     return async () => {
-      if (navigator.clipboard) {
-        // The await here will break a later document.execCommand('copy') so
-        // we only force update a dirty note before sharing if we have access
-        // to the new async Clipboard API.
-        if (this.state.note.content !== this.state.content) {
-          await this.updateNote();
-        }
+      const { pinned = true, readOnly = true } = options || {};
+      const { note, content, format, mode, language } = this.state;
+
+      if (note.content !== content) {
+        await this.updateNote();
       }
 
-      const {
-        format,
-        language,
-        mode,
-        note: { id, version },
-      } = this.state;
-
+      const urlFormat = `${format.toLowerCase()}${
+        format === Format.Code && language ? `-${language}` : ''
+      }`;
       const url = compact([
         `${window.location.protocol}/`,
         punycode.toUnicode(window.location.host),
-        id,
-        pinned ? version : null,
-        `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
+        'shared',
+        ...(readOnly ? [await this.shareNote(pinned)] : [note.id, pinned ? note.version : null]),
+        urlFormat,
         mode === Mode.Dark && mode.toLowerCase(),
       ]).join('/');
 
@@ -967,6 +959,7 @@ class App extends React.Component<IAppProps, IAppState> {
       }
 
       if (error) {
+        // TODO: fallback dialog
         AppToaster.show({
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
@@ -981,6 +974,13 @@ class App extends React.Component<IAppProps, IAppState> {
       }
     };
   };
+
+  private async shareNote(pinned: boolean) {
+    const {
+      note: { id, version },
+    } = this.state;
+    return (await axios.post<string>(`/share/${id}${pinned ? `/${version}` : ''}`)).data;
+  }
 
   private async showNoteVersion(version: number, newWindow: boolean) {
     const {
