@@ -44,6 +44,9 @@ dependency on [`jq`][14]).
 If you're building for production, also run
 `composer dump-autoload --optimize`.
 
+N.B. The PHP `iconv` and `ctype` extensions are required and are installed
+by default in most environments.
+
 ## Development
 
 Use the local build instructions above to install dependencies. Then, start
