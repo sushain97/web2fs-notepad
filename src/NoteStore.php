@@ -92,10 +92,10 @@ class NoteStore
         $file = fopen($path, 'r');
         if (flock($file, LOCK_SH)) {
             $fileSize = filesize($path);
-            $content = $fileSize == 0 ? '' : fread($file, $fileSize);
+            $content = $fileSize === 0 ? '' : fread($file, $fileSize);
             if ($content === false) {
                 flock($file, LOCK_UN);
-                throw new \Exception('Unable to load file.');
+                throw new \Exception('Unable to load file');
             }
             flock($file, LOCK_UN);
         } else {
@@ -168,12 +168,12 @@ class NoteStore
         $time = filemtime($this->getNoteContentPath($id, $version));
 
         if ($time === false) {
-            throw new \Exception("Unable to fetch modification time");
+            throw new \Exception('Unable to fetch modification time');
         }
         return $time;
     }
 
-    private function getVersions(string $id): array
+    private function getNoteVersions(string $id): array
     {
         $versions = array_diff(scandir($this->getNoteVersionDataDir($id)), ['.', '..']);
         sort($versions, SORT_NUMERIC);
@@ -183,7 +183,7 @@ class NoteStore
     public function getCurrentNoteVersion(string $id): int
     {
         if ($this->hasNote($id)) {
-            $versions = $this->getVersions($id);
+            $versions = $this->getNoteVersions($id);
             return intval(end($versions));
         } else {
             return self::INITIAL_VERSION;
@@ -250,12 +250,12 @@ class NoteStore
         $rootContentPath = $this->getNoteContentPath($id);
         $rootContentFile = fopen($rootContentPath, 'w');
         if (flock($rootContentFile, LOCK_EX)) {
-            $this->logger->debug("Writing new version to $rootContentPath");
+            $this->logger->debug("Writing new version to $rootContentPath.");
             fwrite($rootContentFile, $content);
 
             $newVersion = $newNote ? self::INITIAL_VERSION : $this->getCurrentNoteVersion($id) + 1;
             $newVersionPath = $this->getNoteVersionPath($id, $newVersion);
-            $this->logger->debug("Writing new version to $newVersionPath");
+            $this->logger->debug("Writing new version to $newVersionPath.");
             file_put_contents($newVersionPath, $content);
 
             flock($rootContentFile, LOCK_UN);
@@ -283,7 +283,7 @@ class NoteStore
         $versionDataDir = $this->getNoteVersionDataDir($id);
 
         $history = array_map(
-            function ($version) use ($versionDataDir): NoteHistoryEntry {
+            function (int $version) use ($versionDataDir): NoteHistoryEntry {
                 $stat = stat($versionDataDir.$version);
                 return new NoteHistoryEntry($stat['mtime'], $stat['size']);
             },
@@ -321,40 +321,60 @@ class NoteStore
             }
 
             $attempts++;
-            $sharedId = '@'.substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), -6);
-        } while ($sharedId == null || $this->hasSharedNote($sharedId));
+            $shareId = '@'.substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'), -6);
+        } while ($shareId == null || $this->hasSharedNote($shareId));
 
-        $this->logger->info("Generated note shared id: $sharedId.");
+        $this->logger->info("Generated note shared id: $shareId.");
 
-        $sharedSymlinkPath = $this->getSharesDataDir().$sharedId;
+        $sharedSymlinkPath = $this->getSharesDataDir().$shareId;
         if ($version === null) {
-            symlink('../'.$id, $sharedSymlinkPath);
+            symlink("../$id", $sharedSymlinkPath);
         } else {
-            symlink('../'.self::VERSION_DATA_DIR.$id.'/'.$version, $sharedSymlinkPath);
+            symlink('../'.self::VERSION_DATA_DIR."$id/$version", $sharedSymlinkPath);
         }
 
+        $metadataPath = $this->getNoteMetadataPath($id);
+        $metadataFile = fopen($metadataPath, 'c+');
+        if (flock($metadataFile, LOCK_EX)) {
+            if (file_exists($metadataPath)) {
+                $this->logger->debug('Reading existing metadata.');
+                $content = fread($metadataFile, filesize($path));
+                $metadata = NoteMetadata::fromJSON($content);
+            } else {
+                $this->logger->debug('Creating new metadata.');
+                $metadata = new NoteMetadata();
+            }
 
+            $metadata->shares[] = $shareId;
 
-        return $sharedId;
+            $this->logger->debug('Flushing updated metadata.');
+            ftruncate($metadataFile, 0);
+            fwrite(json_encode($metadata->serialize(), JSON_PRETTY_PRINT));
+
+            flock($metadataFile, LOCK_UN);
+        } else {
+            throw new \Exception('Unable to secure metadata file lock');
+        }
+
+        return $shareId;
     }
 
-    public function hasSharedNote(string $id): bool
+    public function hasSharedNote(string $shareId): bool
     {
-        return is_link($this->getSharesDataDir().$id);
+        return is_link($this->getSharesDataDir().$shareId);
     }
 
-    public function hasExtantSharedNote(string $id): bool
+    public function hasExtantSharedNote(string $shareId): bool
     {
-        return file_exists($this->getSharesDataDir().$id);
+        return file_exists($this->getSharesDataDir().$shareId);
     }
 
-    public function getSharedNoteContent(string $id): string
+    public function getSharedNoteContent(string $shareId): string
     {
-        $this->logger->info("Fetching shared note $id.");
+        $this->logger->info("Fetching shared note $shareId.");
 
         $sharesDataDir = $this->getSharesDataDir();
-        $sharedSymlinkPath = $sharesDataDir.$id;
-        $path = $sharesDataDir.readlink($sharedSymlinkPath);
+        $path = $sharesDataDir.readlink($sharesDataDir.$shareId);
         $content = self::readFileWithLock($path);
 
         return $content;
