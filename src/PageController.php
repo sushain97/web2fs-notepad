@@ -76,6 +76,7 @@ class PageController extends AbstractController
 
         $request = Request::createFromGlobals();
         $userAgent = $request->headers->get('User-Agent');
+        $contentType = $request->getAcceptableContentTypes()[0];
 
         if ($hasNote) {
             $note = $store->getNote($id, $version);
@@ -92,10 +93,10 @@ class PageController extends AbstractController
             'currentVersion' => $currentVersion,
         ];
 
-        if (strpos($userAgent, 'curl') === 0) {
-            return new Response($content);
-        } elseif ($request->getAcceptableContentTypes()[0] === 'application/json') {
+        if ($contentType === 'application/json') {
             return $this->json($data);
+        } elseif (strpos($userAgent, 'curl') === 0 || $contentType === 'text/plain') {
+            return new Response($note->content);
         } else {
             return $this->renderHTML($kernel, $data, 'index', $id);
         }
