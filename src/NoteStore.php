@@ -74,6 +74,9 @@ class NoteStore
     private const DATA_DIR_MODE = 0755;
     private const DATA_MODE = 0644;
 
+    private const VERSION_DATA_DIR = '_versions/';
+    private const SHARED_DATA_DIR = '_shared/';
+
     public static function isIdReserved(string $id): bool
     {
         return $id === 'shared';
@@ -110,12 +113,12 @@ class NoteStore
 
     private function getVersionDataDir(): string
     {
-        return $this->getDataDir().'_versions/';
+        return $this->getDataDir().self::VERSION_DATA_DIR;
     }
 
     private function getSharedDataDir(): string
     {
-        return $this->getDataDir().'_shared/';
+        return $this->getDataDir().self::SHARED_DATA_DIR;
     }
 
     private function getNoteVersionDataDir(string $id): string
@@ -318,9 +321,9 @@ class NoteStore
 
         $sharedSymlinkPath = $this->getSharedDataDir().$sharedId;
         if ($version === null) {
-            symlink($this->getNoteContentPath($id), $sharedSymlinkPath);
+            symlink('../'.$id, $sharedSymlinkPath);
         } else {
-            symlink($this->getNoteContentPath($id, $version), $sharedSymlinkPath);
+            symlink('../'.self::VERSION_DATA_DIR.$id.'/'.$version, $sharedSymlinkPath);
         }
 
         return $sharedId;
@@ -335,8 +338,9 @@ class NoteStore
     {
         $this->logger->info("Fetching shared note $id.");
 
-        $sharedSymlinkPath = $this->getSharedDataDir().$id;
-        $realContentPath = readlink($sharedSymlinkPath);
+        $sharedDataDir = $this->getSharedDataDir();
+        $sharedSymlinkPath = $sharedDataDir.$id;
+        $realContentPath = $sharedDataDir.readlink($sharedSymlinkPath);
         $file = fopen($realContentPath, 'r');
         if (flock($file, LOCK_SH)) {
             $fileSize = filesize($realContentPath);
