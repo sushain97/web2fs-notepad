@@ -302,16 +302,18 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleContentKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    const { currentTarget, keyCode } = ev;
+    const { currentTarget, key, shiftKey } = ev;
 
-    if (keyCode === 9) {
+    if (key === 'Tab') {
       ev.preventDefault();
 
-      const { selectionStart, selectionEnd, value } = currentTarget;
-      currentTarget.value = `${value.substring(0, selectionStart)}\t${value.substring(
-        selectionEnd,
-      )}`;
-      currentTarget.selectionEnd = selectionStart + 1;
+      if (!shiftKey) {
+        const { selectionStart, selectionEnd, value } = currentTarget;
+        currentTarget.value = `${value.substring(0, selectionStart)}\t${value.substring(
+          selectionEnd,
+        )}`;
+        currentTarget.selectionEnd = selectionStart + 1;
+      }
     }
   };
 
