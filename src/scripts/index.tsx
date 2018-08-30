@@ -40,6 +40,7 @@ import {
 } from '@blueprintjs/select';
 import axios, { CancelTokenSource } from 'axios';
 import classNames from 'classnames';
+import * as download from 'downloadjs';
 import * as HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
 import * as LocalForage from 'localforage';
@@ -360,12 +361,9 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleDownloadButtonClick = () => {
-    const {
-      format,
-      note: { content, id, version },
-      language,
-    } = this.state;
+    const { format, note, content, language } = this.state;
 
+    // We pick the shortest alias/name as a poor man's extension heuristic.
     let extension = FormatExtensions[format];
     if (format === Format.Code && language && this.HighlightJs) {
       extension = [...(this.HighlightJs.getLanguage(language).aliases || []), language].sort(
@@ -373,18 +371,9 @@ class App extends React.Component<IAppProps, IAppState> {
       )[0];
     }
 
-    const filename = `${id}_${version}.${extension}`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    if (window.navigator.msSaveOrOpenBlob) {
-      window.navigator.msSaveBlob(blob, filename);
-    } else {
-      const downloadLink = window.document.createElement('a');
-      downloadLink.href = window.URL.createObjectURL(blob);
-      downloadLink.download = filename;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-    }
+    const filename = `${note.id}_${note.version}.${extension}`;
+    const type = format === Format.Markdown ? 'text/markdown' : 'text/plain';
+    download(content, filename, type);
   };
 
   private handleHistoryPopoverOpening = async () => {
