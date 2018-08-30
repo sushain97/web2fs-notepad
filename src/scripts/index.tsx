@@ -146,7 +146,6 @@ class App extends React.Component<IAppProps, IAppState> {
   private HighlightJs?: typeof HighlightJs;
   private languages?: ILanguage[];
   private MarkdownIt?: ReturnType<typeof MarkdownIt>;
-  private readOnlySwitch: React.RefObject<HTMLInputElement> = React.createRef();
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
