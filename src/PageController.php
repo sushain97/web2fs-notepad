@@ -34,7 +34,7 @@ class PageController extends AbstractController
 
     private function ensureNoteIdNotReserved(NoteStore $store, string $id): void
     {
-        if ($store->isIdReserved($id)) {
+        if (NoteStore::isIdReserved($id)) {
             throw new BadRequestHttpException("Reserved note id: $id.");
         }
     }
@@ -212,21 +212,20 @@ class PageController extends AbstractController
 
     public function renameNote(string $id, NoteStore $store): Response
     {
-        $this->ensureNoteIdNotReserved($store, $id);
-
         $request = Request::createFromGlobals();
         if (!$request->request->has('newId')) {
             throw new BadRequestHttpException('Missing newId parameter.');
         }
 
         $newId = $request->request->get('newId');
+        $this->ensureNoteIdNotReserved($store, $newId);
 
         if ($store->hasNote($newId)) {
             throw new BadRequestHttpException('Cannot overwrite existing note.');
         }
 
-        if (!preg_match('/[A-z0-9_-]+/', $newId)) {
-            throw new BadRequestHttpException('New ID must match pattern [A-z0-9_-]+.');
+        if (!NoteStore::isIdValid($newId)) {
+            throw new BadRequestHttpException('New ID must match pattern '.NoteStore::ID_PATTERN.'.');
         }
 
         // Renaming a non-existent note is effectively a no-op so just let the

@@ -74,6 +74,16 @@ class NoteStore
     private const DATA_DIR_MODE = 0755;
     private const DATA_MODE = 0644;
 
+    public static function isIdReserved(string $id): bool
+    {
+        return $id === 'shared';
+    }
+
+    public static function isIdValid(string $id): bool
+    {
+        return !self::isIdReserved($id) && preg_match('/^'.self::ID_PATTERN.'$/', $id);
+    }
+
     private $logger;
     private $kernel;
 
@@ -169,16 +179,11 @@ class NoteStore
 
             $attempts++;
             $id = substr(str_shuffle('234579abcdefghjkmnpqrstwxyz'), -5);
-        } while ($id == null || $this->hasNote($id));
+        } while ($id == null || $this->hasNote($id) || !$this->isIdValid($id));
 
         $this->logger->info("Generated new note id: $id.");
 
         return $id;
-    }
-
-    public function isIdReserved(string $id): bool
-    {
-        return $id === 'shared';
     }
 
     public function hasNote(string $id): bool
