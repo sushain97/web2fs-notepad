@@ -773,7 +773,7 @@ class App extends React.Component<IAppProps, IAppState> {
               }
             >
               <input
-                className={Classes.INPUT}
+                className={classNames(Classes.INPUT, Classes.FILL)}
                 required={true}
                 autoFocus={true}
                 pattern="[A-z0-9_-]+"

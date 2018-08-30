@@ -63,11 +63,37 @@ class NoteHistoryEntry
     }
 }
 
+class NoteMetadata
+{
+    public $shares;
+
+    public static function fromJSON(string $rawData): NoteMetadata
+    {
+        $metadata = new self();
+        $data = json_decode($rawData);
+        $metadata->shares = $data->shares;
+        return $metadata;
+    }
+
+    public function __construct()
+    {
+        $this->shares = [];
+    }
+
+    public function serialize(): array
+    {
+        return [
+            'shares' => $this->shares,
+        ];
+    }
+}
+
 class NoteStore
 {
     public const INITIAL_VERSION = 1;
     public const ID_PATTERN = '[A-z0-9_-]+';
     public const SHARED_ID_PATTERN = '@[A-z0-9]{6}';
+    public const VERSION_PATTERN = '\d+';
 
     private const MAX_ID_SELECTION_ATTEMPTS = 10;
     private const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
@@ -76,6 +102,7 @@ class NoteStore
 
     private const VERSION_DATA_DIR = '_versions/';
     private const SHARES_DATA_DIR = '_shares/';
+    private const METADATA_DATA_DIR = '_metadata/';
 
     public static function isIdReserved(string $id): bool
     {
@@ -122,6 +149,9 @@ class NoteStore
         if (!is_dir($this->getSharesDataDir())) {
             mkdir($this->getSharesDataDir(), self::DATA_DIR_MODE, true);
         }
+        if (!is_dir($this->getMetadataDataDir())) {
+            mkdir($this->getMetadataDataDir(), self::DATA_DIR_MODE, true);
+        }
     }
 
     private function getDataDir(): string
@@ -137,6 +167,16 @@ class NoteStore
     private function getSharesDataDir(): string
     {
         return $this->getDataDir().self::SHARES_DATA_DIR;
+    }
+
+    private function getMetadataDataDir(): string
+    {
+        return $this->getDataDir().self::METADATA_DATA_DIR;
+    }
+
+    private function getNoteMetadataPath(string $id): string
+    {
+        return $this->getMetadataDataDir().$id;
     }
 
     private function getNoteVersionDataDir(string $id): string
@@ -160,6 +200,15 @@ class NoteStore
             return $this->getDataDir().$id;
         } else {
             return $this->getNoteVersionPath($id, $version);
+        }
+    }
+
+    private function getShareDirRelativeNoteContentPath(string $id, ?int $version = null): string
+    {
+        if ($version === null) {
+            return "../$id";
+        } else {
+            return '../'.self::VERSION_DATA_DIR."$id/$version";
         }
     }
 
@@ -272,6 +321,16 @@ class NoteStore
         $this->logger->info("Deleting note $id.");
 
         unlink($this->getNoteContentPath($id));
+
+        // We intentionally leave any existing shares intact so that their ids
+        // are not incidentally allocated to another note. Since they are now
+        // dangling symlinks, they will externally behave identically to a non-
+        // existent share.
+        $metadataPath = $this->getNoteMetadataPath($id);
+        if (file_exists($metadataPath)) {
+            unlink($metadataPath);
+        }
+
         $versionDataDir = $this->getNoteVersionDataDir($id);
         array_map('unlink', glob("$versionDataDir/*"));
         rmdir($versionDataDir);
@@ -279,7 +338,7 @@ class NoteStore
 
     public function getNoteHistory(string $id): array
     {
-        $versions = $this->getVersions($id);
+        $versions = $this->getNoteVersions($id);
         $versionDataDir = $this->getNoteVersionDataDir($id);
 
         $history = array_map(
@@ -308,6 +367,38 @@ class NoteStore
         $contentPath = $this->getNoteContentPath($id);
         $newContentPath = $this->getNoteContentPath($newId);
         rename($contentPath, $newContentPath);
+
+        $metadataPath = $this->getNoteMetadataPath($id);
+        if (file_exists($metadataPath)) {
+            $newMetadataPath = $this->getNoteMetadataPath($newId);
+            rename($metadataPath, $newMetadataPath);
+
+            $content = self::readFileWithLock($newMetadataPath);
+            $metadata = NoteMetadata::fromJSON($content);
+
+            $sharesDataDir = $this->getSharesDataDir();
+            $oldRootContentPath = $this->getShareDirRelativeNoteContentPath($id);
+            $newRootContentPath = $this->getShareDirRelativeNoteContentPath($newId);
+            $versionContentPathRegex = '|^../'.self::VERSION_DATA_DIR."$id/(".self::VERSION_PATTERN.')$|';
+
+            foreach ($metadata->shares as $shareId) {
+                $shareSymlinkPath = $sharesDataDir.$shareId;
+                $contentPath = readlink($shareSymlinkPath);
+
+                $matches = [];
+                if ($contentPath === $oldRootContentPath) {
+                    $newContentPath = $newRootContentPath;
+                } elseif (preg_match($versionContentPathRegex, $contentPath, $matches)) {
+                    $newContentPath = $this->getShareDirRelativeNoteContentPath($newId, $matches[1]);
+                } else {
+                    throw new \Exception("Found unrecognized content path link $contentPath");
+                }
+
+                $this->logger->debug("Moving share $shareId from $contentPath to $newContentPath.");
+                unlink($shareSymlinkPath);
+                symlink($newContentPath, $shareSymlinkPath);
+            }
+        }
     }
 
     public function shareNote(string $id, ?int $version = null): string
@@ -326,30 +417,33 @@ class NoteStore
 
         $this->logger->info("Generated note shared id: $shareId.");
 
-        $sharedSymlinkPath = $this->getSharesDataDir().$shareId;
-        if ($version === null) {
-            symlink("../$id", $sharedSymlinkPath);
-        } else {
-            symlink('../'.self::VERSION_DATA_DIR."$id/$version", $sharedSymlinkPath);
-        }
+        // We use a symlink rather than a hard link so that the dangling link
+        // is left behind to reserve this id. In order to support renames,
+        // we maintain a listing of them in metadata. The paths are relative
+        // in order to facilitate renames.
+        $shareSymlinkPath = $this->getSharesDataDir().$shareId;
+        $relativeContentPath = $this->getShareDirRelativeNoteContentPath($id, $version);
+        symlink($relativeContentPath, $shareSymlinkPath);
 
         $metadataPath = $this->getNoteMetadataPath($id);
         $metadataFile = fopen($metadataPath, 'c+');
         if (flock($metadataFile, LOCK_EX)) {
-            if (file_exists($metadataPath)) {
-                $this->logger->debug('Reading existing metadata.');
-                $content = fread($metadataFile, filesize($path));
-                $metadata = NoteMetadata::fromJSON($content);
-            } else {
+            $fileSize = filesize($metadataPath);
+            if ($fileSize === 0) {
                 $this->logger->debug('Creating new metadata.');
                 $metadata = new NoteMetadata();
+            } else {
+                $this->logger->debug('Reading existing metadata.');
+                $content = fread($metadataFile, $fileSize);
+                $metadata = NoteMetadata::fromJSON($content);
             }
 
             $metadata->shares[] = $shareId;
 
             $this->logger->debug('Flushing updated metadata.');
             ftruncate($metadataFile, 0);
-            fwrite(json_encode($metadata->serialize(), JSON_PRETTY_PRINT));
+            fseek($metadataFile, 0);
+            fwrite($metadataFile, json_encode($metadata->serialize(), JSON_PRETTY_PRINT));
 
             flock($metadataFile, LOCK_UN);
         } else {

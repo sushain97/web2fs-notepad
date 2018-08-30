@@ -9,7 +9,7 @@ use Symfony\Component\Routing\Route;
 
 const ID_REQ = NoteStore::ID_PATTERN;
 const SHARED_ID_REQ = NoteStore::SHARED_ID_PATTERN;
-const VERSION_REQ = '\d{1,3}';
+const VERSION_REQ = NoteStore::VERSION_PATTERN;
 const FORMAT_REQ = 'raw|plaintext|plainText|markdown|code(-[^/]+)?';
 const MODE_REQ = 'light|dark';
 
