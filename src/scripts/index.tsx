@@ -102,6 +102,8 @@ interface IAppState {
   readOnly: boolean;
   renameDialogOpen: boolean;
   selectLanguageDialogOpen: boolean;
+  shareUrl?: string;
+  shareUrlSuccessMessage?: string;
   updating: boolean;
 }
 
@@ -207,6 +209,7 @@ class App extends React.Component<IAppProps, IAppState> {
         {this.renderContent(this.state)}
         {this.renderStatusBar(this.state)}
         {this.renderDeleteAlert(this.state)}
+        {this.renderCopyShareUrlAlert(this.state)}
         {this.renderRenameDialog(this.state)}
         {this.renderSelectLanguageDialog(this.state)}
       </div>
@@ -305,6 +308,34 @@ class App extends React.Component<IAppProps, IAppState> {
       )}`;
       currentTarget.selectionEnd = selectionStart + 1;
     }
+  };
+
+  private handleCopyShareLinkInputFocus({ currentTarget }: React.FocusEvent<HTMLInputElement>) {
+    currentTarget.scrollLeft = 0;
+    currentTarget.select();
+  }
+
+  private handleCopyShareUrl = () => {
+    try {
+      const { shareUrl, shareUrlSuccessMessage } = this.state;
+      App.copyTextToClipboard(shareUrl!);
+      AppToaster.show({
+        icon: IconNames.CLIPBOARD,
+        intent: Intent.SUCCESS,
+        message: shareUrlSuccessMessage!,
+      });
+      this.setState({ shareUrl: undefined });
+    } catch (error) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: `Copying share link failed: ${error}`,
+      });
+    }
+  };
+
+  private handleCopyShareUrlCancel = () => {
+    this.setState({ shareUrl: undefined });
   };
 
   private handleDeleteButtonClick = () => {
@@ -424,8 +455,8 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ renameDialogOpen: true });
   };
 
-  private handleSelectionChange = () => {
-    if (this.contentRef) {
+  private handleSelectionChange = ({ currentTarget }: Event) => {
+    if (this.contentRef && currentTarget === this.contentRef) {
       this.updateNoteSettings({
         selectionEnd: this.contentRef.selectionEnd,
         selectionStart: this.contentRef.selectionStart,
@@ -441,13 +472,13 @@ class App extends React.Component<IAppProps, IAppState> {
     this.loadCodeRenderer();
   };
 
-  private handleViewLatestButtonClick = (ev: React.MouseEvent<HTMLElement>) => {
-    this.showNoteVersion(this.state.currentVersion!, ev.metaKey);
+  private handleViewLatestButtonClick = ({ metaKey }: React.MouseEvent<HTMLElement>) => {
+    this.showNoteVersion(this.state.currentVersion!, metaKey);
   };
 
   private historyMenuItemClickHandler = (version: number) => {
-    return (ev: React.MouseEvent<HTMLElement>) => {
-      this.showNoteVersion(version, ev.metaKey);
+    return ({ metaKey }: React.MouseEvent<HTMLElement>) => {
+      this.showNoteVersion(version, metaKey);
     };
   };
 
@@ -584,6 +615,32 @@ class App extends React.Component<IAppProps, IAppState> {
     } else {
       return textArea;
     }
+  }
+
+  private renderCopyShareUrlAlert({ shareUrl, mode }: IAppState) {
+    return (
+      <Alert
+        cancelButtonText="Cancel"
+        onConfirm={this.handleCopyShareUrl}
+        isOpen={shareUrl != null}
+        icon={IconNames.SHARE}
+        className={classNames('copy-share-link-alert', { [Classes.DARK]: mode === Mode.Dark })}
+        canEscapeKeyCancel={true}
+        canOutsideClickCancel={true}
+        onCancel={this.handleCopyShareUrlCancel}
+        intent={Intent.PRIMARY}
+        confirmButtonText="Copy Share Link"
+      >
+        <InputGroup
+          value={shareUrl}
+          readOnly={true}
+          leftIcon={IconNames.CLIPBOARD}
+          className={Classes.FILL}
+          autoFocus={true}
+          onFocus={this.handleCopyShareLinkInputFocus}
+        />
+      </Alert>
+    );
   }
 
   private renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
@@ -955,59 +1012,29 @@ class App extends React.Component<IAppProps, IAppState> {
         await this.updateNote();
       }
 
-      const urlFormat = `${format.toLowerCase()}${
-        format === Format.Code && language ? `-${language}` : ''
-      }`;
       const url = compact([
         `${window.location.protocol}/`,
         punycode.toUnicode(window.location.host),
         'shared',
         ...(readOnly ? [await this.shareNote(pinned)] : [note.id, pinned ? note.version : null]),
-        urlFormat,
+        `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
         mode === Mode.Dark && mode.toLowerCase(),
       ]).join('/');
+      const message = compact([
+        'Copied',
+        pinned && 'pinned',
+        readOnly && 'read-only',
+        'share link to clipboard.',
+      ]).join(' ');
 
-      let error;
-      let textArea;
-      try {
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(url);
-        } else {
-          textArea = document.createElement('textarea');
-          textArea.value = url;
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-
-          if (!document.execCommand('copy')) {
-            error = 'Unknown failure';
-          }
-        }
-      } catch (err) {
-        error = err.toString();
-      } finally {
-        if (textArea) {
-          document.body.removeChild(textArea);
-        }
-      }
-
+      const error = await App.copyTextToClipboard(url);
       if (error) {
-        // TODO: fallback dialog
-        AppToaster.show({
-          icon: IconNames.WARNING_SIGN,
-          intent: Intent.WARNING,
-          message: `Copying share link failed: ${error}.`,
-        });
+        this.setState({ shareUrl: url, shareUrlSuccessMessage: message });
       } else {
         AppToaster.show({
           icon: IconNames.CLIPBOARD,
           intent: Intent.SUCCESS,
-          message: compact([
-            'Copied',
-            pinned && 'pinned',
-            readOnly && 'read-only',
-            'share link to clipboard.',
-          ]).join(' '),
+          message,
         });
       }
     };
@@ -1110,6 +1137,35 @@ class App extends React.Component<IAppProps, IAppState> {
       ...pick(this.state, NOTE_SETTINGS_STATE_PROPERTIES),
       ...settings,
     });
+  }
+
+  private static async copyTextToClipboard(text: string) {
+    let error = null;
+
+    let textArea;
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        if (!document.execCommand('copy')) {
+          error = 'Unknown failure';
+        }
+      }
+    } catch (err) {
+      error = err.toString();
+    } finally {
+      if (textArea) {
+        document.body.removeChild(textArea);
+      }
+    }
+
+    return error;
   }
 }
 
