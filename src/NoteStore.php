@@ -87,6 +87,24 @@ class NoteStore
         return !self::isIdReserved($id) && preg_match('/^'.self::ID_PATTERN.'$/', $id);
     }
 
+    private static function readFileWithLock(string $path): string
+    {
+        $file = fopen($path, 'r');
+        if (flock($file, LOCK_SH)) {
+            $fileSize = filesize($path);
+            $content = $fileSize == 0 ? '' : fread($file, $fileSize);
+            if ($content === false) {
+                flock($file, LOCK_UN);
+                throw new \Exception('Unable to load file.');
+            }
+            flock($file, LOCK_UN);
+        } else {
+            throw new \Exception('Unable to secure file lock');
+        }
+
+        return $content;
+    }
+
     private $logger;
     private $kernel;
 
@@ -204,18 +222,7 @@ class NoteStore
         $this->logger->info("Fetching note $id at version $version.");
 
         $path = $this->getNoteContentPath($id, $version);
-        $file = fopen($path, 'r');
-        if (flock($file, LOCK_SH)) {
-            $fileSize = filesize($path);
-            $content = $fileSize == 0 ? '' : fread($file, $fileSize);
-            if ($content === false) {
-                flock($file, LOCK_UN);
-                throw new \Exception('Unable to load note.');
-            }
-            flock($file, LOCK_UN);
-        } else {
-            throw new \Exception('Unable to secure file lock');
-        }
+        $content = self::readFileWithLock($path);
 
         $version = $version === null ? $this->getCurrentNoteVersion($id) : $version;
         $mtime = $this->getNoteModificationTime($id, $version);
@@ -340,19 +347,8 @@ class NoteStore
 
         $sharesDataDir = $this->getSharesDataDir();
         $sharedSymlinkPath = $sharesDataDir.$id;
-        $realContentPath = $sharesDataDir.readlink($sharedSymlinkPath);
-        $file = fopen($realContentPath, 'r');
-        if (flock($file, LOCK_SH)) {
-            $fileSize = filesize($realContentPath);
-            $content = $fileSize == 0 ? '' : fread($file, $fileSize);
-            if ($content === false) {
-                flock($file, LOCK_UN);
-                throw new \Exception('Unable to load note.');
-            }
-            flock($file, LOCK_UN);
-        } else {
-            throw new \Exception('Unable to secure file lock');
-        }
+        $path = $sharesDataDir.readlink($sharedSymlinkPath);
+        $content = self::readFileWithLock($path);
 
         return $content;
     }
