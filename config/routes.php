@@ -1,10 +1,11 @@
 <?php
 
+// phpcs:disable PSR1.Files.SideEffects
+
+namespace App;
+
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
-
-use App\PageController;
-use App\NoteStore;
 
 const ID_REQ = NoteStore::ID_PATTERN;
 const SHARED_ID_REQ = NoteStore::SHARED_ID_PATTERN;

@@ -12,8 +12,12 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class PageController extends AbstractController
 {
-    private function renderHTML(KernelInterface $kernel, array $context, string $bundle, ?string $title = null): Response
-    {
+    private function renderHTML(
+        KernelInterface $kernel,
+        array $context,
+        string $bundle,
+        ?string $title = null
+    ): Response {
         return $this->render('index.html.php', [
             'kernel' => $kernel,
             'context' => $context,
