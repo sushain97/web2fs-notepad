@@ -101,7 +101,7 @@ interface IAppState {
   monospace: boolean;
   note: INote;
   readOnly: boolean;
-  renameDialogOpen: boolean;
+  renameAlertOpen: boolean;
   selectLanguageDialogOpen: boolean;
   shareUrl?: string;
   shareUrlSuccessMessage?: string;
@@ -177,7 +177,7 @@ class App extends React.Component<IAppProps, IAppState> {
       monospace,
       note,
       readOnly: true,
-      renameDialogOpen: false,
+      renameAlertOpen: false,
       selectLanguageDialogOpen: false,
       updating: false,
       wrap,
@@ -217,7 +217,7 @@ class App extends React.Component<IAppProps, IAppState> {
         {this.renderStatusBar(this.state)}
         {this.renderDeleteAlert(this.state)}
         {this.renderCopyShareUrlAlert(this.state)}
-        {this.renderRenameDialog(this.state)}
+        {this.renderRenameAlert(this.state)}
         {this.renderSelectLanguageDialog(this.state)}
       </div>
     );
@@ -262,7 +262,7 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handelRenameCancel = () => {
-    this.setState({ renameDialogOpen: false });
+    this.setState({ renameAlertOpen: false });
   };
 
   private handleAutoDetectLanguage = async () => {
@@ -349,7 +349,7 @@ class App extends React.Component<IAppProps, IAppState> {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
-        message: `Copying share link failed: ${error}`,
+        message: `Copying share link failed: ${error}.`,
       });
     }
   };
@@ -389,7 +389,7 @@ class App extends React.Component<IAppProps, IAppState> {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
-        message: `Fetching history failed: ${error}`,
+        message: `Fetching history failed: ${error}.`,
       });
     }
   };
@@ -439,14 +439,19 @@ class App extends React.Component<IAppProps, IAppState> {
           note: { ...this.state.note, id: newId },
         });
         window.history.pushState(null, '', `/${newId}${version ? `/${version}` : ''}`);
+        AppToaster.show({
+          icon: IconNames.ANNOTATION,
+          intent: Intent.SUCCESS,
+          message: `Renamed note to ${newId}.`,
+        });
       } catch (error) {
         AppToaster.show({
           icon: IconNames.WARNING_SIGN,
           intent: Intent.WARNING,
-          message: `Renaming note failed: ${error}`,
+          message: `Renaming note failed: ${error}.`,
         });
       } finally {
-        this.setState({ renameDialogOpen: false });
+        this.setState({ renameAlertOpen: false });
       }
     } else {
       // We use this minor hack to trigger the native form validation UI
@@ -460,7 +465,7 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleRenameButtonClick = () => {
-    this.setState({ renameDialogOpen: true });
+    this.setState({ renameAlertOpen: true });
   };
 
   private handleSelectionChange = () => {
@@ -769,50 +774,40 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderRenameDialog({ renameDialogOpen, mode }: IAppState) {
+  private renderRenameAlert({ renameAlertOpen, mode }: IAppState) {
     return (
-      <Dialog
-        isOpen={renameDialogOpen}
-        title="Rename Note"
-        icon={IconNames.EDIT}
-        onClose={this.handelRenameCancel}
+      <Alert
+        isOpen={renameAlertOpen}
+        icon={IconNames.ANNOTATION}
+        intent={Intent.PRIMARY}
+        cancelButtonText="Cancel"
+        confirmButtonText="Rename"
+        onCancel={this.handelRenameCancel}
+        onConfirm={this.handleRename}
+        canEscapeKeyCancel={true}
+        canOutsideClickCancel={true}
         className={classNames({ [Classes.DARK]: mode === Mode.Dark })}
       >
-        <div className={Classes.DIALOG_BODY}>
-          <form ref={this.renameForm} onSubmit={this.handleRename}>
-            <FormGroup
-              inline={true}
-              helperText={
-                <>
-                  Must be unique and match the pattern <Code>[A-z0-9_-]+</Code>
-                </>
-              }
-            >
-              <input
-                className={classNames(Classes.INPUT, Classes.FILL)}
-                required={true}
-                autoFocus={true}
-                pattern="[A-z0-9_-]+"
-                placeholder="Enter new name"
-                ref={this.renameInput}
-              />
-            </FormGroup>
-          </form>
-        </div>
-        <div className={Classes.DIALOG_FOOTER}>
-          <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-            <Button onClick={this.handelRenameCancel}>Cancel</Button>
-            <Button
-              title="Rename"
-              intent={Intent.PRIMARY}
-              icon={IconNames.CONFIRM}
-              onClick={this.handleRename}
-            >
-              Rename
-            </Button>
-          </div>
-        </div>
-      </Dialog>
+        <form ref={this.renameForm} onSubmit={this.handleRename}>
+          <FormGroup
+            inline={true}
+            helperText={
+              <>
+                Must be unique and match the pattern <Code>[A-z0-9_-]+</Code>
+              </>
+            }
+          >
+            <input
+              className={classNames(Classes.INPUT, Classes.FILL)}
+              required={true}
+              autoFocus={true}
+              pattern="[A-z0-9_-]+"
+              placeholder="Enter new name"
+              ref={this.renameInput}
+            />
+          </FormGroup>
+        </form>
+      </Alert>
     );
   }
 
@@ -989,7 +984,7 @@ class App extends React.Component<IAppProps, IAppState> {
               <Button icon={IconNames.FONT} />
             </Popover>
             <Tooltip content="Rename" position={Position.TOP}>
-              <Button icon={IconNames.EDIT} onClick={this.handleRenameButtonClick} />
+              <Button icon={IconNames.ANNOTATION} onClick={this.handleRenameButtonClick} />
             </Tooltip>
             <Tooltip content="Download" position={Position.TOP}>
               <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
