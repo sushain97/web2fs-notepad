@@ -65,9 +65,9 @@ class NoteHistoryEntry
 
 class NoteStore
 {
-    const INITIAL_VERSION = 1;
-    const ID_PATTERN = '[A-z0-9_-]+';
-    const SHARED_ID_PATTERN = '@[A-z0-9]{6}';
+    public const INITIAL_VERSION = 1;
+    public const ID_PATTERN = '[A-z0-9_-]+';
+    public const SHARED_ID_PATTERN = '@[A-z0-9]{6}';
 
     private const MAX_ID_SELECTION_ATTEMPTS = 10;
     private const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
@@ -174,6 +174,11 @@ class NoteStore
         $this->logger->info("Generated new note id: $id.");
 
         return $id;
+    }
+
+    public function isIdReserved(string $id): bool
+    {
+        return $id === 'shared';
     }
 
     public function hasNote(string $id): bool

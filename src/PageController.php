@@ -32,6 +32,13 @@ class PageController extends AbstractController
         }
     }
 
+    private function ensureNoteIdNotReserved(NoteStore $store, string $id): void
+    {
+        if ($store->isIdReserved($id)) {
+            throw new BadRequestHttpException("Reserved note id: $id.");
+        }
+    }
+
     private function extractFormatLanguageAndShareBundle(string $format): array
     {
         $language = null;
@@ -61,14 +68,14 @@ class PageController extends AbstractController
 
     public function showNote(string $id, ?int $version, NoteStore $store, KernelInterface $kernel): Response
     {
-        $request = Request::createFromGlobals();
-        $userAgent = $request->headers->get('User-Agent');
-
+        $this->ensureNoteIdNotReserved($store, $id);
         $hasNote = $store->hasNote($id);
-
         if ($version !== null) {
             $this->ensureNoteVersionExists($store, $id, $version);
         }
+
+        $request = Request::createFromGlobals();
+        $userAgent = $request->headers->get('User-Agent');
 
         if ($hasNote) {
             $note = $store->getNote($id, $version);
@@ -94,10 +101,9 @@ class PageController extends AbstractController
         }
     }
 
-    // TODO: create reserved ids or ensure these don't get saved naturally
-
     public function shareNote(string $id, ?int $version, NoteStore $store): Response
     {
+        $this->ensureNoteIdNotReserved($store, $id);
         $this->ensureNoteVersionExists($store, $id, $version);
         $sharedId = $store->shareNote($id, $version);
         return new Response($sharedId);
@@ -131,6 +137,7 @@ class PageController extends AbstractController
         NoteStore $store,
         KernelInterface $kernel
     ): Response {
+        $this->ensureNoteIdNotReserved($store, $id);
         $this->ensureNoteVersionExists($store, $id);
 
         [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
@@ -151,6 +158,7 @@ class PageController extends AbstractController
         NoteStore $store,
         KernelInterface $kernel
     ): Response {
+        $this->ensureNoteIdNotReserved($store, $id);
         $this->ensureNoteVersionExists($store, $id, $version);
 
         [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
@@ -165,6 +173,8 @@ class PageController extends AbstractController
 
     public function updateNote(string $id, NoteStore $store): Response
     {
+        $this->ensureNoteIdNotReserved($store, $id);
+
         $request = Request::createFromGlobals();
         if (!$request->request->has('text')) {
             throw new BadRequestHttpException('Missing text parameter.');
@@ -191,6 +201,7 @@ class PageController extends AbstractController
 
     public function listNoteHistory(string $id, NoteStore $store): Response
     {
+        $this->ensureNoteIdNotReserved($store, $id);
         $history = $store->getNoteHistory($id);
         $serialize = function ($entry): array {
             return $entry->serialize();
@@ -200,6 +211,8 @@ class PageController extends AbstractController
 
     public function renameNote(string $id, NoteStore $store): Response
     {
+        $this->ensureNoteIdNotReserved($store, $id);
+
         $request = Request::createFromGlobals();
         if (!$request->request->has('newId')) {
             throw new BadRequestHttpException('Missing newId parameter.');
