@@ -105,12 +105,14 @@ interface IAppState {
   shareUrl?: string;
   shareUrlSuccessMessage?: string;
   updating: boolean;
+  wrap: boolean;
 }
 
-const NOTE_SETTINGS_STATE_PROPERTIES: Array<'format' | 'language' | 'monospace'> = [
+const NOTE_SETTINGS_STATE_PROPERTIES: Array<'format' | 'language' | 'monospace' | 'wrap'> = [
   'format',
   'language',
   'monospace',
+  'wrap',
 ];
 
 interface INoteSettings extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[0]>> {
@@ -156,6 +158,7 @@ class App extends React.Component<IAppProps, IAppState> {
     const { note, currentVersion, noteSettings, settings } = props;
 
     const format = (noteSettings && noteSettings.format) || Format.PlainText;
+    const wrap = noteSettings && noteSettings.wrap != null ? noteSettings.wrap : true;
     const monospace =
       (noteSettings && noteSettings.monospace === true) ||
       (noteSettings && noteSettings.monospace == null && format === Format.Code) ||
@@ -174,6 +177,7 @@ class App extends React.Component<IAppProps, IAppState> {
       renameDialogOpen: false,
       selectLanguageDialogOpen: false,
       updating: false,
+      wrap,
     };
 
     this.updateNoteDebounced = debounce(this.updateNote, UPDATE_DEBOUNCE_MS, {
@@ -193,7 +197,7 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
-    if (prevState.format !== this.state.format || prevState.monospace !== this.state.monospace) {
+    if (NOTE_SETTINGS_STATE_PROPERTIES.some(prop => prevState[prop] !== this.state[prop])) {
       this.updateNoteSettings();
     }
   }
@@ -401,7 +405,7 @@ class App extends React.Component<IAppProps, IAppState> {
     SettingsStore.setItem('mode', mode);
   };
 
-  private handleMonospaceButtonClick = () => {
+  private handleMonospaceToggle = () => {
     const { monospace } = this.state;
     this.setState({ monospace: !monospace });
   };
@@ -476,6 +480,11 @@ class App extends React.Component<IAppProps, IAppState> {
     this.showNoteVersion(this.state.currentVersion!, metaKey);
   };
 
+  private handleWrapToggle = () => {
+    const { wrap } = this.state;
+    this.setState({ wrap: !wrap });
+  };
+
   private historyMenuItemClickHandler = (version: number) => {
     return ({ metaKey }: React.MouseEvent<HTMLElement>) => {
       this.showNoteVersion(version, metaKey);
@@ -536,6 +545,7 @@ class App extends React.Component<IAppProps, IAppState> {
     currentVersion,
     language,
     monospace,
+    wrap,
     note: { version },
   }: IAppState) {
     const disabled = currentVersion !== null && version !== currentVersion;
@@ -548,6 +558,7 @@ class App extends React.Component<IAppProps, IAppState> {
         onChange={disabled ? undefined : this.handleContentChange}
         onKeyDown={disabled ? undefined : this.handleContentKeyDown}
         fill={true}
+        wrap={wrap ? 'soft' : 'off'}
         autoFocus={true}
         className={classNames('content-input', {
           [Classes.MONOSPACE_TEXT]: monospace,
@@ -964,16 +975,14 @@ class App extends React.Component<IAppProps, IAppState> {
                 onClick={this.handleModeToggle}
               />
             </Tooltip>
-            <Tooltip
-              content={`${monospace ? 'Disable' : 'Enable'} Monospace`}
+            <Popover
+              content={this.renderTextOptionSwitches()}
+              interactionKind={PopoverInteractionKind.HOVER}
               position={Position.TOP}
+              hoverCloseDelay={200}
             >
-              <Button
-                icon={IconNames.FONT}
-                onClick={this.handleMonospaceButtonClick}
-                active={monospace}
-              />
-            </Tooltip>
+              <Button icon={IconNames.FONT} />
+            </Popover>
             <Tooltip content="Rename" position={Position.TOP}>
               <Button icon={IconNames.EDIT} onClick={this.handleRenameButtonClick} />
             </Tooltip>
@@ -1000,6 +1009,17 @@ class App extends React.Component<IAppProps, IAppState> {
             </Tooltip>
           </ButtonGroup>
         </div>
+      </div>
+    );
+  }
+
+  private renderTextOptionSwitches() {
+    const { monospace, wrap } = this.state;
+
+    return (
+      <div className="text-option-switches-container">
+        <Switch label="Monospace" checked={monospace} onChange={this.handleMonospaceToggle} />
+        <Switch label="Wrap Text" checked={wrap} onChange={this.handleWrapToggle} />
       </div>
     );
   }
