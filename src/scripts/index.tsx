@@ -115,10 +115,13 @@ const NOTE_SETTINGS_STATE_PROPERTIES: Array<'format' | 'language' | 'monospace' 
   'wrap',
 ];
 
-interface INoteSettings extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[0]>> {
-  selectionEnd?: number;
-  selectionStart?: number;
-}
+const NOTE_SETTINGS_TEXTAREA_PROPERTIES: Array<
+  'scrollLeft' | 'scrollTop' | 'selectionEnd' | 'selectionStart'
+> = ['scrollLeft', 'scrollTop', 'selectionEnd', 'selectionStart'];
+
+interface INoteSettings
+  extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[0]>>,
+    Partial<Pick<HTMLTextAreaElement, typeof NOTE_SETTINGS_TEXTAREA_PROPERTIES[0]>> {}
 
 interface ISettings {
   mode: Mode | null;
@@ -223,15 +226,13 @@ class App extends React.Component<IAppProps, IAppState> {
     this.contentRef = ref;
 
     if (this.contentRef) {
-      const { selectionStart = null, selectionEnd = null } =
-        (await NotesSettingStore.getItem<INoteSettings>(this.props.note.id)) || {};
+      const settings = (await NotesSettingStore.getItem<INoteSettings>(this.props.note.id)) || {};
 
-      if (selectionStart != null) {
-        this.contentRef.selectionStart = selectionStart;
-      }
-
-      if (selectionEnd != null) {
-        this.contentRef.selectionEnd = selectionEnd;
+      for (const property of NOTE_SETTINGS_TEXTAREA_PROPERTIES) {
+        const value = settings[property];
+        if (value != null) {
+          this.contentRef[property] = value;
+        }
       }
     }
   };
@@ -312,6 +313,19 @@ class App extends React.Component<IAppProps, IAppState> {
       currentTarget.selectionEnd = selectionStart + 1;
     }
   };
+
+  private handleContentScroll = ({
+    currentTarget: { scrollLeft, scrollTop },
+  }: React.UIEvent<HTMLTextAreaElement>) => {
+    // This redirection is necessary since React's SyntheticEvent will get re-used
+    // and a passed currentTarget reference to debounce will be invalid.
+    this.handleContentScrollDebounced({ scrollTop, scrollLeft });
+  };
+
+  // tslint:disable-next-line member-ordering
+  private handleContentScrollDebounced = debounce(({ scrollLeft, scrollTop }) => {
+    this.updateNoteSettings({ scrollLeft, scrollTop });
+  }, 100);
 
   private handleCopyShareLinkInputFocus({ currentTarget }: React.FocusEvent<HTMLInputElement>) {
     currentTarget.scrollLeft = 0;
@@ -458,8 +472,8 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ renameDialogOpen: true });
   };
 
-  private handleSelectionChange = ({ currentTarget }: Event) => {
-    if (this.contentRef && currentTarget === this.contentRef) {
+  private handleSelectionChange = () => {
+    if (this.contentRef) {
       this.updateNoteSettings({
         selectionEnd: this.contentRef.selectionEnd,
         selectionStart: this.contentRef.selectionStart,
@@ -552,6 +566,7 @@ class App extends React.Component<IAppProps, IAppState> {
     const textArea = (
       <TextArea
         inputRef={this.contentRefHandler}
+        onScroll={this.handleContentScroll}
         value={content}
         title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
         onChange={disabled ? undefined : this.handleContentChange}
