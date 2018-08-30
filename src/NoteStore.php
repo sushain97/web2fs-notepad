@@ -154,81 +154,6 @@ class NoteStore
         }
     }
 
-    private function getDataDir(): string
-    {
-        return $this->kernel->getProjectDir().'/var/data/';
-    }
-
-    private function getVersionDataDir(): string
-    {
-        return $this->getDataDir().self::VERSION_DATA_DIR;
-    }
-
-    private function getSharesDataDir(): string
-    {
-        return $this->getDataDir().self::SHARES_DATA_DIR;
-    }
-
-    private function getMetadataDataDir(): string
-    {
-        return $this->getDataDir().self::METADATA_DATA_DIR;
-    }
-
-    private function getNoteMetadataPath(string $id): string
-    {
-        return $this->getMetadataDataDir().$id;
-    }
-
-    private function getNoteVersionDataDir(string $id): string
-    {
-        return $this->getVersionDataDir().$id.'/';
-    }
-
-    private function getNoteVersionPath(string $id, int $version): string
-    {
-        if (intval($version) < self::INITIAL_VERSION) {
-            throw new \Exception("Invalid version: $version");
-        }
-
-        return $this->getNoteVersionDataDir($id).$version;
-        ;
-    }
-
-    private function getNoteContentPath(string $id, ?int $version = null): string
-    {
-        if ($version === null) {
-            return $this->getDataDir().$id;
-        } else {
-            return $this->getNoteVersionPath($id, $version);
-        }
-    }
-
-    private function getShareDirRelativeNoteContentPath(string $id, ?int $version = null): string
-    {
-        if ($version === null) {
-            return "../$id";
-        } else {
-            return '../'.self::VERSION_DATA_DIR."$id/$version";
-        }
-    }
-
-    private function getNoteModificationTime(string $id, ?int $version = null): int
-    {
-        $time = filemtime($this->getNoteContentPath($id, $version));
-
-        if ($time === false) {
-            throw new \Exception('Unable to fetch modification time');
-        }
-        return $time;
-    }
-
-    private function getNoteVersions(string $id): array
-    {
-        $versions = array_diff(scandir($this->getNoteVersionDataDir($id)), ['.', '..']);
-        sort($versions, SORT_NUMERIC);
-        return $versions;
-    }
-
     public function getCurrentNoteVersion(string $id): int
     {
         if ($this->hasNote($id)) {
@@ -453,11 +378,6 @@ class NoteStore
         return $shareId;
     }
 
-    public function hasSharedNote(string $shareId): bool
-    {
-        return is_link($this->getSharesDataDir().$shareId);
-    }
-
     public function hasExtantSharedNote(string $shareId): bool
     {
         return file_exists($this->getSharesDataDir().$shareId);
@@ -472,5 +392,85 @@ class NoteStore
         $content = self::readFileWithLock($path);
 
         return $content;
+    }
+
+    private function hasSharedNote(string $shareId): bool
+    {
+        return is_link($this->getSharesDataDir().$shareId);
+    }
+
+    private function getDataDir(): string
+    {
+        return $this->kernel->getProjectDir().'/var/data/';
+    }
+
+    private function getVersionDataDir(): string
+    {
+        return $this->getDataDir().self::VERSION_DATA_DIR;
+    }
+
+    private function getSharesDataDir(): string
+    {
+        return $this->getDataDir().self::SHARES_DATA_DIR;
+    }
+
+    private function getMetadataDataDir(): string
+    {
+        return $this->getDataDir().self::METADATA_DATA_DIR;
+    }
+
+    private function getNoteMetadataPath(string $id): string
+    {
+        return $this->getMetadataDataDir().$id;
+    }
+
+    private function getNoteVersionDataDir(string $id): string
+    {
+        return $this->getVersionDataDir().$id.'/';
+    }
+
+    private function getNoteVersionPath(string $id, int $version): string
+    {
+        if (intval($version) < self::INITIAL_VERSION) {
+            throw new \Exception("Invalid version: $version");
+        }
+
+        return $this->getNoteVersionDataDir($id).$version;
+        ;
+    }
+
+    private function getNoteContentPath(string $id, ?int $version = null): string
+    {
+        if ($version === null) {
+            return $this->getDataDir().$id;
+        } else {
+            return $this->getNoteVersionPath($id, $version);
+        }
+    }
+
+    private function getShareDirRelativeNoteContentPath(string $id, ?int $version = null): string
+    {
+        if ($version === null) {
+            return "../$id";
+        } else {
+            return '../'.self::VERSION_DATA_DIR."$id/$version";
+        }
+    }
+
+    private function getNoteModificationTime(string $id, ?int $version = null): int
+    {
+        $time = filemtime($this->getNoteContentPath($id, $version));
+
+        if ($time === false) {
+            throw new \Exception('Unable to fetch modification time');
+        }
+        return $time;
+    }
+
+    private function getNoteVersions(string $id): array
+    {
+        $versions = array_diff(scandir($this->getNoteVersionDataDir($id)), ['.', '..']);
+        sort($versions, SORT_NUMERIC);
+        return $versions;
     }
 }

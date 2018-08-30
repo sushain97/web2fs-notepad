@@ -106,12 +106,14 @@ class PageController extends AbstractController
         }
     }
 
-    public function shareNote(string $id, ?int $version, NoteStore $store): Response
+    public function listNoteHistory(string $id, NoteStore $store): Response
     {
         $this->ensureNoteIdNotReserved($store, $id);
-        $this->ensureNoteVersionExists($store, $id, $version);
-        $sharedId = $store->shareNote($id, $version);
-        return new Response($sharedId);
+        $history = $store->getNoteHistory($id);
+        $serialize = function ($entry): array {
+            return $entry->serialize();
+        };
+        return $this->json(array_map($serialize, $history));
     }
 
     public function showReadOnlySharedNote(
@@ -204,16 +206,6 @@ class PageController extends AbstractController
         return new Response();
     }
 
-    public function listNoteHistory(string $id, NoteStore $store): Response
-    {
-        $this->ensureNoteIdNotReserved($store, $id);
-        $history = $store->getNoteHistory($id);
-        $serialize = function ($entry): array {
-            return $entry->serialize();
-        };
-        return $this->json(array_map($serialize, $history));
-    }
-
     public function renameNote(string $id, NoteStore $store): Response
     {
         $request = Request::createFromGlobals();
@@ -239,5 +231,13 @@ class PageController extends AbstractController
         }
 
         return new Response();
+    }
+
+    public function shareNote(string $id, ?int $version, NoteStore $store): Response
+    {
+        $this->ensureNoteIdNotReserved($store, $id);
+        $this->ensureNoteVersionExists($store, $id, $version);
+        $sharedId = $store->shareNote($id, $version);
+        return new Response($sharedId);
     }
 }
