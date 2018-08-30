@@ -48,11 +48,6 @@ class PageController extends AbstractController
         return [$language, $bundle];
     }
 
-    // TODO: switch routes to something YAML or less ridiculously repetitive
-
-    /**
-     * @Route("/", name="new_note", methods={"GET"})
-     */
     public function newNote(NoteStore $store): Response
     {
         try {
@@ -61,18 +56,9 @@ class PageController extends AbstractController
             throw new HttpException(500, "Unable to allocate new note: {$e->getMessage()}.");
         }
 
-        return $this->redirectToRoute('show_note', ['id' => $id]);
+        return $this->redirectToRoute('showNote', ['id' => $id]);
     }
 
-    /**
-     * @Route(
-     *     "/{id}/{version}",
-     *     name="show_note",
-     *     methods={"GET"},
-     *     requirements={"id"="[A-z0-9_-]+", "version"="\d+"},
-     *     defaults={"version"=null},
-     * )
-     */
     public function showNote(string $id, ?int $version, NoteStore $store, KernelInterface $kernel): Response
     {
         $request = Request::createFromGlobals();
@@ -110,15 +96,6 @@ class PageController extends AbstractController
 
     // TODO: create reserved ids or ensure these don't get saved naturally
 
-    /**
-     * @Route(
-     *     "/share/{id}/{version}",
-     *     name="share_note",
-     *     methods={"POST"},
-     *     requirements={"id"="[A-z0-9_-]+", "version"="\d+"},
-     *     defaults={"version"=null},
-     * )
-     */
     public function shareNote(string $id, ?int $version, NoteStore $store): Response
     {
         $this->ensureNoteVersionExists($store, $id, $version);
@@ -126,20 +103,7 @@ class PageController extends AbstractController
         return new Response($sharedId);
     }
 
-    /**
-     * @Route(
-     *     "/shared/{id}/{format}/{mode}",
-     *     name="show_readonly_shared_note",
-     *     methods={"GET"},
-     *     requirements={
-     *       "id"="@[A-z0-9]{6}",
-     *       "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
-     *       "mode"="light|dark",
-     *     },
-     *     defaults={"format"="plaintext", "mode"="light"},
-     * )
-     */
-    public function showReadonlySharedNote(
+    public function showReadOnlySharedNote(
         string $id,
         NoteStore $store,
         string $format,
@@ -160,20 +124,6 @@ class PageController extends AbstractController
         return $this->renderHTML($kernel, $context, $bundle);
     }
 
-    /**
-     * @Route(
-     *     "/shared/{id}/{format}/{mode}",
-     *     name="show_shared_note",
-     *     methods={"GET"},
-     *     requirements={
-     *       "id"="[A-z0-9_-]+",
-     *       "version"="\d+",
-     *       "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
-     *       "mode"="light|dark",
-     *     },
-     *     defaults={"format"="plaintext", "mode"="light"},
-     * )
-     */
     public function showSharedNote(
         string $id,
         string $format,
@@ -193,19 +143,6 @@ class PageController extends AbstractController
         return $this->renderHTML($kernel, $context, $bundle, $id);
     }
 
-    /**
-     * @Route(
-     *     "/shared/{id}/{version}/{format}/{mode}",
-     *     name="show_shared_note_version",
-     *     methods={"GET"},
-     *     requirements={
-     *       "id"="[A-z0-9_-]+",
-     *       "format"="raw|plaintext|plainText|markdown|code(-[^/]+)?",
-     *       "mode"="light|dark",
-     *     },
-     *     defaults={"format"="plaintext", "mode"="light"},
-     * )
-     */
     public function showSharedNoteVersion(
         string $id,
         int $version,
@@ -226,9 +163,6 @@ class PageController extends AbstractController
         return $this->renderHTML($kernel, $context, $bundle, $id);
     }
 
-    /**
-     * @Route("/{id}", name="update_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
-     */
     public function updateNote(string $id, NoteStore $store): Response
     {
         $request = Request::createFromGlobals();
@@ -247,9 +181,6 @@ class PageController extends AbstractController
         return $this->json($note->serialize());
     }
 
-    /**
-     * @Route("/{id}", name="delete_note", methods={"DELETE"}, requirements={"id"="[A-z0-9_-]+"})
-     */
     public function deleteNote(string $id, NoteStore $store): Response
     {
         if ($store->hasNote($id)) {
@@ -258,9 +189,6 @@ class PageController extends AbstractController
         return new Response();
     }
 
-    /**
-     * @Route("/{id}/history", name="list_note_history", methods={"GET"}, requirements={"id"="[A-z0-9_-]+"})
-     */
     public function listNoteHistory(string $id, NoteStore $store): Response
     {
         $history = $store->getNoteHistory($id);
@@ -270,9 +198,6 @@ class PageController extends AbstractController
         return $this->json(array_map($serialize, $history));
     }
 
-    /**
-     * @Route("/{id}/rename", name="rename_note", methods={"POST"}, requirements={"id"="[A-z0-9_-]+"})
-     */
     public function renameNote(string $id, NoteStore $store): Response
     {
         $request = Request::createFromGlobals();

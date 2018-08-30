@@ -66,6 +66,9 @@ class NoteHistoryEntry
 class NoteStore
 {
     const INITIAL_VERSION = 1;
+    const ID_PATTERN = '[A-z0-9_-]+';
+    const SHARED_ID_PATTERN = '@[A-z0-9]{6}';
+
     private const MAX_ID_SELECTION_ATTEMPTS = 10;
     private const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
     private const DATA_DIR_MODE = 0755;

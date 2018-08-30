@@ -2,6 +2,7 @@
 <ruleset>
     <file>src</file>
     <file>public</file>
+    <file>config</file>
 
     <exclude-pattern>vendor/</exclude-pattern>
     <exclude-pattern>node_modules/</exclude-pattern>
