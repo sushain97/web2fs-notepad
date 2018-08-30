@@ -121,7 +121,7 @@ class PageController extends AbstractController
         string $mode,
         KernelInterface $kernel
     ): Response {
-        if (!$store->hasSharedNote($id)) {
+        if (!$store->hasExtantSharedNote($id)) {
             throw $this->createNotFoundException("Shared note does not exist: $id.");
         }
 

@@ -333,10 +333,17 @@ class NoteStore
             symlink('../'.self::VERSION_DATA_DIR.$id.'/'.$version, $sharedSymlinkPath);
         }
 
+
+
         return $sharedId;
     }
 
     public function hasSharedNote(string $id): bool
+    {
+        return is_link($this->getSharesDataDir().$id);
+    }
+
+    public function hasExtantSharedNote(string $id): bool
     {
         return file_exists($this->getSharesDataDir().$id);
     }
