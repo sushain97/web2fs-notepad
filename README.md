@@ -12,7 +12,8 @@ Powered by [Symfony][1] on the backend with [React][2], [TypeScript][3], and
 ## Installation
 
 These are roughly in order of increasing complexity where both the Docker
-setup and the artifact download produce production installations by default.
+setup and the artifact download produce production builds and require
+setting `APP_ENV=prod`.
 
 ### Docker
 
@@ -20,7 +21,8 @@ setup and the artifact download produce production installations by default.
 1. Download/clone source from GitHub.
 1. Copy `.env.dist` to `.env` and edit settings.
 1. Run `docker build -t web2fs-notepad .`
-1. Run `docker run -d -p 8080:80 web2fs-notepad` to serve on port 8080.
+1. Run `docker run -d -p 8080:80 -v note-data:/app/var/data web2fs-notepad`
+   to serve on port `8080` and use the persistent `note-data` volume.
 
 ### Artifact Download
 
