@@ -38,7 +38,7 @@ import {
   IQueryListRendererProps,
   QueryList,
 } from '@blueprintjs/select';
-import axios, { CancelTokenSource } from 'axios';
+import axios, { AxiosError, CancelTokenSource } from 'axios';
 import classNames from 'classnames';
 import * as download from 'downloadjs';
 import * as HighlightJs from 'highlight.js';
@@ -147,6 +147,11 @@ const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement | null;
+
+  // tslint:disable-next-line member-ordering
+  private handleContentScrollDebounced = debounce(({ scrollLeft, scrollTop }) => {
+    this.updateNoteSettings({ scrollLeft, scrollTop });
+  }, 100);
   private HighlightJs?: typeof HighlightJs;
   private languages?: ILanguage[];
   private MarkdownIt?: ReturnType<typeof MarkdownIt>;
@@ -243,11 +248,7 @@ class App extends React.Component<IAppProps, IAppState> {
       await axios.delete(`/${this.state.note.id}`);
       window.location.href = '/';
     } catch (error) {
-      AppToaster.show({
-        icon: IconNames.WARNING_SIGN,
-        intent: Intent.WARNING,
-        message: `Deleting note failed: ${error}`,
-      });
+      this.showAxiosErrorToast('Deleting note failed', error);
     }
   };
 
@@ -325,11 +326,6 @@ class App extends React.Component<IAppProps, IAppState> {
     this.handleContentScrollDebounced({ scrollTop, scrollLeft });
   };
 
-  // tslint:disable-next-line member-ordering
-  private handleContentScrollDebounced = debounce(({ scrollLeft, scrollTop }) => {
-    this.updateNoteSettings({ scrollLeft, scrollTop });
-  }, 100);
-
   private handleCopyShareLinkInputFocus({ currentTarget }: React.FocusEvent<HTMLInputElement>) {
     currentTarget.scrollLeft = 0;
     currentTarget.select();
@@ -386,11 +382,7 @@ class App extends React.Component<IAppProps, IAppState> {
       );
       this.setState({ history });
     } catch (error) {
-      AppToaster.show({
-        icon: IconNames.WARNING_SIGN,
-        intent: Intent.WARNING,
-        message: `Fetching history failed: ${error}.`,
-      });
+      this.showAxiosErrorToast('Fetching history failed', error);
     }
   };
 
@@ -444,14 +436,9 @@ class App extends React.Component<IAppProps, IAppState> {
           intent: Intent.SUCCESS,
           message: `Renamed note to ${newId}.`,
         });
-      } catch (error) {
-        AppToaster.show({
-          icon: IconNames.WARNING_SIGN,
-          intent: Intent.WARNING,
-          message: `Renaming note failed: ${error}.`,
-        });
-      } finally {
         this.setState({ renameAlertOpen: false });
+      } catch (error) {
+        this.showAxiosErrorToast('Renaming note failed', error);
       }
     } else {
       // We use this minor hack to trigger the native form validation UI
@@ -1032,14 +1019,20 @@ class App extends React.Component<IAppProps, IAppState> {
         await this.updateNote();
       }
 
-      const url = compact([
-        `${window.location.protocol}/`,
-        punycode.toUnicode(window.location.host),
-        'shared',
-        ...(readOnly ? [await this.shareNote(pinned)] : [note.id, pinned ? note.version : null]),
-        `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
-        mode === Mode.Dark && mode.toLowerCase(),
-      ]).join('/');
+      let url;
+      try {
+        url = compact([
+          `${window.location.protocol}/`,
+          punycode.toUnicode(window.location.host),
+          'shared',
+          ...(readOnly ? [await this.shareNote(pinned)] : [note.id, pinned ? note.version : null]),
+          `${format.toLowerCase()}${format === Format.Code && language ? `-${language}` : ''}`,
+          mode === Mode.Dark && mode.toLowerCase(),
+        ]).join('/');
+      } catch {
+        return;
+      }
+
       const message = compact([
         'Copied',
         pinned && 'pinned',
@@ -1064,7 +1057,29 @@ class App extends React.Component<IAppProps, IAppState> {
     const {
       note: { id, version },
     } = this.state;
-    return (await axios.post<string>(`/share/${id}${pinned ? `/${version}` : ''}`)).data;
+
+    try {
+      return (await axios.post<string>(`/share/${id}${pinned ? `/${version}` : ''}`)).data;
+    } catch (error) {
+      this.showAxiosErrorToast('Failed to share note', error);
+      throw error;
+    }
+  }
+
+  private showAxiosErrorToast(message: string, error: AxiosError, key?: string) {
+    return AppToaster.show(
+      {
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: (
+          <>
+            <strong>{message}</strong>:{' '}
+            {(error.response && error.response.data.message) || error.toString()}.
+          </>
+        ),
+      },
+      key,
+    );
   }
 
   private async showNoteVersion(version: number, newWindow: boolean) {
@@ -1090,11 +1105,7 @@ class App extends React.Component<IAppProps, IAppState> {
         });
         window.history.pushState(null, '', `/${id}/${version}`);
       } catch (error) {
-        AppToaster.show({
-          icon: IconNames.WARNING_SIGN,
-          intent: Intent.WARNING,
-          message: `Fetching history failed: ${error}.`,
-        });
+        this.showAxiosErrorToast('Fetching history failed', error);
       }
     }
   }
@@ -1134,12 +1145,9 @@ class App extends React.Component<IAppProps, IAppState> {
       window.history.pushState(null, '', `/${id}/${updatedNote.version}`);
     } catch (error) {
       if (!axios.isCancel(error)) {
-        this.updateFailedToastKey = AppToaster.show(
-          {
-            icon: IconNames.WARNING_SIGN,
-            intent: Intent.WARNING,
-            message: `Updating note failed: ${error}.`,
-          },
+        this.updateFailedToastKey = this.showAxiosErrorToast(
+          'Updating note failed',
+          error,
           this.updateFailedToastKey,
         );
       }

@@ -169,7 +169,7 @@ class NoteStore
         $attempts = 1;
         do {
             if ($attempts >= self::MAX_ID_SELECTION_ATTEMPTS) {
-                throw new MaxIdSelectionAttemptsExceeded("Gave up after $attempts attempts.");
+                throw new MaxIdSelectionAttemptsExceeded("Gave up after $attempts attempts");
             }
 
             $attempts++;
@@ -210,7 +210,7 @@ class NoteStore
 
         if ($content_size > self::MAX_FILE_SIZE_BYTES) {
             throw new NoteContentSizeExceeded(
-                "Content with $content_size bytes exceeded maximum {self::MAX_FILE_SIZE_BYTES} bytes."
+                "Content with $content_size bytes exceeded maximum".self::MAX_FILE_SIZE_BYTES.' bytes'
             );
         }
 
@@ -280,7 +280,7 @@ class NoteStore
     public function renameNote(string $id, string $newId): void
     {
         if ($this->hasNote($newId)) {
-            throw new \NoteAlreadyExists("Refusing to overwrite $newId content.");
+            throw new \NoteAlreadyExists("Refusing to overwrite $newId content");
         }
 
         $this->logger->info("Renaming note $id to $newId.");
@@ -333,7 +333,7 @@ class NoteStore
         $attempts = 1;
         do {
             if ($attempts >= self::MAX_ID_SELECTION_ATTEMPTS) {
-                throw new MaxIdSelectionAttemptsExceeded("Gave up after $attempts attempts.");
+                throw new MaxIdSelectionAttemptsExceeded("Gave up after $attempts attempts");
             }
 
             $attempts++;

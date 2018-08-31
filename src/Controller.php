@@ -3,23 +3,29 @@
 namespace App;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
-class PageController extends AbstractController
+class Controller extends AbstractController
 {
-    private function renderHTML(
-        KernelInterface $kernel,
-        array $context,
-        string $bundle,
-        ?string $title = null
-    ): Response {
+    private $kernel;
+
+    public function __construct(KernelInterface $kernel)
+    {
+        $this->kernel = $kernel;
+    }
+
+    private function renderHTML(array $context, string $bundle, ?string $title = null): Response
+    {
         return $this->render('index.html.php', [
-            'kernel' => $kernel,
+            'kernel' => $this->kernel,
             'context' => $context,
             'bundle' => $bundle,
             'title' => $title,
@@ -30,16 +36,16 @@ class PageController extends AbstractController
     {
         $hasNote = $store->hasNote($id);
         if (!$hasNote) {
-            throw $this->createNotFoundException("Note does not exist: $id.");
+            throw $this->createNotFoundException("Note does not exist: $id");
         } elseif ($version !== null && !$store->hasNoteVersion($id, $version)) {
-            throw $this->createNotFoundException("Version does not exist: $version.");
+            throw $this->createNotFoundException("Version does not exist: $version");
         }
     }
 
     private function ensureNoteIdNotReserved(NoteStore $store, string $id): void
     {
         if (NoteStore::isIdReserved($id)) {
-            throw new BadRequestHttpException("Reserved note id: $id.");
+            throw new BadRequestHttpException("Reserved note id: $id");
         }
     }
 
@@ -64,13 +70,13 @@ class PageController extends AbstractController
         try {
             $id = $store->generateNewId();
         } catch (MaxIdSelectionAttemptsExceeded $e) {
-            throw new HttpException(500, "Unable to allocate new note: {$e->getMessage()}.");
+            throw new HttpException(500, "Unable to allocate new note: {$e->getMessage()}");
         }
 
         return $this->redirectToRoute('showNote', ['id' => $id]);
     }
 
-    public function showNote(string $id, ?int $version, NoteStore $store, KernelInterface $kernel): Response
+    public function showNote(string $id, ?int $version, NoteStore $store): Response
     {
         $this->ensureNoteIdNotReserved($store, $id);
         $hasNote = $store->hasNote($id);
@@ -102,7 +108,7 @@ class PageController extends AbstractController
         } elseif (strpos($userAgent, 'curl') === 0 || $contentType === 'text/plain') {
             return new Response($note->content);
         } else {
-            return $this->renderHTML($kernel, $data, 'index', $id);
+            return $this->renderHTML($data, 'index', $id);
         }
     }
 
@@ -120,11 +126,10 @@ class PageController extends AbstractController
         string $id,
         NoteStore $store,
         string $format,
-        string $mode,
-        KernelInterface $kernel
+        string $mode
     ): Response {
         if (!$store->hasExtantSharedNote($id)) {
-            throw $this->createNotFoundException("Shared note does not exist: $id.");
+            throw $this->createNotFoundException("Shared note does not exist: $id");
         }
 
         [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
@@ -134,15 +139,14 @@ class PageController extends AbstractController
             'language' => $language,
         ];
 
-        return $this->renderHTML($kernel, $context, $bundle);
+        return $this->renderHTML($context, $bundle);
     }
 
     public function showSharedNote(
         string $id,
         string $format,
         string $mode,
-        NoteStore $store,
-        KernelInterface $kernel
+        NoteStore $store
     ): Response {
         $this->ensureNoteIdNotReserved($store, $id);
         $this->ensureNoteVersionExists($store, $id);
@@ -154,7 +158,7 @@ class PageController extends AbstractController
             'language' => $language,
         ];
 
-        return $this->renderHTML($kernel, $context, $bundle, $id);
+        return $this->renderHTML($context, $bundle, $id);
     }
 
     public function showSharedNoteVersion(
@@ -162,8 +166,7 @@ class PageController extends AbstractController
         int $version,
         string $format,
         string $mode,
-        NoteStore $store,
-        KernelInterface $kernel
+        NoteStore $store
     ): Response {
         $this->ensureNoteIdNotReserved($store, $id);
         $this->ensureNoteVersionExists($store, $id, $version);
@@ -175,7 +178,7 @@ class PageController extends AbstractController
             'language' => $language,
         ];
 
-        return $this->renderHTML($kernel, $context, $bundle, $id);
+        return $this->renderHTML($context, $bundle, $id);
     }
 
     public function updateNote(string $id, NoteStore $store): Response
@@ -184,7 +187,7 @@ class PageController extends AbstractController
 
         $request = Request::createFromGlobals();
         if (!$request->request->has('text')) {
-            throw new BadRequestHttpException('Missing text parameter.');
+            throw new BadRequestHttpException('Missing text parameter');
         }
 
         $content = $request->request->get('text');
@@ -192,7 +195,7 @@ class PageController extends AbstractController
         try {
             $note = $store->updateNote($id, $content);
         } catch (NoteContentSizeExceeded $e) {
-            throw new BadRequestHttpException("Failed to update note: {$e->getMessage()}.");
+            throw new BadRequestHttpException("Failed to update note: {$e->getMessage()}");
         }
 
         return $this->json($note->serialize());
@@ -210,18 +213,18 @@ class PageController extends AbstractController
     {
         $request = Request::createFromGlobals();
         if (!$request->request->has('newId')) {
-            throw new BadRequestHttpException('Missing newId parameter.');
+            throw new BadRequestHttpException('Missing newId parameter');
         }
 
         $newId = $request->request->get('newId');
         $this->ensureNoteIdNotReserved($store, $newId);
 
         if ($store->hasNote($newId)) {
-            throw new BadRequestHttpException('Cannot overwrite existing note.');
+            throw new BadRequestHttpException('Cannot overwrite existing note');
         }
 
         if (!NoteStore::isIdValid($newId)) {
-            throw new BadRequestHttpException('New ID must match pattern '.NoteStore::ID_PATTERN.'.');
+            throw new BadRequestHttpException('New ID must match pattern '.NoteStore::ID_PATTERN);
         }
 
         // Renaming a non-existent note is effectively a no-op so just let the
@@ -239,5 +242,39 @@ class PageController extends AbstractController
         $this->ensureNoteVersionExists($store, $id, $version);
         $sharedId = $store->shareNote($id, $version);
         return new Response($sharedId);
+    }
+
+    public function onKernelException(GetResponseForExceptionEvent $event)
+    {
+        if ($this->kernel->getEnvironment() !== 'dev' || $exception instanceof HttpExceptionInterface) {
+            $request = $event->getRequest();
+            $userAgent = $request->headers->get('User-Agent');
+            $contentType = $request->getAcceptableContentTypes()[0];
+
+            $response = null;
+
+            if ($contentType === 'application/json') {
+                $exception = $event->getException();
+                $data = ['message' => $exception->getMessage()];
+                if ($exception->getCode()) {
+                    $data['code'] = $exception->getCode();
+                }
+
+                $response = new JsonResponse($data);
+            } elseif (strpos($userAgent, 'curl') === 0 || $contentType === 'text/plain') {
+                $response = new Response();
+                $response->setContent($exception->getMessage());
+            }
+
+            if ($response !== null) {
+                if ($exception instanceof HttpExceptionInterface) {
+                    $response->setStatusCode($exception->getStatusCode());
+                } else {
+                    $response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+
+                $event->setResponse($response);
+            }
+        }
     }
 }

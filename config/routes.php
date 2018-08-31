@@ -27,7 +27,7 @@ class RouteBuilder
 
     public function addRoute(string $name, string $method, string $path, array $options = [])
     {
-        $route = new Route($path, ['_controller' => [PageController::class, $name]]);
+        $route = new Route($path, ['_controller' => [Controller::class, $name]]);
         $route->setMethods([$method]);
         $route->addDefaults(isset($options['defaults']) ? $options['defaults'] : []);
         $route->addRequirements(isset($options['requirements']) ? $options['requirements'] : []);

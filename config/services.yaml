@@ -8,4 +8,6 @@ services:
 
     App\:
         resource: '../src/*'
-        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+        exclude: '../src/{NoteStore,Kernel.php}'
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
