@@ -40,12 +40,7 @@ class Controller extends AbstractController
 
     public function newNote(NoteStore $store): Response
     {
-        try {
-            $id = $store->generateNewId();
-        } catch (MaxIdSelectionAttemptsExceeded $e) {
-            throw new HttpException(500, "Unable to allocate new note: {$e->getMessage()}");
-        }
-
+        $id = $store->generateNewId();
         return $this->redirectToRoute('showNote', ['id' => $id]);
     }
 
@@ -164,13 +159,7 @@ class Controller extends AbstractController
         }
 
         $content = $request->request->get('text');
-
-        try {
-            $note = $store->updateNote($id, $content);
-        } catch (NoteContentSizeExceeded $e) {
-            throw new BadRequestHttpException("Failed to update note: {$e->getMessage()}");
-        }
-
+        $note = $store->updateNote($id, $content);
         return $this->json($note->serialize());
     }
 
@@ -192,18 +181,17 @@ class Controller extends AbstractController
         $newId = $request->request->get('newId');
         $this->ensureNoteIdNotReserved($store, $newId);
 
-        if ($store->hasNote($newId)) {
-            throw new BadRequestHttpException('Cannot overwrite existing note');
-        }
-
         if (!NoteStore::isIdValid($newId)) {
             throw new BadRequestHttpException('New ID must match pattern '.NoteStore::ID_PATTERN);
         }
 
-        // Renaming a non-existent note is effectively a no-op so just let the
-        // user think they've renamed it. This lets the consumers be less intelligent.
-        if ($store->hasNote($id)) {
-            $store->renameNote($id, $newId);
+        // Silently accept a no-op rename.
+        if ($id !== $newId) {
+            // Renaming a non-existent note is effectively a no-op so just let the
+            // user think they've renamed it. This lets the consumers be less intelligent.
+            if ($store->hasNote($id)) {
+                $store->renameNote($id, $newId);
+            }
         }
 
         return new Response();
@@ -240,7 +228,11 @@ class Controller extends AbstractController
             }
 
             if ($response !== null) {
-                if ($exception instanceof HttpExceptionInterface) {
+                if ($exception instanceof MaxIdSelectionAttemptsExceeded) {
+                    $response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
+                } elseif ($exception instanceof NoteContentSizeExceeded || $exception instanceof NoteAlreadyExists) {
+                    $response->setStatusCode(Response::HTTP_BAD_REQUEST);
+                } elseif ($exception instanceof HttpExceptionInterface) {
                     $response->setStatusCode($exception->getStatusCode());
                 } else {
                     $response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
