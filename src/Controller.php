@@ -15,41 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class Controller extends AbstractController
 {
-    private $kernel;
-
-    public function __construct(KernelInterface $kernel)
-    {
-        $this->kernel = $kernel;
-    }
-
-    private function renderHTML(array $context, string $bundle, ?string $title = null): Response
-    {
-        return $this->render('index.html.php', [
-            'kernel' => $this->kernel,
-            'context' => $context,
-            'bundle' => $bundle,
-            'title' => $title,
-        ]);
-    }
-
-    private function ensureNoteVersionExists(NoteStore $store, string $id, ?int $version = null): void
-    {
-        $hasNote = $store->hasNote($id);
-        if (!$hasNote) {
-            throw $this->createNotFoundException("Note does not exist: $id");
-        } elseif ($version !== null && !$store->hasNoteVersion($id, $version)) {
-            throw $this->createNotFoundException("Version does not exist: $version");
-        }
-    }
-
-    private function ensureNoteIdNotReserved(NoteStore $store, string $id): void
-    {
-        if (NoteStore::isIdReserved($id)) {
-            throw new BadRequestHttpException("Reserved note id: $id");
-        }
-    }
-
-    private function extractFormatLanguageAndShareBundle(string $format): array
+    private static function extractFormatLanguageAndShareBundle(string $format): array
     {
         $language = null;
         if ($format === 'markdown') {
@@ -63,6 +29,13 @@ class Controller extends AbstractController
         }
 
         return [$language, $bundle];
+    }
+
+    private $kernel;
+
+    public function __construct(KernelInterface $kernel)
+    {
+        $this->kernel = $kernel;
     }
 
     public function newNote(NoteStore $store): Response
@@ -124,15 +97,15 @@ class Controller extends AbstractController
 
     public function showReadOnlySharedNote(
         string $id,
-        NoteStore $store,
         string $format,
-        string $mode
+        string $mode,
+        NoteStore $store
     ): Response {
         if (!$store->hasExtantSharedNote($id)) {
             throw $this->createNotFoundException("Shared note does not exist: $id");
         }
 
-        [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
+        [$language, $bundle] = self::extractFormatLanguageAndShareBundle($format);
         $context = [
             'mode' => $mode,
             'content' => $store->getSharedNoteContent($id),
@@ -151,7 +124,7 @@ class Controller extends AbstractController
         $this->ensureNoteIdNotReserved($store, $id);
         $this->ensureNoteVersionExists($store, $id);
 
-        [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
+        [$language, $bundle] = self::extractFormatLanguageAndShareBundle($format);
         $context = [
             'mode' => $mode,
             'content' => $store->getNote($id)->content,
@@ -171,7 +144,7 @@ class Controller extends AbstractController
         $this->ensureNoteIdNotReserved($store, $id);
         $this->ensureNoteVersionExists($store, $id, $version);
 
-        [$language, $bundle] = $this->extractFormatLanguageAndShareBundle($format);
+        [$language, $bundle] = self::extractFormatLanguageAndShareBundle($format);
         $context = [
             'mode' => $mode,
             'content' => $store->getNote($id, $version)->content,
@@ -275,6 +248,33 @@ class Controller extends AbstractController
 
                 $event->setResponse($response);
             }
+        }
+    }
+
+    private function renderHTML(array $context, string $bundle, ?string $title = null): Response
+    {
+        return $this->render('index.html.php', [
+            'kernel' => $this->kernel,
+            'context' => $context,
+            'bundle' => $bundle,
+            'title' => $title,
+        ]);
+    }
+
+    private function ensureNoteVersionExists(NoteStore $store, string $id, ?int $version = null): void
+    {
+        $hasNote = $store->hasNote($id);
+        if (!$hasNote) {
+            throw $this->createNotFoundException("Note does not exist: $id");
+        } elseif ($version !== null && !$store->hasNoteVersion($id, $version)) {
+            throw $this->createNotFoundException("Version does not exist: $version");
+        }
+    }
+
+    private function ensureNoteIdNotReserved(NoteStore $store, string $id): void
+    {
+        if (NoteStore::isIdReserved($id)) {
+            throw new BadRequestHttpException("Reserved note id: $id");
         }
     }
 }
