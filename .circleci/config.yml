@@ -53,11 +53,10 @@ jobs:
           at: .
       - run: composer install --no-dev --prefer-dist --optimize-autoloader
       - run: yarn build
-      - run:
-          tar
-             --ignore-case --exclude 'vendor/*/tests' --exclude 'vendor/*.md' --exclude 'vendor/*.gitignore' --exclude 'vendor/*/LICENSE*'
-            -cvzf dist.tar.gz
-            config/ public/ vendor/ bin/ src/ .env.dist README.md
+      - run: tar
+          --ignore-case --exclude 'vendor/*/tests' --exclude 'vendor/*.md' --exclude 'vendor/*.gitignore' --exclude 'vendor/*/LICENSE*'
+          -cvzf dist.tar.gz
+          config/ public/ vendor/ bin/ src/ .env.dist README.md
       - store_artifacts:
           path: dist.tar.gz
 workflows:
@@ -67,4 +66,4 @@ workflows:
       - test
       - build:
           requires:
-              - test
+            - test

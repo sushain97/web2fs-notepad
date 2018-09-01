@@ -9,7 +9,7 @@
     "build": "webpack",
     "watch": "yarn run build --watch",
     "tslint": "tslint --project .",
-    "prettier": "prettier src/**/{*.tsx,*.ts,*.scss} *.json *.js *.md",
+    "prettier": "prettier src/**/{*.tsx,*.ts,*.scss} config/**/*.yaml .circleci/**.yml *.json *.js *.md *.yaml",
     "stylelint": "stylelint src",
     "lint": "yarn run tslint && yarn run prettier --list-different && yarn run stylelint",
     "fix": "yarn run tslint --fix && yarn run prettier --write && yarn run stylelint --fix"

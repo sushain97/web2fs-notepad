@@ -1,9 +1,9 @@
 framework:
-    secret: '%env(APP_SECRET)%'
-    #csrf_protection: true
+  secret: '%env(APP_SECRET)%'
+  #csrf_protection: true
 
-    php_errors:
-        log: true
+  php_errors:
+    log: true
 
-    templating:
-        engines: ['php']
+  templating:
+    engines: ['php']
