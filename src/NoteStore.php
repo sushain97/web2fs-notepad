@@ -7,16 +7,6 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MultipleClasses
 
-class MaxIdSelectionAttemptsExceeded extends \Exception
-{
-}
-class NoteContentSizeExceeded extends \Exception
-{
-}
-class NoteAlreadyExists extends \Exception
-{
-}
-
 class Note
 {
     public $id;
@@ -88,6 +78,10 @@ class NoteMetadata
     }
 }
 
+class NoteStoreException extends \Exception
+{
+}
+
 class NoteStore
 {
     public const INITIAL_VERSION = 1;
@@ -95,8 +89,16 @@ class NoteStore
     public const SHARED_ID_PATTERN = '@[A-z0-9]{6}';
     public const VERSION_PATTERN = '\d+';
 
+    public const CONTENT_SIZE_LIMIT_EXCEEDED_EXCEPTION_CODE = 1;
+    public const VERSION_LIMIT_EXCEEDED_EXCEPTION_CODE = 2;
+    public const ID_ALREADY_EXISTS_EXCEPTION_CODE = 3;
+    public const ID_LENGTH_EXCEEDED_EXCEPTION_CODE = 4;
+
     private const MAX_ID_SELECTION_ATTEMPTS = 10;
+    private const MAX_ID_LENGTH = 200;
     private const MAX_FILE_SIZE_BYTES = 2500000; // 2.5 MB
+    private const MAX_VERSION = 1000;
+
     private const DATA_DIR_MODE = 0755;
     private const DATA_MODE = 0644;
 
@@ -169,7 +171,7 @@ class NoteStore
         $attempts = 1;
         do {
             if ($attempts >= self::MAX_ID_SELECTION_ATTEMPTS) {
-                throw new MaxIdSelectionAttemptsExceeded("Exceeded $attempts attempts to select a unique id");
+                throw new \Exception("Exceeded $attempts attempts to select a unique id");
             }
 
             $attempts++;
@@ -209,8 +211,9 @@ class NoteStore
         $content_size = strlen($content);
 
         if ($content_size > self::MAX_FILE_SIZE_BYTES) {
-            throw new NoteContentSizeExceeded(
-                "Content with $content_size bytes exceeded maximum ".self::MAX_FILE_SIZE_BYTES.' bytes'
+            throw new NoteStoreException(
+                "Content with $content_size bytes exceeded ".self::MAX_FILE_SIZE_BYTES.' byte limit',
+                self::CONTENT_SIZE_LIMIT_EXCEEDED_EXCEPTION_CODE
             );
         }
 
@@ -218,7 +221,22 @@ class NoteStore
 
         $newNote = !$this->hasNote($id);
         if ($newNote) {
+            if (strlen($id) > self::MAX_ID_LENGTH) {
+                throw new NoteStoreException(
+                    'Id of length '.strlen($id).' exceeded '.self::MAX_ID_LENGTH.' character limit',
+                    self::ID_LENGTH_EXCEEDED_EXCEPTION_CODE
+                );
+            }
+
             mkdir($this->getNoteVersionDataDir($id), self::DATA_DIR_MODE, true);
+        }
+
+        $newVersion = $newNote ? self::INITIAL_VERSION : $this->getCurrentNoteVersion($id) + 1;
+        if ($newVersion > self::MAX_VERSION) {
+            throw new NoteStoreException(
+                "New version $newVersion exceeded maximum ".self::MAX_VERSION.' versions',
+                self::VERSION_LIMIT_EXCEEDED_EXCEPTION_CODE
+            );
         }
 
         $rootContentPath = $this->getNoteContentPath($id);
@@ -227,7 +245,6 @@ class NoteStore
             $this->logger->debug("Writing new version to $rootContentPath.");
             fwrite($rootContentFile, $content);
 
-            $newVersion = $newNote ? self::INITIAL_VERSION : $this->getCurrentNoteVersion($id) + 1;
             $newVersionPath = $this->getNoteVersionPath($id, $newVersion);
             $this->logger->debug("Writing new version to $newVersionPath.");
             file_put_contents($newVersionPath, $content);
@@ -280,7 +297,17 @@ class NoteStore
     public function renameNote(string $id, string $newId): void
     {
         if ($this->hasNote($newId)) {
-            throw new NoteAlreadyExists("Refusing to overwrite content at $newId");
+            throw new NoteStoreException(
+                "Note with id $newId already exists, refusing to overwrite",
+                self::ID_ALREADY_EXISTS_EXCEPTION_CODE
+            );
+        }
+
+        if (strlen($newId) > self::MAX_ID_LENGTH) {
+            throw new NoteStoreException(
+                'New id of length '.strlen($newId).' exceeded '.self::MAX_ID_LENGTH.' character limit',
+                self::ID_LENGTH_EXCEEDED_EXCEPTION_CODE
+            );
         }
 
         $this->logger->info("Renaming note $id to $newId.");
@@ -333,7 +360,7 @@ class NoteStore
         $attempts = 1;
         do {
             if ($attempts >= self::MAX_ID_SELECTION_ATTEMPTS) {
-                throw new MaxIdSelectionAttemptsExceeded("Exceeded $attempts attempts to select a unique share id");
+                throw new \Exception("Exceeded $attempts attempts to select a unique share id");
             }
 
             $attempts++;
@@ -432,7 +459,7 @@ class NoteStore
     private function getNoteVersionPath(string $id, int $version): string
     {
         if (intval($version) < self::INITIAL_VERSION) {
-            throw new \Exception("Invalid version: $version");
+            throw new \DomainException("Invalid version: $version");
         }
 
         return $this->getNoteVersionDataDir($id).$version;

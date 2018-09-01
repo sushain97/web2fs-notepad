@@ -228,9 +228,7 @@ class Controller extends AbstractController
             }
 
             if ($response !== null) {
-                if ($exception instanceof MaxIdSelectionAttemptsExceeded) {
-                    $response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
-                } elseif ($exception instanceof NoteContentSizeExceeded || $exception instanceof NoteAlreadyExists) {
+                if ($exception instanceof NoteStoreException) {
                     $response->setStatusCode(Response::HTTP_BAD_REQUEST);
                 } elseif ($exception instanceof HttpExceptionInterface) {
                     $response->setStatusCode($exception->getStatusCode());
