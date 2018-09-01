@@ -28,6 +28,7 @@ jobs:
           key: js-dependencies-{{ checksum "yarn.lock" }}
       - run: yarn lint
       - run: ./vendor/bin/phpcs
+      - run: git describe --tags --always > .version
       - persist_to_workspace:
           root: .
           paths:
@@ -44,6 +45,7 @@ jobs:
             - tsconfig.json
             - README.md
             - .env.dist
+            - .version
   build:
     <<: *defaults
     environment:
@@ -56,14 +58,42 @@ jobs:
       - run: tar
           --ignore-case --exclude 'vendor/*/tests' --exclude 'vendor/*.md' --exclude 'vendor/*.gitignore' --exclude 'vendor/*/LICENSE*'
           -cvzf dist.tar.gz
-          config/ public/ vendor/ bin/ src/ .env.dist README.md
+          config/ public/ vendor/ bin/ src/ .env.dist .version README.md
       - store_artifacts:
           path: dist.tar.gz
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .version
+            - dist.tar.gz
+  publish:
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: .
+      - run: ghr
+          -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1}
+          -replace -draft "$(< .version)" dist.tar.gz
 workflows:
   version: 2
-  test_and_build:
+  main:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              only: /.*/
       - build:
           requires:
             - test
+          filters:
+            tags:
+              only: /.*/
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
