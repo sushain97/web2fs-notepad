@@ -207,6 +207,7 @@ class Controller extends AbstractController
 
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
+        $exception = $event->getException();
         if ($this->kernel->getEnvironment() !== 'dev' || $exception instanceof HttpExceptionInterface) {
             $request = $event->getRequest();
             $userAgent = $request->headers->get('User-Agent');
@@ -215,7 +216,6 @@ class Controller extends AbstractController
             $response = null;
 
             if ($contentType === 'application/json') {
-                $exception = $event->getException();
                 $data = ['message' => $exception->getMessage()];
                 if ($exception->getCode()) {
                     $data['code'] = $exception->getCode();
