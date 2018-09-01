@@ -27,12 +27,13 @@ setting `APP_ENV=prod`.
 ### Artifact Download
 
 1. Install [PHP][11] 7.1.3+.
-1. Download and extract the most recent build artifact from CircleCI.
+1. Download and extract a `dist.tar.gz` from a GitHub release or CircleCI
+   build.
 1. Copy `.env.dist` to `.env` and edit settings.
 1. Point your web server with PHP support to `/public`.
 
-Run `./bin/update circle_build_number` to update your deployment (runtime
-dependency on [`jq`][14]).
+Run `./bin/update release_version|circle_build_number` to update your
+deployment (CircleCI artifact download has a runtime dependency on [`jq`][14]).
 
 ### Local Build
 
