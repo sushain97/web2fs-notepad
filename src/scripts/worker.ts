@@ -5,14 +5,10 @@ import * as MarkdownIt from 'markdown-it';
 import setupMarkdown from './setup-markdown';
 import {
   AppWorker,
-  BaseWorkerResultMessage,
   WorkerMessageType,
   WorkerRequestMessage,
-  WorkerResultMessage,
-  WorkerErrorMessage,
   WorkerResultForRequest,
-  ILanguage,
-  WorkerMessage,
+  WorkerResultMessage,
 } from './types';
 
 const ctx: AppWorker = self as any;
@@ -35,41 +31,16 @@ const getMarkdownRenderer = async () => {
   return ctx.MarkdownIt!;
 };
 
-// const respond = <T extends WorkerRequestMessage, S extends WorkerResultMessage['result'], R = BaseWorkerResultMessage<T, S>>(request: T, result: S) => {
-//   if ('request_type' in request || 'error' in request) {
-//     throw new Error(`Recieved message with request_type: ${JSON.stringify(request)}`);
-//   }
-
-//   const msg: R = {
-//     request,
-//     request_type: request.type,
-//     result,
-//     type: WorkerMessageType.RESULT,
-//   };
-//   ctx.postMessage(msg);
-// };
-
-// const efef = <T>(a: T, x: keyof T, y: keyof T[typeof x]) => a[x][y];
-
-// const respond = <T extends WorkerResultMessage, S extends (string | ILanguage[] | ReturnType<typeof HighlightJs.highlight>) = T['result']>(request: T['request'], result: S) => {
-//   if ('request_type' in request || 'error' in request) {
-//     throw new Error(`Recieved message with request_type: ${JSON.stringify(request)}`);
-//   }
-
-//   const msg: WorkerMessage = {
-//     request,
-//     request_type: request.type,
-//     result,
-//     type: WorkerMessageType.RESULT,
-//   };
-
-//   ctx.postMessage(msg);
-// };
-
-const respond = (request: WorkerRequestMessage) => <T extends WorkerResultForRequest<typeof request>>(result: T['result']) => {
-  const msg: WorkerResultMessage = {request, request_type: request.type, result, type: WorkerMessageType.RESULT};
-  ctx.postMessage(msg);
-}
+const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResultForRequest<T>) => {
+  // Unable to figure out a way to have this type more cleanly.
+  const message = {
+    request,
+    request_type: request.type,
+    result,
+    type: WorkerMessageType.RESULT,
+  };
+  ctx.postMessage(message as WorkerResultMessage);
+};
 
 ctx.addEventListener('message', async ({ data: request }) => {
   if ('request_type' in request) {
@@ -84,23 +55,13 @@ ctx.addEventListener('message', async ({ data: request }) => {
         const result = language
           ? highlightJs.highlight(language, content, true)
           : (highlightJs.highlightAuto(content) as HighlightJs.IHighlightResult);
-        ctx.postMessage({
-          request,
-          request_type: request.type,
-          result,
-          type: WorkerMessageType.RESULT,
-        });
+        respond(request, result);
         break;
       }
       case WorkerMessageType.RENDER_MARKDOWN: {
         const markdownIt = await getMarkdownRenderer();
         const result = markdownIt.render(request.content);
-        ctx.postMessage({
-          request,
-          request_type: request.type,
-          result,
-          type: WorkerMessageType.RESULT,
-        });
+        respond(request, result);
         break;
       }
       case WorkerMessageType.LIST_CODE_LANGUAGES: {
@@ -109,12 +70,7 @@ ctx.addEventListener('message', async ({ data: request }) => {
           name,
           ...pick(highlightJs.getLanguage(name), 'aliases'),
         }));
-        ctx.postMessage({
-          request,
-          request_type: request.type,
-          result,
-          type: WorkerMessageType.RESULT,
-        });
+        respond(request, result);
         break;
       }
       default:

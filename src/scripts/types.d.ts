@@ -38,37 +38,20 @@ export type WorkerRequestMessage =
   | WorkerListLanguagesRequestMessage
   | WorkerRenderMarkdownRequestMessage;
 
-export interface BaseWorkerResultMessage<T extends WorkerRequestMessage, S> {
+export interface BaseWorkerResultMessage<T extends WorkerRequestMessage> {
   type: WorkerMessageType.RESULT;
   request_type: T['type'];
   request: T;
-  result: S;
+  result: WorkerResultForRequest<T>;
 }
 
-type WorkerRenderCodeResultMessage = BaseWorkerResultMessage<
-  WorkerRenderCodeRequestMessage,
-  ReturnType<typeof HighlightJs['highlight']>
->;
-
-type WorkerRenderMarkdownResultMessage = BaseWorkerResultMessage<
-  WorkerRenderMarkdownRequestMessage,
-  ReturnType<ReturnType<typeof MarkdownIt>['render']>
->;
-
-type WorkerListLanguagesResultMessage = BaseWorkerResultMessage<
-  WorkerListLanguagesRequestMessage,
-  Array<ILanguage>
->;
-
-export type WorkerResultForRequest<T extends WorkerRequestMessage> =
-  T extends WorkerRenderCodeRequestMessage ? WorkerRenderCodeResultMessage :
-  T extends WorkerRenderMarkdownResultMessage ? WorkerRenderMarkdownRequestMessage :
-  T extends WorkerListLanguagesRequestMessage ? WorkerListLanguagesResultMessage : never;
-
-type WorkerResultMessage =
-  | WorkerRenderCodeResultMessage
-  | WorkerRenderMarkdownResultMessage
-  | WorkerListLanguagesResultMessage;
+export type WorkerResultForRequest<
+  T extends WorkerRequestMessage
+> = T extends WorkerRenderCodeRequestMessage
+  ? ReturnType<typeof HighlightJs['highlight']>
+  : T extends WorkerRenderMarkdownRequestMessage
+    ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
+    : T extends WorkerListLanguagesRequestMessage ? Array<ILanguage> : never;
 
 interface WorkerErrorMessage<T extends WorkerRequestMessage> {
   type: WorkerMessageType.ERROR;
@@ -76,6 +59,11 @@ interface WorkerErrorMessage<T extends WorkerRequestMessage> {
   request_type: T['type'];
   error: string;
 }
+
+export type WorkerResultMessage =
+  | BaseWorkerResultMessage<WorkerRenderCodeRequestMessage>
+  | BaseWorkerResultMessage<WorkerRenderMarkdownRequestMessage>
+  | BaseWorkerResultMessage<WorkerListLanguagesRequestMessage>;
 
 type WorkerMessage =
   | WorkerRequestMessage

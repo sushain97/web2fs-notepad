@@ -52,13 +52,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import Worker from 'worker-loader!./worker'; // tslint:disable-line
 
-import {
-  AppWorker,
-  ILanguage,
-  IWorkerMessageEvent,
-  Mode,
-  WorkerMessageType
-} from './types';
+import { AppWorker, ILanguage, IWorkerMessageEvent, Mode, WorkerMessageType } from './types';
 
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
