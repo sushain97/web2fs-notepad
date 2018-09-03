@@ -5,6 +5,8 @@ import { Classes } from '@blueprintjs/core';
 import classNames from 'classnames';
 import * as HighlightJs from 'highlight.js';
 
+import { Mode } from './types';
+
 const { content, language, mode } = (window as any).CONTEXT;
 
 let value;
@@ -19,6 +21,6 @@ app.setAttribute('style', 'white-space: pre');
 app.setAttribute('class', Classes.CODE_BLOCK);
 document.body.setAttribute(
   'class',
-  classNames(Classes.MONOSPACE_TEXT, { [Classes.DARK]: mode === 'dark' }),
+  classNames(Classes.MONOSPACE_TEXT, { [Classes.DARK]: mode === Mode.Dark }),
 );
 document.getElementById('app')!.innerHTML = value;

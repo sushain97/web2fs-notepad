@@ -24,6 +24,7 @@ module.exports = {
     chunkFilename: '[name].[contenthash].chunk.js',
     publicPath: '/assets/',
     path: ASSETS_PATH,
+    globalObject: 'this',
   },
   devtool: 'eval',
   resolve: {
