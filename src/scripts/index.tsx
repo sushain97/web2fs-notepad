@@ -13,7 +13,11 @@ import {
   FocusStyleManager,
   FormGroup,
   H5,
+  Hotkey,
+  Hotkeys,
+  HotkeysTarget,
   Icon,
+  IHotkeyProps,
   InputGroup,
   Intent,
   Menu,
@@ -133,7 +137,13 @@ interface IPageContext {
   note: INote;
 }
 
+interface IHotkeyCallbacks {
+  onModeToggle: NonNullable<IHotkeyProps['onKeyDown']>;
+  onSave: NonNullable<IHotkeyProps['onKeyDown']>;
+}
+
 interface IAppProps extends IPageContext {
+  hotkeyCallbacks: IHotkeyCallbacks;
   noteSettings: INoteSettings | null;
   settings: ISettings;
 }
@@ -163,7 +173,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public constructor(props: IAppProps) {
     super(props);
 
-    const { note, currentVersion, noteSettings, settings } = props;
+    const { note, currentVersion, noteSettings, settings, hotkeyCallbacks } = props;
 
     const format = (noteSettings && noteSettings.format) || Format.PlainText;
     const wrap = noteSettings && noteSettings.wrap != null ? noteSettings.wrap : true;
@@ -190,6 +200,11 @@ class App extends React.Component<IAppProps, IAppState> {
 
     this.updateNoteDebounced = debounce(this.updateNote, UPDATE_DEBOUNCE_MS, {
       maxWait: UPDATE_MAX_WAIT_MS,
+    });
+
+    Object.assign(hotkeyCallbacks, {
+      onModeToggle: this.handleModeToggle,
+      onSave: this.updateNote,
     });
 
     if (format === Format.Markdown) {
@@ -882,7 +897,6 @@ class App extends React.Component<IAppProps, IAppState> {
     format,
     language,
     updating,
-    monospace,
   }: IAppState) {
     const saved = currentVersion !== null;
     const old = saved && version !== currentVersion;
@@ -1167,6 +1181,39 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   }
 
+  public static hotkeyRenderer(hotkeyCallbacks: IHotkeyCallbacks) {
+    const proxiedCallbacks: IHotkeyCallbacks = new Proxy(
+      {},
+      {
+        get: (_, callback) => (...args: Array<unknown>) =>
+          (hotkeyCallbacks as any)[callback](...args),
+      },
+    ) as any;
+
+    return () => (
+      <Hotkeys>
+        <Hotkey
+          global={true}
+          combo="mod+s"
+          label="Save"
+          onKeyDown={proxiedCallbacks.onSave}
+          allowInInput={true}
+          stopPropagation={true}
+          preventDefault={true}
+        />
+        <Hotkey
+          global={true}
+          combo="mod+d"
+          label="Toggle Mode"
+          onKeyDown={proxiedCallbacks.onModeToggle}
+          allowInInput={true}
+          stopPropagation={true}
+          preventDefault={true}
+        />
+      </Hotkeys>
+    );
+  }
+
   private static async copyTextToClipboard(text: string) {
     let error = null;
 
@@ -1201,8 +1248,22 @@ class App extends React.Component<IAppProps, IAppState> {
   const context: IPageContext = (window as any).CONTEXT;
   const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
   const settings = { mode: (await SettingsStore.getItem<string>('mode')) as Mode };
+
+  // This is a hack to work around https://github.com/palantir/blueprint/issues/2972
+  const hotkeyCallbacks: IHotkeyCallbacks = {} as any;
+  class StatelessApp extends React.PureComponent {
+    // tslint:disable-line max-classes-per-file
+    public render() {
+      return <App {...{ ...context, settings, noteSettings, hotkeyCallbacks }} />;
+    }
+  }
+  function AppWrapper() {} // tslint:disable-line no-empty
+  AppWrapper.prototype = Object.create(StatelessApp.prototype);
+  AppWrapper.prototype.renderHotkeys = App.hotkeyRenderer(hotkeyCallbacks);
+  const AppContainer = HotkeysTarget(AppWrapper as any);
+
   ReactDOM.render(
-    <App {...{ ...context, settings, noteSettings }} />,
+    <AppContainer {...{ ...context, settings, noteSettings }} />,
     document.getElementById('app'),
   );
 })();
