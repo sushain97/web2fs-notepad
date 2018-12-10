@@ -137,10 +137,17 @@ interface IPageContext {
   note: INote;
 }
 
-interface IHotkeyCallbacks {
-  onModeToggle: NonNullable<IHotkeyProps['onKeyDown']>;
-  onSave: NonNullable<IHotkeyProps['onKeyDown']>;
-}
+type IHotkeyCallbacks = {
+  [K in
+    | 'onModeToggle'
+    | 'onSave'
+    | 'onDelete'
+    | 'onRename'
+    | 'onDownload'
+    | 'onShare'
+    | 'onMonospaceToggle'
+    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>
+};
 
 interface IAppProps extends IPageContext {
   hotkeyCallbacks: IHotkeyCallbacks;
@@ -203,8 +210,14 @@ class App extends React.Component<IAppProps, IAppState> {
     });
 
     Object.assign(hotkeyCallbacks, {
+      onDelete: this.handleDeleteButtonClick,
+      onDownload: this.handleDownloadButtonClick,
       onModeToggle: this.handleModeToggle,
+      onMonospaceToggle: this.handleMonospaceToggle,
+      onRename: this.handleRenameButtonClick,
       onSave: this.updateNote,
+      onShare: this.shareHandler(false),
+      onWrapToggle: this.handleWrapToggle,
     });
 
     if (format === Format.Markdown) {
@@ -1190,26 +1203,31 @@ class App extends React.Component<IAppProps, IAppState> {
       },
     ) as any;
 
+    const hotkeys: Array<[string, string, keyof IHotkeyCallbacks]> = [
+      ['Save', 'mod+s', 'onSave'],
+      ['Toggle Mode', 'mod+d', 'onModeToggle'],
+      ['Delete', 'mod+alt+d', 'onDelete'],
+      ['Rename', 'mod+alt+r', 'onRename'],
+      ['Download', 'mod+alt+j', 'onDownload'],
+      ['Share', 'mod+alt+s', 'onShare'],
+      ['Toggle Monospace', 'mod+alt+m', 'onMonospaceToggle'],
+      ['Toggle Text Wrap', 'mod+alt+w', 'onWrapToggle'],
+    ];
+
     return () => (
       <Hotkeys>
-        <Hotkey
-          global={true}
-          combo="mod+s"
-          label="Save"
-          onKeyDown={proxiedCallbacks.onSave}
-          allowInInput={true}
-          stopPropagation={true}
-          preventDefault={true}
-        />
-        <Hotkey
-          global={true}
-          combo="mod+d"
-          label="Toggle Mode"
-          onKeyDown={proxiedCallbacks.onModeToggle}
-          allowInInput={true}
-          stopPropagation={true}
-          preventDefault={true}
-        />
+        {hotkeys.map(([label, combo, callback]) => (
+          <Hotkey
+            key={combo}
+            global={true}
+            allowInInput={true}
+            preventDefault={true}
+            stopPropagation={true}
+            combo={combo}
+            label={label}
+            onKeyDown={proxiedCallbacks[callback]}
+          />
+        ))}
       </Hotkeys>
     );
   }
