@@ -592,6 +592,7 @@ class App extends React.Component<IAppProps, IAppState> {
             <div
               className={classNames(
                 Classes.RUNNING_TEXT,
+                format === Format.Code && Classes.CODE_BLOCK,
                 'content-output-container',
                 format.toLowerCase(),
               )}
