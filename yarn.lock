@@ -5601,6 +5601,10 @@ webpack-log@^1.1.2:
     loglevelnext "^1.0.1"
     uuid "^3.1.0"
 
+webpack-require-from@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/webpack-require-from/-/webpack-require-from-1.7.0.tgz#6618ef294e8070a57f32563aaf6bb04a3757f17a"
+
 webpack-sources@^1.0.0, webpack-sources@^1.0.1, webpack-sources@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/webpack-sources/-/webpack-sources-1.1.0.tgz#a101ebae59d6507354d71d8013950a3a8b7a5a54"

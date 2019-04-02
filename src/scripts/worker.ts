@@ -24,6 +24,7 @@ const getCodeRenderer = async () => {
 
 const getMarkdownRenderer = async () => {
   if (!ctx.MarkdownIt) {
+    (self as any).__webpack_public_path__ = '/assets/';
     const md = await import(/* webpackChunkName: "markdown-it" */ 'markdown-it');
     ctx.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
   }
@@ -55,14 +56,12 @@ ctx.addEventListener('message', async ({ data: request }) => {
         const result = language
           ? highlightJs.highlight(language, content, true)
           : (highlightJs.highlightAuto(content) as HighlightJs.IHighlightResult);
-        respond(request, result);
-        break;
+        return respond(request, result);
       }
       case WorkerMessageType.RENDER_MARKDOWN: {
         const markdownIt = await getMarkdownRenderer();
         const result = markdownIt.render(request.content);
-        respond(request, result);
-        break;
+        return respond(request, result);
       }
       case WorkerMessageType.LIST_CODE_LANGUAGES: {
         const highlightJs = await getCodeRenderer();
@@ -70,18 +69,20 @@ ctx.addEventListener('message', async ({ data: request }) => {
           name,
           ...pick(highlightJs.getLanguage(name), 'aliases'),
         }));
-        respond(request, result);
-        break;
+        return respond(request, result);
       }
       default:
         const _: never = request;
     }
   } catch (error) {
-    ctx.postMessage({
-      error: error.toString(),
-      request,
-      request_type: request.type,
-      type: WorkerMessageType.ERROR,
-    });
+    throw error;
+    // ctx.postMessage({
+    //   error: error.toString(),
+    //   request,
+    //   request_type: request.type,
+    //   type: WorkerMessageType.ERROR,
+    // });
   }
 });
+
+export default null as any;

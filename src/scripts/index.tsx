@@ -50,7 +50,7 @@ import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
 import * as punycode from 'punycode';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import Worker from 'worker-loader!./worker'; // tslint:disable-line
+import Worker from './worker';
 
 import { AppWorker, ILanguage, IWorkerMessageEvent, Mode, WorkerMessageType } from './types';
 
