@@ -85,7 +85,7 @@ module.exports = {
     }),
     new WebpackAssetsManifest(),
     new WebpackRequireFrom({
-      path: 'http://localhost:8080/',
+      replaceSrcMethodName: 'mungeImportScriptsUrl',
       suppressErrors: true,
     }),
   ],

@@ -24,7 +24,6 @@ const getCodeRenderer = async () => {
 
 const getMarkdownRenderer = async () => {
   if (!ctx.MarkdownIt) {
-    (self as any).__webpack_public_path__ = '/assets/';
     const md = await import(/* webpackChunkName: "markdown-it" */ 'markdown-it');
     ctx.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
   }
@@ -33,7 +32,7 @@ const getMarkdownRenderer = async () => {
 };
 
 const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResultForRequest<T>) => {
-  // Unable to figure out a way to have this type more cleanly.
+  // TODO: get this to type more cleanly
   const message = {
     request,
     request_type: request.type,
@@ -50,6 +49,12 @@ ctx.addEventListener('message', async ({ data: request }) => {
 
   try {
     switch (request.type) {
+      case WorkerMessageType.INITIALIZE: {
+        (self as any).mungeImportScriptsUrl = (url: string) => {
+          return `${request.path}/assets/${url}`;
+        };
+        break;
+      }
       case WorkerMessageType.RENDER_CODE: {
         const { language, content } = request;
         const highlightJs = await getCodeRenderer();
@@ -75,13 +80,12 @@ ctx.addEventListener('message', async ({ data: request }) => {
         const _: never = request;
     }
   } catch (error) {
-    throw error;
-    // ctx.postMessage({
-    //   error: error.toString(),
-    //   request,
-    //   request_type: request.type,
-    //   type: WorkerMessageType.ERROR,
-    // });
+    ctx.postMessage({
+      error: error.toString(),
+      request,
+      request_type: request.type,
+      type: WorkerMessageType.ERROR,
+    });
   }
 });
 

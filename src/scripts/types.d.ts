@@ -7,6 +7,7 @@ export const enum Mode {
 }
 
 export const enum WorkerMessageType {
+  INITIALIZE = 'INITIALIZE',
   RESULT = 'RESULT',
   ERROR = 'ERROR',
   RENDER_CODE = 'RENDER_CODE',
@@ -33,7 +34,13 @@ interface WorkerRenderMarkdownRequestMessage {
   content: string;
 }
 
+interface WorkerInitializeRequestMessage {
+  type: WorkerMessageType.INITIALIZE;
+  path: string;
+}
+
 export type WorkerRequestMessage =
+  | WorkerInitializeRequestMessage
   | WorkerRenderCodeRequestMessage
   | WorkerListLanguagesRequestMessage
   | WorkerRenderMarkdownRequestMessage;

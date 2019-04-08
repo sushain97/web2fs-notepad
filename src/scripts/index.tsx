@@ -206,6 +206,10 @@ class App extends React.Component<IAppProps, IAppState> {
       onWrapToggle: this.handleWrapToggle,
     });
 
+    this.worker.postMessage({
+      path: `${window.location.protocol}//${window.location.host}/`,
+      type: WorkerMessageType.INITIALIZE,
+    });
     this.worker.addEventListener('message', this.handleWorkerMessage);
     this.requestWorkerContentRender();
   }

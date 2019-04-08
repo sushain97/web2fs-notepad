@@ -65,7 +65,7 @@
     "webpack": "^4.16.5",
     "webpack-assets-manifest": "^3.0.2",
     "webpack-cli": "^3.1.0",
-    "webpack-require-from": "^1.7.0",
+    "webpack-require-from": "https://github.com/agoldis/webpack-require-from.git#next",
     "worker-loader": "^2.0.0"
   }
 }
