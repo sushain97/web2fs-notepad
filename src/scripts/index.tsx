@@ -223,6 +223,13 @@ class App extends React.Component<IAppProps, IAppState> {
     if (NOTE_SETTINGS_STATE_PROPERTIES.some(prop => prevState[prop] !== this.state[prop])) {
       this.updateNoteSettings();
     }
+    if (
+      prevState.content !== this.state.content ||
+      prevState.format !== this.state.format ||
+      prevState.language !== this.state.language
+    ) {
+      this.requestWorkerContentRender();
+    }
   }
 
   public componentWillUnmount() {
@@ -272,7 +279,7 @@ class App extends React.Component<IAppProps, IAppState> {
       if (format === Format.Code) {
         this.setState({ selectLanguageDialogOpen: true });
       } else {
-        this.setState({ format, renderedContent: undefined }, this.requestWorkerContentRender);
+        this.setState({ format, renderedContent: undefined });
       }
     };
   };
@@ -282,16 +289,13 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleAutoDetectLanguage = async () => {
-    this.setState(
-      {
-        format: Format.Code,
-        language: undefined,
-        monospace: true,
-        renderedContent: undefined,
-        selectLanguageDialogOpen: false,
-      },
-      this.requestWorkerContentRender,
-    );
+    this.setState({
+      format: Format.Code,
+      language: undefined,
+      monospace: true,
+      renderedContent: undefined,
+      selectLanguageDialogOpen: false,
+    });
   };
 
   private handleBeforeUnload = (ev: BeforeUnloadEvent) => {
@@ -315,8 +319,6 @@ class App extends React.Component<IAppProps, IAppState> {
       } else {
         this.updateNoteDebounced();
       }
-
-      this.requestWorkerContentRender();
     });
   };
 
@@ -406,16 +408,13 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleLanguageSelected = ({ name }: ILanguage) => {
-    this.setState(
-      {
-        format: Format.Code,
-        language: name,
-        monospace: true,
-        renderedContent: undefined,
-        selectLanguageDialogOpen: false,
-      },
-      this.requestWorkerContentRender,
-    );
+    this.setState({
+      format: Format.Code,
+      language: name,
+      monospace: true,
+      renderedContent: undefined,
+      selectLanguageDialogOpen: false,
+    });
   };
 
   private handleModeToggle = () => {
