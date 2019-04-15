@@ -105,20 +105,18 @@ interface IAppState {
   wrap: boolean;
 }
 
-const NOTE_SETTINGS_STATE_PROPERTIES: Array<'format' | 'language' | 'monospace' | 'wrap'> = [
-  'format',
-  'language',
-  'monospace',
-  'wrap',
-];
+const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const;
 
-const NOTE_SETTINGS_TEXTAREA_PROPERTIES: Array<
-  'scrollLeft' | 'scrollTop' | 'selectionEnd' | 'selectionStart'
-> = ['scrollLeft', 'scrollTop', 'selectionEnd', 'selectionStart'];
+const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
+  'scrollLeft',
+  'scrollTop',
+  'selectionEnd',
+  'selectionStart',
+] as const;
 
 interface INoteSettings
-  extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[0]>>,
-    Partial<Pick<HTMLTextAreaElement, typeof NOTE_SETTINGS_TEXTAREA_PROPERTIES[0]>> {}
+  extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
+    Partial<Pick<HTMLTextAreaElement, typeof NOTE_SETTINGS_TEXTAREA_PROPERTIES[number]>> {}
 
 interface ISettings {
   mode: Mode | null;
