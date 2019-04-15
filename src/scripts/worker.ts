@@ -19,7 +19,7 @@ const getCodeRenderer = async () => {
     self.HighlightJs = ((hljs as any).default as typeof HighlightJs | undefined) || hljs;
   }
 
-  return self.HighlightJs!;
+  return self.HighlightJs;
 };
 
 const getMarkdownRenderer = async () => {
@@ -28,7 +28,7 @@ const getMarkdownRenderer = async () => {
     self.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
   }
 
-  return self.MarkdownIt!;
+  return self.MarkdownIt;
 };
 
 const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResultForRequest<T>) => {

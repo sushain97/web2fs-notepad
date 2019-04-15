@@ -136,7 +136,7 @@ type IHotkeyCallbacks = {
     | 'onDownload'
     | 'onShare'
     | 'onMonospaceToggle'
-    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>
+    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']> // tslint:disable-line max-union-size
 };
 
 interface IAppProps extends IPageContext {
@@ -863,7 +863,6 @@ class App extends React.Component<IAppProps, IAppState> {
     mode,
     format,
     language,
-    updating,
   }: IAppState) {
     const saved = currentVersion !== null;
     const old = saved && version !== currentVersion;
@@ -871,39 +870,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     return (
       <div className="status-bar">
-        <div className="status-bar-history">
-          <Tooltip
-            content={updating ? 'Saving' : updated ? 'Saved' : 'Save'}
-            position={Position.TOP}
-          >
-            <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
-              icon={IconNames.FLOPPY_DISK}
-              loading={updating}
-              onClick={this.updateNote}
-              disabled={updated || old}
-            />
-          </Tooltip>
-          <Popover
-            content={saved ? this.renderHistoryMenu() : undefined}
-            onOpening={this.handleHistoryPopoverOpening}
-            position={Position.TOP_LEFT}
-          >
-            <Tag
-              icon={updated ? IconNames.SAVED : IconNames.OUTDATED}
-              minimal={true}
-              large={true}
-              interactive={saved}
-              className="version-tag"
-            >
-              {saved ? `Version ${version} of ${currentVersion}` : 'Unsaved'}
-            </Tag>
-          </Popover>
-          {old && (
-            <Tooltip content="View latest" position={Position.TOP}>
-              <Button icon={IconNames.FAST_FORWARD} onClick={this.handleViewLatestButtonClick} />
-            </Tooltip>
-          )}
-        </div>
+        {this.renderStatusBarHistory(this.state, { updated, old, saved })}
         <div>
           <Callout
             intent={old ? Intent.WARNING : undefined}
@@ -977,6 +944,44 @@ class App extends React.Component<IAppProps, IAppState> {
             </Tooltip>
           </ButtonGroup>
         </div>
+      </div>
+    );
+  }
+
+  private renderStatusBarHistory(
+    { updating, currentVersion, note: { version } }: IAppState,
+    { updated, old, saved }: { old: boolean; saved: boolean; updated: boolean },
+  ) {
+    return (
+      <div className="status-bar-history">
+        <Tooltip content={updating ? 'Saving' : updated ? 'Saved' : 'Save'} position={Position.TOP}>
+          <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
+            icon={IconNames.FLOPPY_DISK}
+            loading={updating}
+            onClick={this.updateNote}
+            disabled={updated || old}
+          />
+        </Tooltip>
+        <Popover
+          content={saved ? this.renderHistoryMenu() : undefined}
+          onOpening={this.handleHistoryPopoverOpening}
+          position={Position.TOP_LEFT}
+        >
+          <Tag
+            icon={updated ? IconNames.SAVED : IconNames.OUTDATED}
+            minimal={true}
+            large={true}
+            interactive={saved}
+            className="version-tag"
+          >
+            {saved ? `Version ${version} of ${currentVersion}` : 'Unsaved'}
+          </Tag>
+        </Popover>
+        {old && (
+          <Tooltip content="View latest" position={Position.TOP}>
+            <Button icon={IconNames.FAST_FORWARD} onClick={this.handleViewLatestButtonClick} />
+          </Tooltip>
+        )}
       </div>
     );
   }

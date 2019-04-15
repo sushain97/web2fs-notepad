@@ -5,7 +5,8 @@
     "tslint-react",
     "tslint-eslint-rules",
     "@blueprintjs/tslint-config/blueprint-rules",
-    "tslint-config-prettier"
+    "tslint-config-prettier",
+    "tslint-sonarts"
   ],
   "rules": {
     "member-ordering": {
@@ -13,6 +14,9 @@
         "alphabetize": true,
         "order": "instance-sandwich"
       }
+    },
+    "no-nested-template-literals": {
+      "severity": "off"
     }
   }
 }
