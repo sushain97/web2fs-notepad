@@ -27,7 +27,6 @@ import {
   Popover,
   PopoverInteractionKind,
   Position,
-  Pre,
   Spinner,
   Switch,
   Tag,
@@ -45,26 +44,21 @@ import {
 import axios, { AxiosError, CancelTokenSource } from 'axios';
 import classNames from 'classnames';
 import * as download from 'downloadjs';
-import * as HighlightJs from 'highlight.js';
 import { fileSize } from 'humanize-plus';
 import * as LocalForage from 'localforage';
 import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
-import * as MarkdownIt from 'markdown-it';
 import * as punycode from 'punycode';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import setupMarkdown from './setup-markdown';
+import Worker from './worker';
+
+import { AppWorker, ILanguage, IWorkerMessageEvent, Mode, WorkerMessageType } from './types';
 
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
 // built up so we only buffer UPDATE_MAX_WAIT_MS of updates.
 const UPDATE_DEBOUNCE_MS = 5000;
 const UPDATE_MAX_WAIT_MS = 15000;
-
-enum Mode {
-  Light = 'Light',
-  Dark = 'Dark',
-}
 
 enum Format {
   PlainText = 'PlainText',
@@ -90,10 +84,6 @@ interface INoteVersionEntry {
   size: number;
 }
 
-interface ILanguage extends HighlightJs.IMode {
-  name: string;
-}
-
 interface IAppState {
   confirmDeleteAlertOpen: boolean;
   content: string;
@@ -101,11 +91,13 @@ interface IAppState {
   format: Format;
   history?: INoteVersionEntry[];
   language?: string;
+  languages?: ILanguage[];
   mode: Mode;
   monospace: boolean;
   note: INote;
   readOnly: boolean;
   renameAlertOpen: boolean;
+  renderedContent?: string;
   selectLanguageDialogOpen: boolean;
   shareUrl?: string;
   shareUrlSuccessMessage?: string;
@@ -164,18 +156,12 @@ const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private contentRef?: HTMLTextAreaElement | null;
-
-  // tslint:disable-next-line member-ordering
-  private handleContentScrollDebounced = debounce(({ scrollLeft, scrollTop }) => {
-    this.updateNoteSettings({ scrollLeft, scrollTop });
-  }, 100);
-  private HighlightJs?: typeof HighlightJs;
-  private languages?: ILanguage[];
-  private MarkdownIt?: ReturnType<typeof MarkdownIt>;
+  private handleContentScrollDebounced = debounce(this.updateNoteSettings, 100);
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private updateNoteDebounced: ReturnType<typeof debounce>;
+  private worker: AppWorker = new Worker();
 
   public constructor(props: IAppProps) {
     super(props);
@@ -220,11 +206,12 @@ class App extends React.Component<IAppProps, IAppState> {
       onWrapToggle: this.handleWrapToggle,
     });
 
-    if (format === Format.Markdown) {
-      this.loadMarkdownRenderer();
-    } else if (format === Format.Code) {
-      this.loadCodeRenderer();
-    }
+    this.worker.postMessage({
+      path: `${window.location.protocol}//${window.location.host}`,
+      type: WorkerMessageType.INITIALIZE,
+    });
+    this.worker.addEventListener('message', this.handleWorkerMessage);
+    this.requestWorkerContentRender();
   }
 
   public componentDidMount() {
@@ -235,6 +222,13 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
     if (NOTE_SETTINGS_STATE_PROPERTIES.some(prop => prevState[prop] !== this.state[prop])) {
       this.updateNoteSettings();
+    }
+    if (
+      prevState.content !== this.state.content ||
+      prevState.format !== this.state.format ||
+      prevState.language !== this.state.language
+    ) {
+      this.requestWorkerContentRender();
     }
   }
 
@@ -285,7 +279,7 @@ class App extends React.Component<IAppProps, IAppState> {
       if (format === Format.Code) {
         this.setState({ selectLanguageDialogOpen: true });
       } else {
-        this.setState({ format });
+        this.setState({ format, renderedContent: undefined });
       }
     };
   };
@@ -297,15 +291,10 @@ class App extends React.Component<IAppProps, IAppState> {
   private handleAutoDetectLanguage = async () => {
     this.setState({
       format: Format.Code,
-      selectLanguageDialogOpen: false,
-    });
-
-    await this.loadCodeRenderer();
-
-    const { language } = this.HighlightJs!.highlightAuto(this.state.content);
-    this.setState({
-      language,
+      language: undefined,
       monospace: true,
+      renderedContent: undefined,
+      selectLanguageDialogOpen: false,
     });
   };
 
@@ -320,14 +309,17 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleContentChange = ({
-    currentTarget: { value },
+    currentTarget: { value: content },
   }: React.FormEvent<HTMLTextAreaElement>) => {
     const { currentVersion, updating } = this.state;
 
-    this.setState(
-      { content: value },
-      currentVersion === null && !updating ? this.updateNote : this.updateNoteDebounced,
-    );
+    this.setState({ content }, () => {
+      if (currentVersion === null && !updating) {
+        this.updateNote();
+      } else {
+        this.updateNoteDebounced();
+      }
+    });
   };
 
   private handleContentKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -387,14 +379,15 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleDownloadButtonClick = () => {
-    const { format, note, content, language } = this.state;
+    const { format, note, content, language, languages } = this.state;
 
     // We pick the shortest alias/name as a poor man's extension heuristic.
     let extension = FormatExtensions[format];
-    if (format === Format.Code && language && this.HighlightJs) {
-      extension = [...(this.HighlightJs.getLanguage(language).aliases || []), language].sort(
-        (a, b) => a.length - b.length,
-      )[0];
+    if (format === Format.Code && language && languages) {
+      extension = [
+        ...(languages.find(({ name }) => name === language)!.aliases || []),
+        language,
+      ].sort((a, b) => a.length - b.length)[0];
     }
 
     const filename = `${note.id}_${note.version}.${extension}`;
@@ -419,6 +412,7 @@ class App extends React.Component<IAppProps, IAppState> {
       format: Format.Code,
       language: name,
       monospace: true,
+      renderedContent: undefined,
       selectLanguageDialogOpen: false,
     });
   };
@@ -497,11 +491,47 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private handleSelectLanguageDialogOpening = () => {
-    this.loadCodeRenderer();
+    this.worker.postMessage({ type: WorkerMessageType.LIST_CODE_LANGUAGES });
   };
 
   private handleViewLatestButtonClick = ({ metaKey }: React.MouseEvent<HTMLElement>) => {
     this.showNoteVersion(this.state.currentVersion!, metaKey);
+  };
+
+  private handleWorkerMessage = ({ data: response }: IWorkerMessageEvent) => {
+    if (!('request_type' in response)) {
+      throw new Error(`Recieved message without request_type: ${JSON.stringify(response)}`);
+    }
+
+    if (response.type === WorkerMessageType.ERROR) {
+      AppToaster.show({
+        icon: IconNames.WARNING_SIGN,
+        intent: Intent.WARNING,
+        message: (
+          <>
+            <strong>Failed to {startCase(response.request_type.toLowerCase())}</strong>:{' '}
+            {response.error}.
+          </>
+        ),
+      });
+    } else {
+      switch (response.request_type) {
+        case WorkerMessageType.RENDER_CODE:
+          this.setState({
+            language: response.result.language,
+            renderedContent: response.result.value,
+          });
+          break;
+        case WorkerMessageType.RENDER_MARKDOWN:
+          this.setState({ renderedContent: response.result });
+          break;
+        case WorkerMessageType.LIST_CODE_LANGUAGES:
+          this.setState({ languages: response.result });
+          break;
+        default:
+          const _: never = response;
+      }
+    }
   };
 
   private handleWrapToggle = () => {
@@ -523,53 +553,13 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private loadCodeRenderer = async () => {
-    if (this.HighlightJs) {
-      return;
-    }
-
-    try {
-      const hljs = await import(/* webpackChunkName: "highlight-js" */ 'highlight.js');
-      this.HighlightJs = ((hljs as any).default as typeof HighlightJs | undefined) || hljs;
-      this.languages = this.HighlightJs.listLanguages().map(name => ({
-        name,
-        ...this.HighlightJs!.getLanguage(name),
-      }));
-      this.forceUpdate();
-    } catch (error) {
-      AppToaster.show({
-        icon: IconNames.WARNING_SIGN,
-        intent: Intent.WARNING,
-        message: `Fetching code renderer failed: ${error}.`,
-      });
-    }
-  };
-
-  private async loadMarkdownRenderer() {
-    if (this.MarkdownIt) {
-      return;
-    }
-
-    try {
-      const md = await import(/* webpackChunkName: "markdown-it" */ 'markdown-it');
-      this.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
-      this.forceUpdate();
-    } catch (error) {
-      AppToaster.show({
-        icon: IconNames.WARNING_SIGN,
-        intent: Intent.WARNING,
-        message: `Fetching markdown renderer failed: ${error}.`,
-      });
-    }
-  }
-
   private renderContent({
     content,
     format,
     currentVersion,
-    language,
     monospace,
     wrap,
+    renderedContent,
     note: { version },
   }: IAppState) {
     const disabled = currentVersion !== null && version !== currentVersion;
@@ -593,59 +583,25 @@ class App extends React.Component<IAppProps, IAppState> {
     );
 
     if (format === Format.Markdown || format === Format.Code) {
-      let output;
-
-      if (format === Format.Markdown) {
-        if (this.MarkdownIt) {
-          output = (
-            <div
-              className={classNames(Classes.RUNNING_TEXT, 'content-output-container', 'markdown')}
-              dangerouslySetInnerHTML={{ __html: this.MarkdownIt.render(content) }}
-            />
-          );
-        } else {
-          this.loadMarkdownRenderer();
-
-          output = (
-            <div className="content-output-container">
-              <NonIdealState icon={<Spinner />} title="Loading Markdown Renderer…" />
-            </div>
-          );
-        }
-      } else if (format === Format.Code) {
-        if (this.HighlightJs) {
-          if (language) {
-            output = (
-              <Pre
-                className={classNames(Classes.RUNNING_TEXT, 'content-output-container')}
-                dangerouslySetInnerHTML={{
-                  __html: this.HighlightJs.highlight(language, content, true).value,
-                }}
-              />
-            );
-          } else {
-            output = (
-              <div className="content-output-container">
-                <NonIdealState icon={<Spinner />} title="Detecting Language…" />
-              </div>
-            );
-          }
-        } else {
-          this.loadCodeRenderer();
-
-          output = (
-            <div className="content-output-container">
-              <NonIdealState icon={<Spinner />} title="Loading Code Renderer…" />
-            </div>
-          );
-        }
-      }
-
       return (
         <div className="split-content-area">
           <div className="content-input-container">{textArea}</div>
           <Divider />
-          {output}
+          {renderedContent == null ? (
+            <div className={classNames('content-output-container')}>
+              <NonIdealState title={`Rendering ${startCase(format)}...`} icon={<Spinner />} />
+            </div>
+          ) : (
+            <div
+              className={classNames(
+                Classes.RUNNING_TEXT,
+                format === Format.Code && Classes.CODE_BLOCK,
+                'content-output-container',
+                format.toLowerCase(),
+              )}
+              dangerouslySetInnerHTML={{ __html: renderedContent }}
+            />
+          )}
         </div>
       );
     } else {
@@ -826,7 +782,7 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderSelectLanguageDialog({ selectLanguageDialogOpen, mode }: IAppState) {
+  private renderSelectLanguageDialog({ selectLanguageDialogOpen, mode, languages }: IAppState) {
     return (
       <Dialog
         isOpen={selectLanguageDialogOpen}
@@ -837,10 +793,10 @@ class App extends React.Component<IAppProps, IAppState> {
         className={classNames('select-language-dialog', { [Classes.DARK]: mode === Mode.Dark })}
       >
         <div className={Classes.DIALOG_BODY}>
-          {this.HighlightJs ? (
+          {languages ? (
             <QueryList
               renderer={this.renderLanguagesQueryList}
-              items={sortBy(this.languages!, 'name')}
+              items={sortBy(languages, 'name')}
               itemRenderer={this.renderLanguage}
               onItemSelect={this.handleLanguageSelected}
               itemPredicate={this.languagePredicate}
@@ -1037,6 +993,23 @@ class App extends React.Component<IAppProps, IAppState> {
       </div>
     );
   }
+
+  private requestWorkerContentRender = () => {
+    const { format, content, language } = this.state;
+
+    if (format === Format.Code) {
+      this.worker.postMessage({
+        content,
+        language,
+        type: WorkerMessageType.RENDER_CODE,
+      });
+    } else if (format === Format.Markdown) {
+      this.worker.postMessage({
+        content,
+        type: WorkerMessageType.RENDER_MARKDOWN,
+      });
+    }
+  };
 
   private shareHandler = (pinned: boolean) => {
     return async () => {

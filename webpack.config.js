@@ -3,10 +3,11 @@ require('dotenv').config();
 const path = require('path');
 const fs = require('fs');
 
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const WebpackRequireFrom = require('webpack-require-from');
 
 const SRC_PATH = path.resolve(__dirname, 'src', 'scripts');
 const ASSETS_PATH = path.resolve(__dirname, 'public', 'assets');
@@ -24,6 +25,7 @@ module.exports = {
     chunkFilename: '[name].[contenthash].chunk.js',
     publicPath: '/assets/',
     path: ASSETS_PATH,
+    globalObject: 'this',
   },
   devtool: 'eval',
   resolve: {
@@ -31,6 +33,14 @@ module.exports = {
   },
   module: {
     rules: [
+      {
+        test: /worker\.ts$/,
+        loader: 'worker-loader',
+        options: {
+          publicPath: '/assets/',
+          inline: true,
+        },
+      },
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
@@ -74,5 +84,9 @@ module.exports = {
       canPrint: true,
     }),
     new WebpackAssetsManifest(),
+    new WebpackRequireFrom({
+      replaceSrcMethodName: 'mungeImportScriptsUrl',
+      suppressErrors: true,
+    }),
   ],
 };
