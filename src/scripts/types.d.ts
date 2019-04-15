@@ -19,6 +19,11 @@ export interface ILanguage extends Pick<HighlightJs.IMode, 'aliases'> {
   name: string;
 }
 
+interface WorkerInitializeMessage {
+  type: WorkerMessageType.INITIALIZE;
+  path: string;
+}
+
 interface WorkerRenderCodeRequestMessage {
   type: WorkerMessageType.RENDER_CODE;
   content: string;
@@ -34,18 +39,12 @@ interface WorkerRenderMarkdownRequestMessage {
   content: string;
 }
 
-interface WorkerInitializeRequestMessage {
-  type: WorkerMessageType.INITIALIZE;
-  path: string;
-}
-
 export type WorkerRequestMessage =
-  | WorkerInitializeRequestMessage
   | WorkerRenderCodeRequestMessage
   | WorkerListLanguagesRequestMessage
   | WorkerRenderMarkdownRequestMessage;
 
-export interface BaseWorkerResultMessage<T extends WorkerRequestMessage> {
+interface BaseWorkerResultMessage<T extends WorkerRequestMessage> {
   type: WorkerMessageType.RESULT;
   request_type: T['type'];
   request: T;
@@ -60,7 +59,7 @@ export type WorkerResultForRequest<
     ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
     : T extends WorkerListLanguagesRequestMessage ? Array<ILanguage> : never;
 
-interface WorkerErrorMessage<T extends WorkerRequestMessage> {
+interface WorkerErrorMessage<T extends WorkerRequestMessage | WorkerInitializeMessage> {
   type: WorkerMessageType.ERROR;
   request: T;
   request_type: T['type'];
@@ -69,13 +68,14 @@ interface WorkerErrorMessage<T extends WorkerRequestMessage> {
 
 export type WorkerResultMessage =
   | BaseWorkerResultMessage<WorkerRenderCodeRequestMessage>
-  | BaseWorkerResultMessage<WorkerRenderMarkdownRequestMessage>
-  | BaseWorkerResultMessage<WorkerListLanguagesRequestMessage>;
+  | BaseWorkerResultMessage<WorkerListLanguagesRequestMessage>
+  | BaseWorkerResultMessage<WorkerRenderMarkdownRequestMessage>;
 
 type WorkerMessage =
+  | WorkerInitializeMessage
   | WorkerRequestMessage
   | WorkerResultMessage
-  | WorkerErrorMessage<WorkerRequestMessage>;
+  | WorkerErrorMessage<WorkerInitializeMessage | WorkerRequestMessage>;
 
 interface IWorkerMessageEvent extends MessageEvent {
   data: WorkerMessage;

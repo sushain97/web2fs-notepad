@@ -5,44 +5,44 @@ import * as MarkdownIt from 'markdown-it';
 import setupMarkdown from './setup-markdown';
 import {
   AppWorker,
+  WorkerMessage,
   WorkerMessageType,
   WorkerRequestMessage,
   WorkerResultForRequest,
-  WorkerResultMessage,
 } from './types';
 
-const ctx: AppWorker = self as any;
+declare var self: AppWorker;
 
 const getCodeRenderer = async () => {
-  if (!ctx.HighlightJs) {
+  if (!self.HighlightJs) {
     const hljs = await import(/* webpackChunkName: "highlight-js" */ 'highlight.js');
-    ctx.HighlightJs = ((hljs as any).default as typeof HighlightJs | undefined) || hljs;
+    self.HighlightJs = ((hljs as any).default as typeof HighlightJs | undefined) || hljs;
   }
 
-  return ctx.HighlightJs!;
+  return self.HighlightJs!;
 };
 
 const getMarkdownRenderer = async () => {
-  if (!ctx.MarkdownIt) {
+  if (!self.MarkdownIt) {
     const md = await import(/* webpackChunkName: "markdown-it" */ 'markdown-it');
-    ctx.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
+    self.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
   }
 
-  return ctx.MarkdownIt!;
+  return self.MarkdownIt!;
 };
 
 const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResultForRequest<T>) => {
-  // TODO: get this to type more cleanly
   const message = {
     request,
     request_type: request.type,
     result,
     type: WorkerMessageType.RESULT,
   };
-  ctx.postMessage(message as WorkerResultMessage);
+  // Avoiding this cast and ensuring type narrowing in handleWorkerMessage seem mutually exclusive.
+  self.postMessage(message as WorkerMessage);
 };
 
-ctx.addEventListener('message', async ({ data: request }) => {
+self.addEventListener('message', async ({ data: request }) => {
   if ('request_type' in request) {
     throw new Error(`Recieved message with request_type: ${JSON.stringify(request)}`);
   }
@@ -80,7 +80,7 @@ ctx.addEventListener('message', async ({ data: request }) => {
         const _: never = request;
     }
   } catch (error) {
-    ctx.postMessage({
+    self.postMessage({
       error: error.toString(),
       request,
       request_type: request.type,
