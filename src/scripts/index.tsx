@@ -864,13 +864,14 @@ class App extends React.Component<IAppProps, IAppState> {
     format,
     language,
   }: IAppState) {
+    const mobile = window.innerWidth <= 480;
     const saved = currentVersion !== null;
     const old = saved && version !== currentVersion;
     const updated = saved && currentContent === content;
 
     return (
       <div className="status-bar">
-        {this.renderStatusBarHistory(this.state, { updated, old, saved })}
+        {this.renderStatusBarHistory(this.state, { updated, old, saved, mobile })}
         <div>
           <Callout
             intent={old ? Intent.WARNING : undefined}
@@ -882,23 +883,28 @@ class App extends React.Component<IAppProps, IAppState> {
           </Callout>
           <ButtonGroup>
             <Popover position={Position.TOP} content={this.renderFormatMenu()}>
-              <Button rightIcon={IconNames.CARET_UP} icon={IconNames.PRESENTATION}>
-                <>
-                  {startCase(format)}
-                  {format === Format.Code ? (
-                    <>
-                      {' ('}
-                      {language ? (
-                        startCase(language)
-                      ) : (
-                        <span className={Classes.SKELETON}>...</span>
-                      )}
-                      {')'}
-                    </>
-                  ) : (
-                    ''
-                  )}
-                </>
+              <Button
+                rightIcon={mobile ? undefined : IconNames.CARET_UP}
+                icon={IconNames.PRESENTATION}
+              >
+                {!mobile && (
+                  <>
+                    {startCase(format)}
+                    {format === Format.Code ? (
+                      <>
+                        {' ('}
+                        {language ? (
+                          startCase(language)
+                        ) : (
+                          <span className={Classes.SKELETON}>...</span>
+                        )}
+                        {')'}
+                      </>
+                    ) : (
+                      ''
+                    )}
+                  </>
+                )}
               </Button>
             </Popover>
             <Tooltip
@@ -950,8 +956,18 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private renderStatusBarHistory(
     { updating, currentVersion, note: { version } }: IAppState,
-    { updated, old, saved }: { old: boolean; saved: boolean; updated: boolean },
+    {
+      updated,
+      old,
+      saved,
+      mobile,
+    }: { mobile: boolean; old: boolean; saved: boolean; updated: boolean },
   ) {
+    const versionString = saved
+      ? mobile
+        ? `v${version}`
+        : `Version ${version} of ${currentVersion}`
+      : 'Unsaved';
     return (
       <div className="status-bar-history">
         <Tooltip content={updating ? 'Saving' : updated ? 'Saved' : 'Save'} position={Position.TOP}>
@@ -974,7 +990,7 @@ class App extends React.Component<IAppProps, IAppState> {
             interactive={saved}
             className="version-tag"
           >
-            {saved ? `Version ${version} of ${currentVersion}` : 'Unsaved'}
+            {versionString}
           </Tag>
         </Popover>
         {old && (
