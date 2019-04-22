@@ -442,9 +442,11 @@ class App extends React.Component<IAppProps, IAppState> {
       ev.preventDefault();
     }
 
-    if (this.renameForm.current!.checkValidity()) {
+    if (form.checkValidity()) {
+      this.setState({ renameAlertOpen: false });
+
+      const newId = this.renameInput.current!.value;
       try {
-        const newId = this.renameInput.current!.value;
         await axios.post(`/${id}/rename`, `newId=${encodeURIComponent(newId)}`);
 
         this.setState({
@@ -456,7 +458,6 @@ class App extends React.Component<IAppProps, IAppState> {
           intent: Intent.SUCCESS,
           message: `Renamed note to ${newId}.`,
         });
-        this.setState({ renameAlertOpen: false });
       } catch (error) {
         this.showAxiosErrorToast('Renaming note failed', error);
       }
