@@ -59,6 +59,7 @@ import { AppWorker, ILanguage, IWorkerMessageEvent, Mode, WorkerMessageType } fr
 // built up so we only buffer UPDATE_MAX_WAIT_MS of updates.
 const UPDATE_DEBOUNCE_MS = 5000;
 const UPDATE_MAX_WAIT_MS = 15000;
+const OUTDATED_CHECK_MS = 60000;
 
 enum Format {
   PlainText = 'PlainText',
@@ -153,8 +154,10 @@ const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
+  private checkOutdatedVersionInterval?: number;
   private contentRef?: HTMLTextAreaElement | null;
   private handleContentScrollDebounced = debounce(this.updateNoteSettings, 100);
+  private lastOutdatedVersionCheck: number;
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
@@ -210,11 +213,18 @@ class App extends React.Component<IAppProps, IAppState> {
     });
     this.worker.addEventListener('message', this.handleWorkerMessage);
     this.requestWorkerContentRender();
+
+    this.lastOutdatedVersionCheck = Date.now();
   }
 
   public componentDidMount() {
     document.addEventListener('selectionchange', this.handleSelectionChange);
     window.addEventListener('beforeunload', this.handleBeforeUnload);
+    window.addEventListener('onfocus', this.checkOutdatedVersion);
+    this.checkOutdatedVersionInterval = window.setInterval(
+      this.checkOutdatedVersion,
+      OUTDATED_CHECK_MS,
+    );
   }
 
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
@@ -233,6 +243,9 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentWillUnmount() {
     document.removeEventListener('selectionchange', this.handleSelectionChange);
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    window.removeEventListener('visibilitychange', this.checkOutdatedVersion);
+    window.clearInterval(this.checkOutdatedVersionInterval);
+    this.updateNoteDebounced.cancel();
   }
 
   public render() {
@@ -247,6 +260,42 @@ class App extends React.Component<IAppProps, IAppState> {
       </div>
     );
   }
+
+  private checkOutdatedVersion = async () => {
+    let { currentVersion } = this.state;
+    const { version } = this.state.note;
+    const saved = currentVersion !== null;
+    const old = saved && version !== currentVersion;
+
+    if (Date.now() - this.lastOutdatedVersionCheck < OUTDATED_CHECK_MS) {
+      return;
+    }
+
+    try {
+      const { data: history } = await axios.get<INoteVersionEntry[]>(
+        `/${this.state.note.id}/history`,
+      );
+      this.lastOutdatedVersionCheck = Date.now();
+      currentVersion = history.length ? history.length : null;
+      this.setState({ currentVersion });
+
+      if (currentVersion !== null && (currentVersion > version || !saved) && !old) {
+        if (document.hidden) {
+          const showOutdatedVersionToast = () => {
+            this.showOutdatedVersionToast();
+            window.removeEventListener('visibilitychange', showOutdatedVersionToast);
+          };
+          window.addEventListener('visibilitychange', showOutdatedVersionToast);
+        } else {
+          this.showOutdatedVersionToast();
+        }
+
+        this.showNoteVersion(version, false);
+      }
+    } catch (error) {
+      console.warn('Failed to check for outdated version: ', error); // tslint:disable-line no-console
+    }
+  };
 
   private contentRefHandler = async (ref: HTMLTextAreaElement | null) => {
     this.contentRef = ref;
@@ -1128,6 +1177,19 @@ class App extends React.Component<IAppProps, IAppState> {
         this.showAxiosErrorToast('Fetching history failed', error);
       }
     }
+  }
+
+  private showOutdatedVersionToast() {
+    AppToaster.show({
+      action: {
+        icon: IconNames.FAST_FORWARD,
+        onClick: this.handleViewLatestButtonClick,
+        text: 'View latest',
+      },
+      icon: IconNames.WARNING_SIGN,
+      intent: Intent.WARNING,
+      message: `Current version is now outdated.`,
+    });
   }
 
   private updateNote = async () => {
