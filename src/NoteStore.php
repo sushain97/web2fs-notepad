@@ -496,6 +496,10 @@ class NoteStore
 
     private function getNoteVersions(string $id): array
     {
+        if (!$this->hasNote($id)) {
+            return [];
+        }
+
         $versions = array_diff(scandir($this->getNoteVersionDataDir($id)), ['.', '..']);
         sort($versions, SORT_NUMERIC);
         return $versions;
