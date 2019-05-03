@@ -20,6 +20,6 @@ const app = document.getElementById('app')!;
 app.setAttribute('class', Classes.CODE_BLOCK);
 document.body.setAttribute(
   'class',
-  classNames(Classes.MONOSPACE_TEXT, { [Classes.DARK]: mode === Mode.Dark }),
+  classNames(Classes.MONOSPACE_TEXT, { [Classes.DARK]: mode === Mode.Dark.toLowerCase() }),
 );
 document.getElementById('app')!.innerHTML = value;

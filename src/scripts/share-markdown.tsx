@@ -16,4 +16,7 @@ const { content, mode } = (window as any).CONTEXT;
 const app = document.getElementById('app')!;
 app.setAttribute('class', classNames(Classes.RUNNING_TEXT, 'markdown'));
 app.innerHTML = markdownIt.render(content);
-document.body.setAttribute('class', classNames({ [Classes.DARK]: mode === Mode.Dark }));
+document.body.setAttribute(
+  'class',
+  classNames({ [Classes.DARK]: mode === Mode.Dark.toLowerCase() }),
+);
