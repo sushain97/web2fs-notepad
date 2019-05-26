@@ -72,12 +72,15 @@ class Controller extends AbstractController
         ];
 
         if ($contentType === 'application/json') {
-            return $this->json($data);
+            $response = $this->json($data);
         } elseif (strpos($userAgent, 'curl') === 0 || $contentType === 'text/plain') {
-            return new Response($note->content);
+            $response = new Response($note->content);
         } else {
-            return $this->renderHTML($data, 'index', $id);
+            $response = $this->renderHTML($data, 'index', $id);
         }
+
+        $response->setVary('Accept');
+        return $response;
     }
 
     public function listNoteHistory(string $id, NoteStore $store): Response
