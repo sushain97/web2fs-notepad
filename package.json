@@ -24,7 +24,7 @@
     "highlight.js": "^9.12.0",
     "humanize-plus": "^1.8.2",
     "localforage": "^1.7.2",
-    "lodash-es": "^4.17.10",
+    "lodash-es": "^4.17.14",
     "markdown-it": "^8.4.2",
     "markdown-it-anchor": "^5.0.2",
     "normalize.css": "^8.0.0",
