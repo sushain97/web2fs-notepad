@@ -1,20 +1,19 @@
 #!/bin/bash
-
-set -eu
+set -euo pipefail
 
 file="${BASH_SOURCE[0]}"
 
 cd "$(dirname "$file")/.."
 
 if [[ $# -eq 0 ]] ; then
-    echo "Usage: $file release_version|circle_build_number.";
-    echo "       $file v0.3.7 or $file 196 (e.g.)";
+    echo "ℹ️ Usage: $file release_version|circle_build_number."
+    echo "        $file v0.3.7 or $file 196 (e.g.)"
     exit 1
 fi
 
 if [[ $1 != v* && -z "${CIRCLE_TOKEN:-}" ]]; then
-    echo 'Please set the CIRCLE_TOKEN environment variable. See https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token.';
-    exit 1;
+    echo '⚠️ Please set the CIRCLE_TOKEN environment variable. See https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token.'
+    exit 1
 fi
 
 if [[ $1 == v* ]]; then
@@ -24,8 +23,8 @@ else
     dist_url=$(echo "$artifacts" | jq -r '.[] | select(.path=="home/circleci/web2fs-notepad/dist.tar.gz") | .["url"]')
 
     if [[ -z "$dist_url" ]]; then
-        echo "Artifact dist.tar.gz not found for build $1 (found: $artifacts).";
-        exit 1;
+        echo "⚠️ Artifact dist.tar.gz not found for build $1 (found: $artifacts)."
+        exit 1
     fi
 
     wget "$dist_url?circle-token=$CIRCLE_TOKEN" -O dist.tar.gz
@@ -36,4 +35,4 @@ tar -xvf dist.tar.gz
 rm dist.tar.gz
 
 ./bin/console cache:clear
-echo 'Updated!'
+echo '✅ Updated!'
