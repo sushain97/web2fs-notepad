@@ -137,7 +137,7 @@ type IHotkeyCallbacks = {
     | 'onDownload'
     | 'onShare'
     | 'onMonospaceToggle'
-    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']> // tslint:disable-line max-union-size
+    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // tslint:disable-line max-union-size
 };
 
 interface IAppProps extends IPageContext {
@@ -172,7 +172,7 @@ class App extends React.Component<IAppProps, IAppState> {
     const format = noteSettings?.format || Format.PlainText;
     const wrap = noteSettings?.wrap ?? true;
     const monospace =
-      (noteSettings?.monospace === true) ||
+      noteSettings?.monospace === true ||
       (noteSettings?.monospace == null && format === Format.Code) ||
       false;
 
@@ -1142,8 +1142,7 @@ class App extends React.Component<IAppProps, IAppState> {
         intent: Intent.WARNING,
         message: (
           <>
-            <strong>{message}</strong>:{' '}
-            {error.response?.data.message || error.toString()}.
+            <strong>{message}</strong>: {error.response?.data.message || error.toString()}.
           </>
         ),
       },

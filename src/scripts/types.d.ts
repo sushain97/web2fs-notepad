@@ -56,8 +56,10 @@ export type WorkerResultForRequest<
 > = T extends WorkerRenderCodeRequestMessage
   ? ReturnType<typeof HighlightJs['highlight']>
   : T extends WorkerRenderMarkdownRequestMessage
-    ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
-    : T extends WorkerListLanguagesRequestMessage ? Array<ILanguage> : never;
+  ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
+  : T extends WorkerListLanguagesRequestMessage
+  ? Array<ILanguage>
+  : never;
 
 interface WorkerErrorMessage<T extends WorkerRequestMessage | WorkerInitializeMessage> {
   type: WorkerMessageType.ERROR;
