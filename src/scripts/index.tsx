@@ -169,11 +169,11 @@ class App extends React.Component<IAppProps, IAppState> {
 
     const { note, currentVersion, noteSettings, settings, hotkeyCallbacks } = props;
 
-    const format = (noteSettings && noteSettings.format) || Format.PlainText;
-    const wrap = noteSettings && noteSettings.wrap != null ? noteSettings.wrap : true;
+    const format = noteSettings?.format || Format.PlainText;
+    const wrap = noteSettings?.wrap ?? true;
     const monospace =
-      (noteSettings && noteSettings.monospace === true) ||
-      (noteSettings && noteSettings.monospace == null && format === Format.Code) ||
+      (noteSettings?.monospace === true) ||
+      (noteSettings?.monospace == null && format === Format.Code) ||
       false;
 
     this.state = {
@@ -181,8 +181,8 @@ class App extends React.Component<IAppProps, IAppState> {
       content: note.content,
       currentVersion,
       format,
-      language: noteSettings == null ? undefined : noteSettings.language,
-      mode: (settings && settings.mode) || Mode.Light,
+      language: noteSettings?.language,
+      mode: settings?.mode || Mode.Light,
       monospace,
       note,
       readOnly: true,
@@ -276,7 +276,7 @@ class App extends React.Component<IAppProps, IAppState> {
         `/${this.state.note.id}/history`,
       );
       this.lastOutdatedVersionCheck = Date.now();
-      currentVersion = history.length ? history.length : null;
+      currentVersion = history?.length ?? null;
       this.setState({ currentVersion });
 
       if (currentVersion !== null && (currentVersion > version || !saved) && !old) {
@@ -1143,7 +1143,7 @@ class App extends React.Component<IAppProps, IAppState> {
         message: (
           <>
             <strong>{message}</strong>:{' '}
-            {(error.response && error.response.data.message) || error.toString()}.
+            {error.response?.data.message || error.toString()}.
           </>
         ),
       },
