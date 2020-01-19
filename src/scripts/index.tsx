@@ -1243,7 +1243,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private async updateNoteSettings(settings?: Partial<INoteSettings>) {
     const { id } = this.state.note;
     await NotesSettingStore.setItem(id, {
-      ...(await NotesSettingStore.getItem(id)),
+      ...((await NotesSettingStore.getItem(id)) as {}), // tslint:disable-line no-useless-cast
       ...pick(this.state, NOTE_SETTINGS_STATE_PROPERTIES),
       ...settings,
     });
@@ -1253,8 +1253,9 @@ class App extends React.Component<IAppProps, IAppState> {
     const proxiedCallbacks: IHotkeyCallbacks = new Proxy(
       {},
       {
-        get: (_, callback) => (...args: Array<unknown>) =>
-          (hotkeyCallbacks as any)[callback](...args),
+        get: (_, callback) => (...args: unknown[]) => {
+          return (hotkeyCallbacks as any)[callback](...args);
+        },
       },
     ) as any;
 
