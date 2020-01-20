@@ -55,8 +55,10 @@ class BlueprintIconShakingPlugin {
   }
 }
 
+const development = process.env.APP_ENV == 'dev';
+
 module.exports = {
-  mode: process.env.APP_ENV == 'dev' ? 'development' : 'production',
+  mode: development ? 'development' : 'production',
   entry: fs.readdirSync(SRC_PATH).reduce((entrypoints, name) => {
     if (!fs.statSync(path.join(SRC_PATH, name)).isDirectory() && name.endsWith('.tsx')) {
       entrypoints[path.basename(name, '.tsx')] = path.join(SRC_PATH, name);
@@ -117,15 +119,16 @@ module.exports = {
       filename: '[name].[contenthash].bundle.css',
       path: ASSETS_PATH,
     }),
-    new OptimizeCssAssetsPlugin({
-      cssProcessor: require('cssnano'),
-      cssProcessorOptions: {
-        discardComments: {
-          removeAll: true,
+    !development &&
+      new OptimizeCssAssetsPlugin({
+        cssProcessor: require('cssnano'),
+        cssProcessorOptions: {
+          discardComments: {
+            removeAll: true,
+          },
         },
-      },
-      canPrint: true,
-    }),
+        canPrint: true,
+      }),
     new WebpackAssetsManifest(),
     new WebpackRequireFrom({
       replaceSrcMethodName: 'mungeImportScriptsUrl',
@@ -133,5 +136,5 @@ module.exports = {
     }),
     new NormalModuleReplacementPlugin(/.*\/generated\/iconSvgPaths.*/, iconsFile.name),
     new BlueprintIconShakingPlugin(),
-  ],
+  ].filter(Boolean),
 };
