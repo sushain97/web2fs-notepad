@@ -4,6 +4,7 @@ const util = require('util');
 const path = require('path');
 const fs = require('fs');
 const child_process = require('child_process');
+const tmp = require('tmp');
 
 const { NormalModuleReplacementPlugin } = require('webpack');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
@@ -16,6 +17,7 @@ const icons = require('@blueprintjs/icons');
 
 const SRC_PATH = path.resolve(__dirname, 'src', 'scripts');
 const ASSETS_PATH = path.resolve(__dirname, 'public', 'assets');
+const iconsFile = tmp.fileSync();
 
 class BlueprintIconShakingPlugin {
   static extraIcons = ['key-command', 'key-option'];
@@ -42,7 +44,7 @@ class BlueprintIconShakingPlugin {
       );
 
       await writeFile(
-        'icons.js',
+        iconsFile.name,
         `export const IconSvgPaths16 = ${JSON.stringify(iconSvgPaths16, null, 2)}
     export const IconSvgPaths20 = ${JSON.stringify(iconSvgPaths20, null, 2)}`,
       );
@@ -129,10 +131,7 @@ module.exports = {
       replaceSrcMethodName: 'mungeImportScriptsUrl',
       suppressErrors: true,
     }),
-    new NormalModuleReplacementPlugin(
-      /.*\/generated\/iconSvgPaths.*/,
-      path.resolve(__dirname, 'icons.js'),
-    ),
+    new NormalModuleReplacementPlugin(/.*\/generated\/iconSvgPaths.*/, iconsFile.name),
     new BlueprintIconShakingPlugin(),
   ],
 };
