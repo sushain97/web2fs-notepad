@@ -20,7 +20,7 @@ if [[ $1 == v* ]]; then
     wget "https://github.com/sushain97/web2fs-notepad/releases/download/$1/dist.tar.gz" -O dist.tar.gz
 else
     artifacts=$(curl -s "https://circleci.com/api/v1.1/project/github/sushain97/web2fs-notepad/$1/artifacts?circle-token=$CIRCLE_TOKEN")
-    dist_url=$(echo "$artifacts" | jq -r '.[] | select(.path=="home/circleci/web2fs-notepad/dist.tar.gz") | .["url"]')
+    dist_url=$(echo "$artifacts" | jq -r '.[] | select(.path=="dist.tar.gz") | .["url"]')
 
     if [[ -z "$dist_url" ]]; then
         echo "⚠️ Artifact dist.tar.gz not found for build $1 (found: $artifacts)."
