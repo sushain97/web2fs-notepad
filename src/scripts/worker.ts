@@ -51,7 +51,7 @@ self.addEventListener('message', async ({ data: request }) => {
     switch (request.type) {
       case WorkerMessageType.INITIALIZE: {
         (self as any).mungeImportScriptsUrl = (url: string) => {
-          return `${request.path}/assets/${url}`;
+          return `${request.path}/${url}`;
         };
         break;
       }

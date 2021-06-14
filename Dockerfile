@@ -1,4 +1,4 @@
-FROM php:7-apache-stretch
+FROM php:7-apache-buster
 LABEL maintainer sushain@skc.name
 
 RUN apt-get -qq update && apt-get -qq install \
@@ -6,7 +6,7 @@ RUN apt-get -qq update && apt-get -qq install \
     git \
     unzip
 
-ADD https://deb.nodesource.com/setup_10.x install_node_source.sh
+ADD https://deb.nodesource.com/setup_12.x install_node_source.sh
 RUN bash install_node_source.sh
 RUN apt-get -qq update && apt-get -qq install nodejs
 RUN npm install -g yarn

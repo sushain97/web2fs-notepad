@@ -106,14 +106,14 @@ interface IAppState {
   wrap: boolean;
 }
 
-const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const;
+const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const; // tslint:disable-line
 
 const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
   'scrollLeft',
   'scrollTop',
   'selectionEnd',
   'selectionStart',
-] as const;
+] as const; // tslint:disable-line
 
 interface INoteSettings
   extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
