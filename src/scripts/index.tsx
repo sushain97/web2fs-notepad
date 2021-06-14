@@ -228,7 +228,7 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
-    if (NOTE_SETTINGS_STATE_PROPERTIES.some(prop => prevState[prop] !== this.state[prop])) {
+    if (NOTE_SETTINGS_STATE_PROPERTIES.some((prop) => prevState[prop] !== this.state[prop])) {
       this.updateNoteSettings();
     }
     if (
@@ -597,7 +597,7 @@ class App extends React.Component<IAppProps, IAppState> {
     const lowerQuery = query.toLowerCase();
     return (
       name.toLowerCase().includes(lowerQuery) ||
-      (aliases || []).some(alias => alias.toLowerCase().includes(lowerQuery))
+      (aliases || []).some((alias) => alias.toLowerCase().includes(lowerQuery))
     );
   }
 
@@ -704,7 +704,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderFormatMenu = () => {
     return (
       <Menu>
-        {Object.keys(Format).map(format => {
+        {Object.keys(Format).map((format) => {
           const icon = {
             [Format.PlainText]: IconNames.DOCUMENT,
             [Format.Markdown]: IconNames.STYLE,
@@ -734,7 +734,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     let content;
     if (history == null) {
-      content = [...Array(currentVersion).keys()].map(i => (
+      content = [...Array(currentVersion).keys()].map((i) => (
         <MenuItem
           key={i}
           className={Classes.SKELETON}
@@ -1252,9 +1252,11 @@ class App extends React.Component<IAppProps, IAppState> {
     const proxiedCallbacks: IHotkeyCallbacks = new Proxy(
       {},
       {
-        get: (_, callback) => (...args: unknown[]) => {
-          return (hotkeyCallbacks as any)[callback](...args);
-        },
+        get:
+          (_, callback) =>
+          (...args: unknown[]) => {
+            return (hotkeyCallbacks as any)[callback](...args);
+          },
       },
     ) as any;
 

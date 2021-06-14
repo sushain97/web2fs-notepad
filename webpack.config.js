@@ -26,13 +26,13 @@ class BlueprintIconShakingPlugin {
     const exec = util.promisify(child_process.exec);
     const writeFile = fs.promises.writeFile;
 
-    const iconsShaker = async _ => {
+    const iconsShaker = async (_) => {
       const usedIcons = new Set([
         ...(await exec(`grep -ohER 'IconNames.[A-Z_]+' ${SRC_PATH}`)).stdout
           .split('\n')
-          .map(i => i.split('.', 2)[1])
+          .map((i) => i.split('.', 2)[1])
           .filter(Boolean)
-          .map(i => i.toLowerCase().replace('_', '-')),
+          .map((i) => i.toLowerCase().replace('_', '-')),
         ...BlueprintIconShakingPlugin.extraIcons,
       ]);
 

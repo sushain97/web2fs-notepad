@@ -51,15 +51,14 @@ interface BaseWorkerResultMessage<T extends WorkerRequestMessage> {
   result: WorkerResultForRequest<T>;
 }
 
-export type WorkerResultForRequest<
-  T extends WorkerRequestMessage
-> = T extends WorkerRenderCodeRequestMessage
-  ? ReturnType<typeof HighlightJs['highlight']>
-  : T extends WorkerRenderMarkdownRequestMessage
-  ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
-  : T extends WorkerListLanguagesRequestMessage
-  ? Array<ILanguage>
-  : never;
+export type WorkerResultForRequest<T extends WorkerRequestMessage> =
+  T extends WorkerRenderCodeRequestMessage
+    ? ReturnType<typeof HighlightJs['highlight']>
+    : T extends WorkerRenderMarkdownRequestMessage
+    ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
+    : T extends WorkerListLanguagesRequestMessage
+    ? Array<ILanguage>
+    : never;
 
 interface WorkerErrorMessage<T extends WorkerRequestMessage | WorkerInitializeMessage> {
   type: WorkerMessageType.ERROR;

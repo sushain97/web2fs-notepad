@@ -70,7 +70,7 @@ self.addEventListener('message', async ({ data: request }) => {
       }
       case WorkerMessageType.LIST_CODE_LANGUAGES: {
         const highlightJs = await getCodeRenderer();
-        const result = highlightJs.listLanguages().map(name => ({
+        const result = highlightJs.listLanguages().map((name) => ({
           name,
           ...pick(highlightJs.getLanguage(name), 'aliases'),
         }));
