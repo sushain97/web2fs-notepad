@@ -11,7 +11,8 @@
     "tslint": "tslint --project .",
     "prettier": "prettier src/**/{*.tsx,*.ts,*.scss} config/**/*.yaml .circleci/**.yml *.json *.js *.md *.yaml",
     "stylelint": "stylelint src",
-    "lint": "yarn run tslint && yarn run prettier --list-different && yarn run stylelint",
+    "tsc": "tsc --noEmit",
+    "lint": "yarn run tslint && yarn run prettier --list-different && yarn run stylelint && yarn run tsc",
     "fix": "yarn run tslint --fix && yarn run prettier --write && yarn run stylelint --fix"
   },
   "dependencies": {
@@ -41,6 +42,7 @@
     "@types/lodash-es": "^4.17.1",
     "@types/markdown-it": "^0.0.5",
     "@types/markdown-it-anchor": "^4.0.1",
+    "@types/punycode": "^2.1.0",
     "@types/react": "^16.4.11",
     "@types/react-dom": "^16.0.7",
     "clean-webpack-plugin": "^0.1.19",
