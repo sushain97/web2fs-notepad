@@ -1,6 +1,5 @@
-import * as HighlightJs from 'highlight.js';
+import type { HLJSApi, HighlightResult } from 'highlight.js';
 import { pick } from 'lodash-es';
-import * as MarkdownIt from 'markdown-it';
 
 import setupMarkdown from './setup-markdown';
 import {
@@ -15,8 +14,9 @@ declare var self: AppWorker;
 
 const getCodeRenderer = async () => {
   if (!self.HighlightJs) {
-    const hljs = await import(/* webpackChunkName: "highlight-js" */ 'highlight.js');
-    self.HighlightJs = ((hljs as any).default as typeof HighlightJs | undefined) || hljs;
+    self.HighlightJs = (
+      await import(/* webpackChunkName: "highlight-js" */ 'highlight.js')
+    ).default;
   }
 
   return self.HighlightJs;
@@ -24,8 +24,8 @@ const getCodeRenderer = async () => {
 
 const getMarkdownRenderer = async () => {
   if (!self.MarkdownIt) {
-    const md = await import(/* webpackChunkName: "markdown-it" */ 'markdown-it');
-    self.MarkdownIt = setupMarkdown(((md as any).default as typeof MarkdownIt | undefined) || md);
+    const md = (await import(/* webpackChunkName: "markdown-it" */ 'markdown-it')).default;
+    self.MarkdownIt = setupMarkdown(md);
   }
 
   return self.MarkdownIt;
@@ -63,8 +63,8 @@ self.addEventListener('message', async ({ data: request }) => {
         // and thus cause a DataCloneError if included.
         const result = pick(
           language
-            ? highlightJs.highlight(language, content, true)
-            : (highlightJs.highlightAuto(content) as HighlightJs.IHighlightResult),
+            ? highlightJs.highlight(content, { language, ignoreIllegals: true })
+            : (highlightJs.highlightAuto(content) as HighlightResult),
           ['language', 'value'],
         );
 

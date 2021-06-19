@@ -1,4 +1,4 @@
-import * as HighlightJs from 'highlight.js';
+import type { HLJSApi, LanguageDetail } from 'highlight.js';
 import * as MarkdownIt from 'markdown-it';
 
 export const enum Mode {
@@ -15,7 +15,7 @@ export const enum WorkerMessageType {
   LIST_CODE_LANGUAGES = 'LIST_CODE_LANGUAGES',
 }
 
-export interface ILanguage extends Pick<HighlightJs.IMode, 'aliases'> {
+export interface ILanguage extends Pick<LanguageDetail, 'aliases'> {
   name: string;
 }
 
@@ -53,7 +53,7 @@ interface BaseWorkerResultMessage<T extends WorkerRequestMessage> {
 
 export type WorkerResultForRequest<T extends WorkerRequestMessage> =
   T extends WorkerRenderCodeRequestMessage
-    ? Pick<ReturnType<typeof HighlightJs['highlight']>, 'language' | 'value'>
+    ? Pick<ReturnType<HLJSApi['highlight']>, 'language' | 'value'>
     : T extends WorkerRenderMarkdownRequestMessage
     ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
     : T extends WorkerListLanguagesRequestMessage
@@ -89,7 +89,7 @@ type WorkerEventListenerOrEventListenerObject =
   | ((evt: IWorkerMessageEvent) => void);
 
 export class AppWorker extends Worker {
-  HighlightJs?: typeof HighlightJs;
+  HighlightJs?: HLJSApi;
   MarkdownIt?: ReturnType<typeof MarkdownIt>;
 
   public postMessage(message: WorkerMessage): void;

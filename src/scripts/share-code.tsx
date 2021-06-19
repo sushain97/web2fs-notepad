@@ -3,7 +3,7 @@ import '../styles/share.scss';
 
 import { Classes } from '@blueprintjs/core';
 import classNames from 'classnames';
-import * as HighlightJs from 'highlight.js';
+import HighlightJs from 'highlight.js';
 
 import { Mode } from './types';
 
@@ -11,7 +11,7 @@ const { content, language, mode } = (window as any).CONTEXT;
 
 let value;
 if (language) {
-  ({ value } = HighlightJs.highlight(language, content, true));
+  ({ value } = HighlightJs.highlight(content, { language, ignoreIllegals: true }));
 } else {
   ({ value } = HighlightJs.highlightAuto(content));
 }
