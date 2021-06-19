@@ -53,7 +53,7 @@ interface BaseWorkerResultMessage<T extends WorkerRequestMessage> {
 
 export type WorkerResultForRequest<T extends WorkerRequestMessage> =
   T extends WorkerRenderCodeRequestMessage
-    ? ReturnType<typeof HighlightJs['highlight']>
+    ? Pick<ReturnType<typeof HighlightJs['highlight']>, 'language' | 'value'>
     : T extends WorkerRenderMarkdownRequestMessage
     ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
     : T extends WorkerListLanguagesRequestMessage

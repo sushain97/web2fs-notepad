@@ -58,9 +58,16 @@ self.addEventListener('message', async ({ data: request }) => {
       case WorkerMessageType.RENDER_CODE: {
         const { language, content } = request;
         const highlightJs = await getCodeRenderer();
-        const result = language
-          ? highlightJs.highlight(language, content, true)
-          : (highlightJs.highlightAuto(content) as HighlightJs.IHighlightResult);
+
+        // Exclude properties of the highlight result which cannot be cloned
+        // and thus cause a DataCloneError if included.
+        const result = pick(
+          language
+            ? highlightJs.highlight(language, content, true)
+            : (highlightJs.highlightAuto(content) as HighlightJs.IHighlightResult),
+          ['language', 'value'],
+        );
+
         return respond(request, result);
       }
       case WorkerMessageType.RENDER_MARKDOWN: {
