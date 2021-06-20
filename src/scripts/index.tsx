@@ -106,14 +106,14 @@ interface IAppState {
   wrap: boolean;
 }
 
-const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const; // tslint:disable-line
+const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const; // eslint-disable-line
 
 const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
   'scrollLeft',
   'scrollTop',
   'selectionEnd',
   'selectionStart',
-] as const; // tslint:disable-line
+] as const; // eslint-disable-line
 
 interface INoteSettings
   extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
@@ -137,7 +137,7 @@ type IHotkeyCallbacks = {
     | 'onDownload'
     | 'onShare'
     | 'onMonospaceToggle'
-    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // tslint:disable-line max-union-size
+    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // eslint-disable-line 
 };
 
 interface IAppProps extends IPageContext {
@@ -293,7 +293,7 @@ class App extends React.Component<IAppProps, IAppState> {
         this.showNoteVersion(version, false);
       }
     } catch (error) {
-      console.warn('Failed to check for outdated version: ', error); // tslint:disable-line no-console
+      console.warn('Failed to check for outdated version: ', error); // eslint-disable-line  no-console
     }
   };
 
@@ -1242,7 +1242,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private async updateNoteSettings(settings?: Partial<INoteSettings>) {
     const { id } = this.state.note;
     await NotesSettingStore.setItem(id, {
-      ...((await NotesSettingStore.getItem(id)) as {}), // tslint:disable-line no-useless-cast
+      ...((await NotesSettingStore.getItem(id)) as {}), // eslint-disable-line  @typescript-eslint/no-unnecessary-type-assertion
       ...pick(this.state, NOTE_SETTINGS_STATE_PROPERTIES),
       ...settings,
     });
@@ -1327,12 +1327,12 @@ class App extends React.Component<IAppProps, IAppState> {
   // This is a hack to work around https://github.com/palantir/blueprint/issues/2972
   const hotkeyCallbacks: IHotkeyCallbacks = {} as any;
   class StatelessApp extends React.PureComponent {
-    // tslint:disable-line max-classes-per-file
+    // eslint-disable-line  max-classes-per-file
     public render() {
       return <App {...{ ...context, settings, noteSettings, hotkeyCallbacks }} />;
     }
   }
-  function AppWrapper() {} // tslint:disable-line no-empty
+  function AppWrapper() {} // eslint-disable-line  no-empty, no-empty-function, @typescript-eslint/no-empty-function
   AppWrapper.prototype = Object.create(StatelessApp.prototype);
   AppWrapper.prototype.renderHotkeys = App.hotkeyRenderer(hotkeyCallbacks);
   const AppContainer = HotkeysTarget(AppWrapper as any);
