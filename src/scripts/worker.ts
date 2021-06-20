@@ -1,4 +1,3 @@
-import type { HighlightResult } from 'highlight.js';
 import { pick } from 'lodash-es';
 
 import setupMarkdown from './setup-markdown';
@@ -10,7 +9,7 @@ import {
   WorkerResultForRequest,
 } from './types';
 
-declare var self: AppWorker;
+declare let self: AppWorker;
 
 const getCodeRenderer = async () => {
   if (!self.HighlightJs) {
@@ -42,6 +41,7 @@ const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResul
   self.postMessage(message as WorkerMessage);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 self.addEventListener('message', async ({ data: request }) => {
   if ('request_type' in request) {
     throw new Error(`Recieved message with request_type: ${JSON.stringify(request)}`);
@@ -50,6 +50,7 @@ self.addEventListener('message', async ({ data: request }) => {
   try {
     switch (request.type) {
       case WorkerMessageType.INITIALIZE: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (self as any).mungeImportScriptsUrl = (url: string) => {
           return `${request.path}/${url}`;
         };
@@ -68,12 +69,12 @@ self.addEventListener('message', async ({ data: request }) => {
           ['language', 'value'],
         );
 
-        return respond(request, result);
+        return void respond(request, result);
       }
       case WorkerMessageType.RENDER_MARKDOWN: {
         const markdownIt = await getMarkdownRenderer();
         const result = markdownIt.render(request.content);
-        return respond(request, result);
+        return void respond(request, result);
       }
       case WorkerMessageType.LIST_CODE_LANGUAGES: {
         const highlightJs = await getCodeRenderer();
@@ -81,10 +82,12 @@ self.addEventListener('message', async ({ data: request }) => {
           name,
           ...pick(highlightJs.getLanguage(name), 'aliases'),
         }));
-        return respond(request, result);
+        return void respond(request, result);
       }
-      default:
+      default: {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const _: never = request;
+      }
     }
   } catch (error) {
     self.postMessage({
@@ -96,4 +99,5 @@ self.addEventListener('message', async ({ data: request }) => {
   }
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default null as any;

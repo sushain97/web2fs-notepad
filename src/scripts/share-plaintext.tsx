@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { Mode } from './types';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { content, mode } = (window as any).CONTEXT;
 
 const app = document.getElementById('app')!;

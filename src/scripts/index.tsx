@@ -17,7 +17,9 @@ import {
   Hotkeys,
   HotkeysTarget,
   Icon,
+  IConstructor,
   IHotkeyProps,
+  IHotkeysTargetComponent,
   InputGroup,
   Intent,
   Menu,
@@ -137,7 +139,7 @@ type IHotkeyCallbacks = {
     | 'onDownload'
     | 'onShare'
     | 'onMonospaceToggle'
-    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // eslint-disable-line 
+    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // eslint-disable-line
 };
 
 interface IAppProps extends IPageContext {
@@ -220,7 +222,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentDidMount() {
     document.addEventListener('selectionchange', this.handleSelectionChange);
     window.addEventListener('beforeunload', this.handleBeforeUnload);
-    window.addEventListener('onfocus', this.checkOutdatedVersion);
+    window.addEventListener('onfocus', () => void this.checkOutdatedVersion());
     this.checkOutdatedVersionInterval = window.setInterval(
       this.checkOutdatedVersion,
       OUTDATED_CHECK_MS,
@@ -229,7 +231,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
     if (NOTE_SETTINGS_STATE_PROPERTIES.some((prop) => prevState[prop] !== this.state[prop])) {
-      this.updateNoteSettings();
+      void this.updateNoteSettings();
     }
     if (
       prevState.content !== this.state.content ||
@@ -243,7 +245,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentWillUnmount() {
     document.removeEventListener('selectionchange', this.handleSelectionChange);
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
-    window.removeEventListener('visibilitychange', this.checkOutdatedVersion);
+    window.removeEventListener('visibilitychange', () => void this.checkOutdatedVersion());
     window.clearInterval(this.checkOutdatedVersionInterval);
     this.updateNoteDebounced.cancel();
   }
@@ -290,7 +292,7 @@ class App extends React.Component<IAppProps, IAppState> {
           this.showOutdatedVersionToast();
         }
 
-        this.showNoteVersion(version, false);
+        await this.showNoteVersion(version, false);
       }
     } catch (error) {
       console.warn('Failed to check for outdated version: ', error); // eslint-disable-line  no-console
@@ -335,7 +337,7 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ renameAlertOpen: false });
   };
 
-  private handleAutoDetectLanguage = async () => {
+  private handleAutoDetectLanguage = () => {
     this.setState({
       format: Format.Code,
       language: undefined,
@@ -362,7 +364,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     this.setState({ content }, () => {
       if (currentVersion === null && !updating) {
-        this.updateNote();
+        void this.updateNote();
       } else {
         this.updateNoteDebounced();
       }
@@ -390,7 +392,7 @@ class App extends React.Component<IAppProps, IAppState> {
   }: React.UIEvent<HTMLTextAreaElement>) => {
     // This redirection is necessary since React's SyntheticEvent will get re-used
     // and a passed currentTarget reference to debounce will be invalid.
-    this.handleContentScrollDebounced({ scrollTop, scrollLeft });
+    void this.handleContentScrollDebounced({ scrollTop, scrollLeft });
   };
 
   private handleCopyShareLinkInputFocus({ currentTarget }: React.FocusEvent<HTMLInputElement>) {
@@ -398,20 +400,21 @@ class App extends React.Component<IAppProps, IAppState> {
     currentTarget.select();
   }
 
-  private handleCopyShareUrl = () => {
+  private handleCopyShareUrl = async () => {
     try {
       const { shareUrl, shareUrlSuccessMessage } = this.state;
-      App.copyTextToClipboard(shareUrl!);
+      await App.copyTextToClipboard(shareUrl!);
       AppToaster.show({
         icon: IconNames.CLIPBOARD,
         intent: Intent.SUCCESS,
-        message: shareUrlSuccessMessage!,
+        message: shareUrlSuccessMessage,
       });
       this.setState({ shareUrl: undefined });
     } catch (error) {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         message: `Copying share link failed: ${error}.`,
       });
     }
@@ -464,10 +467,10 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   };
 
-  private handleModeToggle = () => {
+  private handleModeToggle = async () => {
     const mode = this.state.mode === Mode.Light ? Mode.Dark : Mode.Light;
     this.setState({ mode });
-    SettingsStore.setItem('mode', mode);
+    await SettingsStore.setItem('mode', mode);
   };
 
   private handleMonospaceToggle = () => {
@@ -527,7 +530,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private handleSelectionChange = () => {
     if (this.contentRef) {
-      this.updateNoteSettings({
+      void this.updateNoteSettings({
         selectionEnd: this.contentRef.selectionEnd,
         selectionStart: this.contentRef.selectionStart,
       });
@@ -542,8 +545,8 @@ class App extends React.Component<IAppProps, IAppState> {
     this.worker.postMessage({ type: WorkerMessageType.LIST_CODE_LANGUAGES });
   };
 
-  private handleViewLatestButtonClick = ({ metaKey }: React.MouseEvent<HTMLElement>) => {
-    this.showNoteVersion(this.state.currentVersion!, metaKey);
+  private handleViewLatestButtonClick = async ({ metaKey }: React.MouseEvent<HTMLElement>) => {
+    await this.showNoteVersion(this.state.currentVersion!, metaKey);
   };
 
   private handleWorkerMessage = ({ data: response }: IWorkerMessageEvent) => {
@@ -576,8 +579,10 @@ class App extends React.Component<IAppProps, IAppState> {
         case WorkerMessageType.LIST_CODE_LANGUAGES:
           this.setState({ languages: response.result });
           break;
-        default:
+        default: {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const _: never = response;
+        }
       }
     }
   };
@@ -589,7 +594,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private historyMenuItemClickHandler = (version: number) => {
     return ({ metaKey }: React.MouseEvent<HTMLElement>) => {
-      this.showNoteVersion(version, metaKey);
+      void this.showNoteVersion(version, metaKey);
     };
   };
 
@@ -1016,7 +1021,7 @@ class App extends React.Component<IAppProps, IAppState> {
     const versionString = saved
       ? mobile
         ? `v${version}`
-        : `Version ${version} of ${currentVersion}`
+        : `Version ${version} of ${currentVersion!}`
       : 'Unsaved';
     return (
       <div className="status-bar-history">
@@ -1161,7 +1166,7 @@ class App extends React.Component<IAppProps, IAppState> {
     } else {
       try {
         if (currentContent !== content) {
-          this.updateNote();
+          void this.updateNote();
         }
 
         const {
@@ -1242,23 +1247,24 @@ class App extends React.Component<IAppProps, IAppState> {
   private async updateNoteSettings(settings?: Partial<INoteSettings>) {
     const { id } = this.state.note;
     await NotesSettingStore.setItem(id, {
-      ...((await NotesSettingStore.getItem(id)) as {}), // eslint-disable-line  @typescript-eslint/no-unnecessary-type-assertion
+      ...((await NotesSettingStore.getItem(id)) as Partial<INoteSettings>),
       ...pick(this.state, NOTE_SETTINGS_STATE_PROPERTIES),
       ...settings,
     });
   }
 
   public static hotkeyRenderer(hotkeyCallbacks: IHotkeyCallbacks) {
-    const proxiedCallbacks: IHotkeyCallbacks = new Proxy(
+    const proxiedCallbacks = new Proxy(
       {},
       {
         get:
           (_, callback) =>
           (...args: unknown[]) => {
+            // eslint-disable-next-line
             return (hotkeyCallbacks as any)[callback](...args);
           },
       },
-    ) as any;
+    ) as IHotkeyCallbacks;
 
     const hotkeys: [string, string, keyof IHotkeyCallbacks][] = [
       ['Save', 'mod+s', 'onSave'],
@@ -1290,7 +1296,7 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private static async copyTextToClipboard(text: string) {
-    let error = null;
+    let error: string | null = null;
 
     let textArea;
     try {
@@ -1319,13 +1325,13 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 }
 
-(async () => {
-  const context: IPageContext = (window as any).CONTEXT;
+void (async () => {
+  const context = (window as unknown as { CONTEXT: IPageContext }).CONTEXT;
   const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
   const settings = { mode: (await SettingsStore.getItem<string>('mode')) as Mode };
 
   // This is a hack to work around https://github.com/palantir/blueprint/issues/2972
-  const hotkeyCallbacks: IHotkeyCallbacks = {} as any;
+  const hotkeyCallbacks = {} as IHotkeyCallbacks;
   class StatelessApp extends React.PureComponent {
     // eslint-disable-line  max-classes-per-file
     public render() {
@@ -1335,7 +1341,9 @@ class App extends React.Component<IAppProps, IAppState> {
   function AppWrapper() {} // eslint-disable-line  no-empty, no-empty-function, @typescript-eslint/no-empty-function
   AppWrapper.prototype = Object.create(StatelessApp.prototype);
   AppWrapper.prototype.renderHotkeys = App.hotkeyRenderer(hotkeyCallbacks);
-  const AppContainer = HotkeysTarget(AppWrapper as any);
+  const AppContainer = HotkeysTarget(
+    AppWrapper as unknown as IConstructor<IHotkeysTargetComponent>,
+  );
 
   ReactDOM.render(
     <AppContainer {...{ ...context, settings, noteSettings }} />,

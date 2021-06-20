@@ -1,0 +1,36 @@
+{
+  "env": { "browser": true, "es6": true },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:prettier/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": { "project": "tsconfig.json", "sourceType": "module" },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "plugins": ["eslint-plugin-react", "sonarjs", "@typescript-eslint"],
+  "rules": {
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/unbound-method": "off"
+  },
+  "overrides": [
+    {
+      "files": ["webpack.config.js"],
+      "env": { "node": true },
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/no-unsafe-return": "off"
+      }
+    }
+  ]
+}

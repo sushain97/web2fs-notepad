@@ -6,6 +6,8 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "jsx": "react",
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "incremental": true,
     "strict": true
   }
 }
