@@ -1260,7 +1260,7 @@ class App extends React.Component<IAppProps, IAppState> {
       },
     ) as any;
 
-    const hotkeys: Array<[string, string, keyof IHotkeyCallbacks]> = [
+    const hotkeys: [string, string, keyof IHotkeyCallbacks][] = [
       ['Save', 'mod+s', 'onSave'],
       ['Toggle Mode', 'mod+d', 'onModeToggle'],
       ['Delete', 'mod+alt+d', 'onDelete'],
