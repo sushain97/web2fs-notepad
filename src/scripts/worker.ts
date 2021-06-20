@@ -1,4 +1,4 @@
-import type { HLJSApi, HighlightResult } from 'highlight.js';
+import type { HighlightResult } from 'highlight.js';
 import { pick } from 'lodash-es';
 
 import setupMarkdown from './setup-markdown';
@@ -64,7 +64,7 @@ self.addEventListener('message', async ({ data: request }) => {
         const result = pick(
           language
             ? highlightJs.highlight(content, { language, ignoreIllegals: true })
-            : (highlightJs.highlightAuto(content) as HighlightResult),
+            : highlightJs.highlightAuto(content),
           ['language', 'value'],
         );
 
