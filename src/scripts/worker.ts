@@ -91,7 +91,7 @@ self.addEventListener('message', async ({ data: request }) => {
     }
   } catch (error) {
     self.postMessage({
-      error: error.toString(),
+      error: (error as Error).toString(),
       request,
       request_type: request.type,
       type: WorkerMessageType.ERROR,

@@ -7,8 +7,9 @@ import HighlightJs from 'highlight.js';
 
 import { Mode } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { content, language, mode } = (window as any).CONTEXT;
+const { content, language, mode } = (
+  window as unknown as { CONTEXT: { content: string; language: string; mode: string } }
+).CONTEXT;
 
 let value;
 if (language) {

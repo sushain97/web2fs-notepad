@@ -1,3 +1,4 @@
 /node_modules/
 /public/assets/
 /vendor/
+/webpack.config.js

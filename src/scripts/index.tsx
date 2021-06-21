@@ -164,7 +164,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private updateNoteDebounced: ReturnType<typeof debounce>;
-  private worker: AppWorker = new Worker();
+  private worker = new Worker() as AppWorker;
 
   public constructor(props: IAppProps) {
     super(props);
@@ -1324,7 +1324,7 @@ class App extends React.Component<IAppProps, IAppState> {
         }
       }
     } catch (err) {
-      error = err.toString();
+      error = (err as Error).toString();
     } finally {
       if (textArea) {
         document.body.removeChild(textArea);
@@ -1348,7 +1348,9 @@ void (async () => {
       return <App {...{ ...context, settings, noteSettings, hotkeyCallbacks }} />;
     }
   }
-  function AppWrapper() {} // eslint-disable-line  no-empty, no-empty-function, @typescript-eslint/no-empty-function
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  function AppWrapper() {}
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   AppWrapper.prototype = Object.create(StatelessApp.prototype);
   AppWrapper.prototype.renderHotkeys = App.hotkeyRenderer(hotkeyCallbacks);
   const AppContainer = HotkeysTarget(

@@ -5,8 +5,8 @@ import classNames from 'classnames';
 
 import { Mode } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { content, mode } = (window as any).CONTEXT;
+const { content, mode } = (window as unknown as { CONTEXT: { content: string; mode: string } })
+  .CONTEXT;
 
 const app = document.getElementById('app')!;
 app.innerText = content;
