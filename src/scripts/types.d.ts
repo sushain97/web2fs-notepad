@@ -97,5 +97,6 @@ export class AppWorker extends Worker {
     listener: WorkerEventListenerOrEventListenerObject,
     options?: boolean | AddEventListenerOptions,
   ): void;
+  public mungeImportScriptsUrl(url: string): string;
   public postMessage(message: WorkerMessage): void;
 }

@@ -164,6 +164,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private updateNoteDebounced: ReturnType<typeof debounce>;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   private worker = new Worker() as AppWorker;
 
   public constructor(props: IAppProps) {
@@ -1157,7 +1158,8 @@ class App extends React.Component<IAppProps, IAppState> {
         intent: Intent.WARNING,
         message: (
           <>
-            <strong>{message}</strong>: {error.response?.data.message || error.toString()}.
+            <strong>{message}</strong>:{' '}
+            {(error.response?.data as { message: string }).message || error.toString()}.
           </>
         ),
       },
@@ -1343,19 +1345,18 @@ void (async () => {
   // This is a hack to work around https://github.com/palantir/blueprint/issues/2972
   const hotkeyCallbacks = {} as IHotkeyCallbacks;
   class StatelessApp extends React.PureComponent {
-    // eslint-disable-line  max-classes-per-file
     public render() {
       return <App {...{ ...context, settings, noteSettings, hotkeyCallbacks }} />;
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  /* eslint-disable */
   function AppWrapper() {}
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   AppWrapper.prototype = Object.create(StatelessApp.prototype);
   AppWrapper.prototype.renderHotkeys = App.hotkeyRenderer(hotkeyCallbacks);
   const AppContainer = HotkeysTarget(
     AppWrapper as unknown as IConstructor<IHotkeysTargetComponent>,
   );
+  /* eslint-enable */
 
   ReactDOM.render(
     <AppContainer {...{ ...context, settings, noteSettings }} />,

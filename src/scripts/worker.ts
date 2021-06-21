@@ -50,8 +50,7 @@ self.addEventListener('message', async ({ data: request }) => {
   try {
     switch (request.type) {
       case WorkerMessageType.INITIALIZE: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (self as any).mungeImportScriptsUrl = (url: string) => {
+        self.mungeImportScriptsUrl = (url: string) => {
           return `${request.path}/${url}`;
         };
         break;
