@@ -26,7 +26,7 @@ class BlueprintIconShakingPlugin {
     const exec = util.promisify(child_process.exec);
     const writeFile = fs.promises.writeFile;
 
-    const iconsShaker = async (_) => {
+    const iconsShaker = async () => {
       const usedIcons = new Set([
         ...(await exec(`grep -ohER 'IconNames.[A-Z_]+' ${SRC_PATH}`)).stdout
           .split('\n')
@@ -37,10 +37,10 @@ class BlueprintIconShakingPlugin {
       ]);
 
       const iconSvgPaths16 = Object.fromEntries(
-        Object.entries(icons.IconSvgPaths16).filter(([iconName, _]) => usedIcons.has(iconName)),
+        Object.entries(icons.IconSvgPaths16).filter(([iconName]) => usedIcons.has(iconName)),
       );
       const iconSvgPaths20 = Object.fromEntries(
-        Object.entries(icons.IconSvgPaths20).filter(([iconName, _]) => usedIcons.has(iconName)),
+        Object.entries(icons.IconSvgPaths20).filter(([iconName]) => usedIcons.has(iconName)),
       );
 
       await writeFile(

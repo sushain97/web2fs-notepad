@@ -2,7 +2,7 @@ import { Classes } from '@blueprintjs/core';
 import classNames from 'classnames';
 import * as MarkdownIt from 'markdown-it';
 
-export default (md: typeof MarkdownIt) => {
+export default (md: typeof MarkdownIt): MarkdownIt => {
   const markdownIt = md({
     linkify: true,
     typographer: true,

@@ -92,10 +92,11 @@ export class AppWorker extends Worker {
   HighlightJs?: HLJSApi;
   MarkdownIt?: ReturnType<typeof MarkdownIt>;
 
-  public postMessage(message: WorkerMessage): void;
   public addEventListener(
     type: 'message',
     listener: WorkerEventListenerOrEventListenerObject,
     options?: boolean | AddEventListenerOptions,
   ): void;
+  public mungeImportScriptsUrl(url: string): string;
+  public postMessage(message: WorkerMessage): void;
 }

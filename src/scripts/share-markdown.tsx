@@ -12,7 +12,8 @@ import { Mode } from './types';
 const markdownIt = setupMarkdown(MarkdownIt);
 markdownIt.use(MarkdownItAnchor, { permalink: true });
 
-const { content, mode } = (window as any).CONTEXT;
+const { content, mode } = (window as unknown as { CONTEXT: { content: string; mode: string } })
+  .CONTEXT;
 const app = document.getElementById('app')!;
 app.setAttribute('class', classNames(Classes.RUNNING_TEXT, 'markdown'));
 app.innerHTML = markdownIt.render(content);

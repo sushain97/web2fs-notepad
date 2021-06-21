@@ -17,7 +17,9 @@ import {
   Hotkeys,
   HotkeysTarget,
   Icon,
+  IConstructor,
   IHotkeyProps,
+  IHotkeysTargetComponent,
   InputGroup,
   Intent,
   Menu,
@@ -43,7 +45,7 @@ import {
 } from '@blueprintjs/select';
 import axios, { AxiosError, CancelTokenSource } from 'axios';
 import classNames from 'classnames';
-import * as download from 'downloadjs';
+import download from 'downloadjs';
 import { fileSize } from 'humanize-plus';
 import * as LocalForage from 'localforage';
 import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
@@ -106,14 +108,14 @@ interface IAppState {
   wrap: boolean;
 }
 
-const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const; // tslint:disable-line
+const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const; // eslint-disable-line
 
 const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
   'scrollLeft',
   'scrollTop',
   'selectionEnd',
   'selectionStart',
-] as const; // tslint:disable-line
+] as const; // eslint-disable-line
 
 interface INoteSettings
   extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
@@ -137,7 +139,7 @@ type IHotkeyCallbacks = {
     | 'onDownload'
     | 'onShare'
     | 'onMonospaceToggle'
-    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // tslint:disable-line max-union-size
+    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // eslint-disable-line
 };
 
 interface IAppProps extends IPageContext {
@@ -156,13 +158,14 @@ class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private checkOutdatedVersionInterval?: number;
   private contentRef?: HTMLTextAreaElement | null;
-  private handleContentScrollDebounced = debounce(this.updateNoteSettings, 100);
+  private handleContentScrollDebounced = debounce(this.updateNoteSettings.bind(this), 100);
   private lastOutdatedVersionCheck: number;
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private updateNoteDebounced: ReturnType<typeof debounce>;
-  private worker: AppWorker = new Worker();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  private worker = new Worker() as AppWorker;
 
   public constructor(props: IAppProps) {
     super(props);
@@ -220,7 +223,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentDidMount() {
     document.addEventListener('selectionchange', this.handleSelectionChange);
     window.addEventListener('beforeunload', this.handleBeforeUnload);
-    window.addEventListener('onfocus', this.checkOutdatedVersion);
+    window.addEventListener('onfocus', () => void this.checkOutdatedVersion());
     this.checkOutdatedVersionInterval = window.setInterval(
       this.checkOutdatedVersion,
       OUTDATED_CHECK_MS,
@@ -229,7 +232,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
     if (NOTE_SETTINGS_STATE_PROPERTIES.some((prop) => prevState[prop] !== this.state[prop])) {
-      this.updateNoteSettings();
+      void this.updateNoteSettings();
     }
     if (
       prevState.content !== this.state.content ||
@@ -243,7 +246,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentWillUnmount() {
     document.removeEventListener('selectionchange', this.handleSelectionChange);
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
-    window.removeEventListener('visibilitychange', this.checkOutdatedVersion);
+    window.removeEventListener('visibilitychange', () => void this.checkOutdatedVersion());
     window.clearInterval(this.checkOutdatedVersionInterval);
     this.updateNoteDebounced.cancel();
   }
@@ -290,10 +293,10 @@ class App extends React.Component<IAppProps, IAppState> {
           this.showOutdatedVersionToast();
         }
 
-        this.showNoteVersion(version, false);
+        await this.showNoteVersion(version, false);
       }
     } catch (error) {
-      console.warn('Failed to check for outdated version: ', error); // tslint:disable-line no-console
+      console.warn('Failed to check for outdated version: ', error); // eslint-disable-line  no-console
     }
   };
 
@@ -335,7 +338,7 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ renameAlertOpen: false });
   };
 
-  private handleAutoDetectLanguage = async () => {
+  private handleAutoDetectLanguage = () => {
     this.setState({
       format: Format.Code,
       language: undefined,
@@ -362,7 +365,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     this.setState({ content }, () => {
       if (currentVersion === null && !updating) {
-        this.updateNote();
+        void this.updateNote();
       } else {
         this.updateNoteDebounced();
       }
@@ -390,28 +393,32 @@ class App extends React.Component<IAppProps, IAppState> {
   }: React.UIEvent<HTMLTextAreaElement>) => {
     // This redirection is necessary since React's SyntheticEvent will get re-used
     // and a passed currentTarget reference to debounce will be invalid.
-    this.handleContentScrollDebounced({ scrollTop, scrollLeft });
+    void this.handleContentScrollDebounced({ scrollTop, scrollLeft });
   };
 
-  private handleCopyShareLinkInputFocus({ currentTarget }: React.FocusEvent<HTMLInputElement>) {
+  private handleCopyShareLinkInputFocus(
+    this: void,
+    { currentTarget }: React.FocusEvent<HTMLInputElement>,
+  ) {
     currentTarget.scrollLeft = 0;
     currentTarget.select();
   }
 
-  private handleCopyShareUrl = () => {
+  private handleCopyShareUrl = async () => {
     try {
       const { shareUrl, shareUrlSuccessMessage } = this.state;
-      App.copyTextToClipboard(shareUrl!);
+      await App.copyTextToClipboard(shareUrl!);
       AppToaster.show({
         icon: IconNames.CLIPBOARD,
         intent: Intent.SUCCESS,
-        message: shareUrlSuccessMessage!,
+        message: shareUrlSuccessMessage,
       });
       this.setState({ shareUrl: undefined });
     } catch (error) {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         message: `Copying share link failed: ${error}.`,
       });
     }
@@ -464,10 +471,10 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   };
 
-  private handleModeToggle = () => {
+  private handleModeToggle = async () => {
     const mode = this.state.mode === Mode.Light ? Mode.Dark : Mode.Light;
     this.setState({ mode });
-    SettingsStore.setItem('mode', mode);
+    await SettingsStore.setItem('mode', mode);
   };
 
   private handleMonospaceToggle = () => {
@@ -525,15 +532,6 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ renameAlertOpen: true });
   };
 
-  private handleSelectionChange = () => {
-    if (this.contentRef) {
-      this.updateNoteSettings({
-        selectionEnd: this.contentRef.selectionEnd,
-        selectionStart: this.contentRef.selectionStart,
-      });
-    }
-  };
-
   private handleSelectLanguageClose = () => {
     this.setState({ selectLanguageDialogOpen: false });
   };
@@ -542,8 +540,17 @@ class App extends React.Component<IAppProps, IAppState> {
     this.worker.postMessage({ type: WorkerMessageType.LIST_CODE_LANGUAGES });
   };
 
-  private handleViewLatestButtonClick = ({ metaKey }: React.MouseEvent<HTMLElement>) => {
-    this.showNoteVersion(this.state.currentVersion!, metaKey);
+  private handleSelectionChange = () => {
+    if (this.contentRef) {
+      void this.updateNoteSettings({
+        selectionEnd: this.contentRef.selectionEnd,
+        selectionStart: this.contentRef.selectionStart,
+      });
+    }
+  };
+
+  private handleViewLatestButtonClick = async ({ metaKey }: React.MouseEvent<HTMLElement>) => {
+    await this.showNoteVersion(this.state.currentVersion!, metaKey);
   };
 
   private handleWorkerMessage = ({ data: response }: IWorkerMessageEvent) => {
@@ -576,8 +583,10 @@ class App extends React.Component<IAppProps, IAppState> {
         case WorkerMessageType.LIST_CODE_LANGUAGES:
           this.setState({ languages: response.result });
           break;
-        default:
+        default: {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const _: never = response;
+        }
       }
     }
   };
@@ -589,11 +598,11 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private historyMenuItemClickHandler = (version: number) => {
     return ({ metaKey }: React.MouseEvent<HTMLElement>) => {
-      this.showNoteVersion(version, metaKey);
+      void this.showNoteVersion(version, metaKey);
     };
   };
 
-  private languagePredicate(query: string, { name, aliases }: ILanguage) {
+  private languagePredicate(this: void, query: string, { name, aliases }: ILanguage) {
     const lowerQuery = query.toLowerCase();
     return (
       name.toLowerCase().includes(lowerQuery) ||
@@ -759,23 +768,30 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private renderLanguage(
+    this: void,
     { name }: ILanguage,
     { modifiers: { active }, handleClick }: IItemRendererProps,
   ) {
     return <MenuItem active={active} onClick={handleClick} key={name} text={startCase(name)} />;
   }
 
-  private renderLanguages({ filteredItems, renderItem }: IItemListRendererProps<ILanguage>) {
+  private renderLanguages(
+    this: void,
+    { filteredItems, renderItem }: IItemListRendererProps<ILanguage>,
+  ) {
     return <Menu className="languages">{filteredItems.map(renderItem)}</Menu>;
   }
 
-  private renderLanguagesQueryList({
-    itemList,
-    handleQueryChange,
-    query,
-    handleKeyDown,
-    handleKeyUp,
-  }: IQueryListRendererProps<ILanguage>) {
+  private renderLanguagesQueryList(
+    this: void,
+    {
+      itemList,
+      handleQueryChange,
+      query,
+      handleKeyDown,
+      handleKeyUp,
+    }: IQueryListRendererProps<ILanguage>,
+  ) {
     return (
       <div onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
         <InputGroup
@@ -1016,7 +1032,7 @@ class App extends React.Component<IAppProps, IAppState> {
     const versionString = saved
       ? mobile
         ? `v${version}`
-        : `Version ${version} of ${currentVersion}`
+        : `Version ${version} of ${currentVersion!}`
       : 'Unsaved';
     return (
       <div className="status-bar-history">
@@ -1142,7 +1158,8 @@ class App extends React.Component<IAppProps, IAppState> {
         intent: Intent.WARNING,
         message: (
           <>
-            <strong>{message}</strong>: {error.response?.data.message || error.toString()}.
+            <strong>{message}</strong>:{' '}
+            {(error.response?.data as { message: string }).message || error.toString()}.
           </>
         ),
       },
@@ -1161,7 +1178,7 @@ class App extends React.Component<IAppProps, IAppState> {
     } else {
       try {
         if (currentContent !== content) {
-          this.updateNote();
+          void this.updateNote();
         }
 
         const {
@@ -1242,25 +1259,26 @@ class App extends React.Component<IAppProps, IAppState> {
   private async updateNoteSettings(settings?: Partial<INoteSettings>) {
     const { id } = this.state.note;
     await NotesSettingStore.setItem(id, {
-      ...((await NotesSettingStore.getItem(id)) as {}), // tslint:disable-line no-useless-cast
+      ...((await NotesSettingStore.getItem(id)) as Partial<INoteSettings>),
       ...pick(this.state, NOTE_SETTINGS_STATE_PROPERTIES),
       ...settings,
     });
   }
 
   public static hotkeyRenderer(hotkeyCallbacks: IHotkeyCallbacks) {
-    const proxiedCallbacks: IHotkeyCallbacks = new Proxy(
+    const proxiedCallbacks = new Proxy(
       {},
       {
         get:
           (_, callback) =>
           (...args: unknown[]) => {
+            // eslint-disable-next-line
             return (hotkeyCallbacks as any)[callback](...args);
           },
       },
-    ) as any;
+    ) as IHotkeyCallbacks;
 
-    const hotkeys: Array<[string, string, keyof IHotkeyCallbacks]> = [
+    const hotkeys: [string, string, keyof IHotkeyCallbacks][] = [
       ['Save', 'mod+s', 'onSave'],
       ['Toggle Mode', 'mod+d', 'onModeToggle'],
       ['Delete', 'mod+alt+d', 'onDelete'],
@@ -1290,7 +1308,7 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private static async copyTextToClipboard(text: string) {
-    let error = null;
+    let error: string | null = null;
 
     let textArea;
     try {
@@ -1308,7 +1326,7 @@ class App extends React.Component<IAppProps, IAppState> {
         }
       }
     } catch (err) {
-      error = err.toString();
+      error = (err as Error).toString();
     } finally {
       if (textArea) {
         document.body.removeChild(textArea);
@@ -1319,23 +1337,26 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 }
 
-(async () => {
-  const context: IPageContext = (window as any).CONTEXT;
+void (async () => {
+  const context = (window as unknown as { CONTEXT: IPageContext }).CONTEXT;
   const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
   const settings = { mode: (await SettingsStore.getItem<string>('mode')) as Mode };
 
   // This is a hack to work around https://github.com/palantir/blueprint/issues/2972
-  const hotkeyCallbacks: IHotkeyCallbacks = {} as any;
+  const hotkeyCallbacks = {} as IHotkeyCallbacks;
   class StatelessApp extends React.PureComponent {
-    // tslint:disable-line max-classes-per-file
     public render() {
       return <App {...{ ...context, settings, noteSettings, hotkeyCallbacks }} />;
     }
   }
-  function AppWrapper() {} // tslint:disable-line no-empty
+  /* eslint-disable */
+  function AppWrapper() {}
   AppWrapper.prototype = Object.create(StatelessApp.prototype);
   AppWrapper.prototype.renderHotkeys = App.hotkeyRenderer(hotkeyCallbacks);
-  const AppContainer = HotkeysTarget(AppWrapper as any);
+  const AppContainer = HotkeysTarget(
+    AppWrapper as unknown as IConstructor<IHotkeysTargetComponent>,
+  );
+  /* eslint-enable */
 
   ReactDOM.render(
     <AppContainer {...{ ...context, settings, noteSettings }} />,

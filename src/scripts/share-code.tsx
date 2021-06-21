@@ -7,7 +7,9 @@ import HighlightJs from 'highlight.js';
 
 import { Mode } from './types';
 
-const { content, language, mode } = (window as any).CONTEXT;
+const { content, language, mode } = (
+  window as unknown as { CONTEXT: { content: string; language: string; mode: string } }
+).CONTEXT;
 
 let value;
 if (language) {
