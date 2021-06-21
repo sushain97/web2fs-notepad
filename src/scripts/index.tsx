@@ -45,7 +45,7 @@ import {
 } from '@blueprintjs/select';
 import axios, { AxiosError, CancelTokenSource } from 'axios';
 import classNames from 'classnames';
-import * as download from 'downloadjs';
+import download from 'downloadjs';
 import { fileSize } from 'humanize-plus';
 import * as LocalForage from 'localforage';
 import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
@@ -158,7 +158,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private checkOutdatedVersionInterval?: number;
   private contentRef?: HTMLTextAreaElement | null;
-  private handleContentScrollDebounced = debounce(this.updateNoteSettings, 100);
+  private handleContentScrollDebounced = debounce(this.updateNoteSettings.bind(this), 100);
   private lastOutdatedVersionCheck: number;
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
@@ -395,7 +395,10 @@ class App extends React.Component<IAppProps, IAppState> {
     void this.handleContentScrollDebounced({ scrollTop, scrollLeft });
   };
 
-  private handleCopyShareLinkInputFocus({ currentTarget }: React.FocusEvent<HTMLInputElement>) {
+  private handleCopyShareLinkInputFocus(
+    this: void,
+    { currentTarget }: React.FocusEvent<HTMLInputElement>,
+  ) {
     currentTarget.scrollLeft = 0;
     currentTarget.select();
   }
@@ -528,6 +531,14 @@ class App extends React.Component<IAppProps, IAppState> {
     this.setState({ renameAlertOpen: true });
   };
 
+  private handleSelectLanguageClose = () => {
+    this.setState({ selectLanguageDialogOpen: false });
+  };
+
+  private handleSelectLanguageDialogOpening = () => {
+    this.worker.postMessage({ type: WorkerMessageType.LIST_CODE_LANGUAGES });
+  };
+
   private handleSelectionChange = () => {
     if (this.contentRef) {
       void this.updateNoteSettings({
@@ -535,14 +546,6 @@ class App extends React.Component<IAppProps, IAppState> {
         selectionStart: this.contentRef.selectionStart,
       });
     }
-  };
-
-  private handleSelectLanguageClose = () => {
-    this.setState({ selectLanguageDialogOpen: false });
-  };
-
-  private handleSelectLanguageDialogOpening = () => {
-    this.worker.postMessage({ type: WorkerMessageType.LIST_CODE_LANGUAGES });
   };
 
   private handleViewLatestButtonClick = async ({ metaKey }: React.MouseEvent<HTMLElement>) => {
@@ -598,7 +601,7 @@ class App extends React.Component<IAppProps, IAppState> {
     };
   };
 
-  private languagePredicate(query: string, { name, aliases }: ILanguage) {
+  private languagePredicate(this: void, query: string, { name, aliases }: ILanguage) {
     const lowerQuery = query.toLowerCase();
     return (
       name.toLowerCase().includes(lowerQuery) ||
@@ -764,23 +767,30 @@ class App extends React.Component<IAppProps, IAppState> {
   }
 
   private renderLanguage(
+    this: void,
     { name }: ILanguage,
     { modifiers: { active }, handleClick }: IItemRendererProps,
   ) {
     return <MenuItem active={active} onClick={handleClick} key={name} text={startCase(name)} />;
   }
 
-  private renderLanguages({ filteredItems, renderItem }: IItemListRendererProps<ILanguage>) {
+  private renderLanguages(
+    this: void,
+    { filteredItems, renderItem }: IItemListRendererProps<ILanguage>,
+  ) {
     return <Menu className="languages">{filteredItems.map(renderItem)}</Menu>;
   }
 
-  private renderLanguagesQueryList({
-    itemList,
-    handleQueryChange,
-    query,
-    handleKeyDown,
-    handleKeyUp,
-  }: IQueryListRendererProps<ILanguage>) {
+  private renderLanguagesQueryList(
+    this: void,
+    {
+      itemList,
+      handleQueryChange,
+      query,
+      handleKeyDown,
+      handleKeyUp,
+    }: IQueryListRendererProps<ILanguage>,
+  ) {
     return (
       <div onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
         <InputGroup
