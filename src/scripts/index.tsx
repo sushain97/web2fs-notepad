@@ -1151,15 +1151,21 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   }
 
-  private showAxiosErrorToast(message: string, error: AxiosError, key?: string) {
+  private showAxiosErrorToast(message: string, error: AxiosError | unknown, key?: string) {
+    let details;
+    if (axios.isAxiosError(error)) {
+      details = (error.response?.data as { message: string }).message || error.toString();
+    } else {
+      console.warn('Encountered unknown error', error);
+    }
+
     return AppToaster.show(
       {
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
         message: (
           <>
-            <strong>{message}</strong>:{' '}
-            {(error.response?.data as { message: string }).message || error.toString()}.
+            <strong>{message}</strong>: {details}.
           </>
         ),
       },
