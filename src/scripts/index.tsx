@@ -943,7 +943,7 @@ class App extends React.Component<IAppProps, IAppState> {
     return (
       <div className="status-bar">
         {this.renderStatusBarHistory(this.state, { updated, old, saved, mobile })}
-        <div>
+        <div className="status-bar-menu">
           <Callout
             intent={old ? Intent.WARNING : undefined}
             icon={old ? <Icon icon={IconNames.WARNING_SIGN} /> : null} // manually inserted in order to control sizing

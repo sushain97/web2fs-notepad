@@ -60,21 +60,30 @@ body {
 
 .status-bar {
   display: flex;
+  gap: $pt-grid-size;
   justify-content: space-between;
   padding-top: $content-status-bar-spacing;
 
   .status-bar-history {
     display: flex;
+    overflow-y: scroll;
 
     .version-tag {
       margin: 0 $pt-grid-size;
     }
   }
 
+  .status-bar-menu {
+    display: flex;
+    gap: $pt-grid-size;
+  }
+
   .status-bar-callout {
     padding: $pt-grid-size / 2 $pt-grid-size $pt-grid-size / 2;
-    margin-right: $pt-grid-size;
-    display: inline;
+    width: unset;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     &.#{$ns}-callout-icon > .#{$ns}-icon:first-child {
       top: $pt-grid-size / 2;
