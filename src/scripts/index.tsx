@@ -12,14 +12,11 @@ import {
   Divider,
   FocusStyleManager,
   FormGroup,
+  HotkeysProvider,
   H5,
-  Hotkey,
-  Hotkeys,
-  HotkeysTarget,
+  HotkeyConfig,
+  HotkeysTarget2,
   Icon,
-  IConstructor,
-  IHotkeyProps,
-  IHotkeysTargetComponent,
   InputGroup,
   Intent,
   Menu,
@@ -108,14 +105,14 @@ interface IAppState {
   wrap: boolean;
 }
 
-const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const; // eslint-disable-line
+const NOTE_SETTINGS_STATE_PROPERTIES = ['format', 'language', 'monospace', 'wrap'] as const;
 
 const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
   'scrollLeft',
   'scrollTop',
   'selectionEnd',
   'selectionStart',
-] as const; // eslint-disable-line
+] as const;
 
 interface INoteSettings
   extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
@@ -130,20 +127,8 @@ interface IPageContext {
   note: INote;
 }
 
-type IHotkeyCallbacks = {
-  [K in
-    | 'onModeToggle'
-    | 'onSave'
-    | 'onDelete'
-    | 'onRename'
-    | 'onDownload'
-    | 'onShare'
-    | 'onMonospaceToggle'
-    | 'onWrapToggle']: NonNullable<IHotkeyProps['onKeyDown']>; // eslint-disable-line
-};
-
 interface IAppProps extends IPageContext {
-  hotkeyCallbacks: IHotkeyCallbacks;
+  // hotkeyCallbacks: IHotkeyCallbacks;
   noteSettings: INoteSettings | null;
   settings: ISettings;
 }
@@ -159,6 +144,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private checkOutdatedVersionInterval?: number;
   private contentRef?: HTMLTextAreaElement | null;
   private handleContentScrollDebounced = debounce(this.updateNoteSettings.bind(this), 100);
+  private hotkeys: HotkeyConfig[];
   private lastOutdatedVersionCheck: number;
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
@@ -170,7 +156,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public constructor(props: IAppProps) {
     super(props);
 
-    const { note, currentVersion, noteSettings, settings, hotkeyCallbacks } = props;
+    const { note, currentVersion, noteSettings, settings } = props;
 
     const format = noteSettings?.format || Format.PlainText;
     const wrap = noteSettings?.wrap ?? true;
@@ -199,16 +185,26 @@ class App extends React.Component<IAppProps, IAppState> {
       maxWait: UPDATE_MAX_WAIT_MS,
     });
 
-    Object.assign(hotkeyCallbacks, {
-      onDelete: this.handleDeleteButtonClick,
-      onDownload: this.handleDownloadButtonClick,
-      onModeToggle: this.handleModeToggle,
-      onMonospaceToggle: this.handleMonospaceToggle,
-      onRename: this.handleRenameButtonClick,
-      onSave: this.updateNote,
-      onShare: this.shareHandler(false),
-      onWrapToggle: this.handleWrapToggle,
-    });
+    this.hotkeys = (
+      [
+        ['Save', 'mod+s', this.updateNote],
+        ['Toggle Mode', 'mod+d', this.handleModeToggle],
+        ['Delete', 'mod+alt+d', this.handleDeleteButtonClick],
+        ['Rename', 'mod+alt+r', this.handleRenameButtonClick],
+        ['Download', 'mod+alt+j', this.handleDownloadButtonClick],
+        ['Share', 'mod+alt+s', this.shareHandler(false)],
+        ['Toggle Monospace', 'mod+alt+m', this.handleMonospaceToggle],
+        ['Toggle Text Wrap', 'mod+alt+w', this.handleWrapToggle],
+      ] as Array<[string, string, () => void]>
+    ).map(([label, combo, onKeyDown]) => ({
+      label,
+      combo,
+      onKeyDown,
+      global: true,
+      allowInInput: true,
+      preventDefault: true,
+      stopPropagation: true,
+    }));
 
     this.worker.postMessage({
       path: `${window.location.protocol}//${window.location.host}`,
@@ -253,14 +249,19 @@ class App extends React.Component<IAppProps, IAppState> {
 
   public render() {
     return (
-      <div id="container" className={classNames({ [Classes.DARK]: this.state.mode === Mode.Dark })}>
-        {this.renderContent(this.state)}
-        {this.renderStatusBar(this.state)}
-        {this.renderDeleteAlert(this.state)}
-        {this.renderCopyShareUrlAlert(this.state)}
-        {this.renderRenameAlert(this.state)}
-        {this.renderSelectLanguageDialog(this.state)}
-      </div>
+      <HotkeysTarget2 hotkeys={this.hotkeys}>
+        <div
+          id="container"
+          className={classNames({ [Classes.DARK]: this.state.mode === Mode.Dark })}
+        >
+          {this.renderContent(this.state)}
+          {this.renderStatusBar(this.state)}
+          {this.renderDeleteAlert(this.state)}
+          {this.renderCopyShareUrlAlert(this.state)}
+          {this.renderRenameAlert(this.state)}
+          {this.renderSelectLanguageDialog(this.state)}
+        </div>
+      </HotkeysTarget2>
     );
   }
 
@@ -1271,48 +1272,6 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   }
 
-  public static hotkeyRenderer(hotkeyCallbacks: IHotkeyCallbacks) {
-    const proxiedCallbacks = new Proxy(
-      {},
-      {
-        get:
-          (_, callback) =>
-          (...args: unknown[]) => {
-            // eslint-disable-next-line
-            return (hotkeyCallbacks as any)[callback](...args);
-          },
-      },
-    ) as IHotkeyCallbacks;
-
-    const hotkeys: [string, string, keyof IHotkeyCallbacks][] = [
-      ['Save', 'mod+s', 'onSave'],
-      ['Toggle Mode', 'mod+d', 'onModeToggle'],
-      ['Delete', 'mod+alt+d', 'onDelete'],
-      ['Rename', 'mod+alt+r', 'onRename'],
-      ['Download', 'mod+alt+j', 'onDownload'],
-      ['Share', 'mod+alt+s', 'onShare'],
-      ['Toggle Monospace', 'mod+alt+m', 'onMonospaceToggle'],
-      ['Toggle Text Wrap', 'mod+alt+w', 'onWrapToggle'],
-    ];
-
-    return () => (
-      <Hotkeys>
-        {hotkeys.map(([label, combo, callback]) => (
-          <Hotkey
-            key={combo}
-            global={true}
-            allowInInput={true}
-            preventDefault={true}
-            stopPropagation={true}
-            combo={combo}
-            label={label}
-            onKeyDown={proxiedCallbacks[callback]}
-          />
-        ))}
-      </Hotkeys>
-    );
-  }
-
   private static async copyTextToClipboard(text: string) {
     let error: string | null = null;
 
@@ -1348,24 +1307,10 @@ void (async () => {
   const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
   const settings = { mode: (await SettingsStore.getItem<string>('mode')) as Mode };
 
-  // This is a hack to work around https://github.com/palantir/blueprint/issues/2972
-  const hotkeyCallbacks = {} as IHotkeyCallbacks;
-  class StatelessApp extends React.PureComponent {
-    public render() {
-      return <App {...{ ...context, settings, noteSettings, hotkeyCallbacks }} />;
-    }
-  }
-  /* eslint-disable */
-  function AppWrapper() {}
-  AppWrapper.prototype = Object.create(StatelessApp.prototype);
-  AppWrapper.prototype.renderHotkeys = App.hotkeyRenderer(hotkeyCallbacks);
-  const AppContainer = HotkeysTarget(
-    AppWrapper as unknown as IConstructor<IHotkeysTargetComponent>,
-  );
-  /* eslint-enable */
-
   ReactDOM.render(
-    <AppContainer {...{ ...context, settings, noteSettings }} />,
+    <HotkeysProvider>
+      <App {...{ ...context, settings, noteSettings }} />
+    </HotkeysProvider>,
     document.getElementById('app'),
   );
 })();
