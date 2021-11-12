@@ -58,7 +58,7 @@ the development web server using `./bin/console server:run`.
 Run tests and linters using `./bin/test`. [CircleCI][7] powers CI and mirrors
 the test script's actions.
 
-Autofix errors from [Prettier][8], [TSLint][9], [Stylelint][13], and
+Autofix errors from [Prettier][8], [ESLint][9], [Stylelint][13], and
 [PHP_CodeSniffer][10] using `./bin/fix`.
 
 [1]: https://symfony.com/
@@ -69,7 +69,7 @@ Autofix errors from [Prettier][8], [TSLint][9], [Stylelint][13], and
 [6]: https://getcomposer.org/
 [7]: https://circleci.com/
 [8]: https://prettier.io/
-[9]: https://palantir.github.io/tslint/
+[9]: https://eslint.org/
 [10]: http://pear.php.net/package/PHP_CodeSniffer
 [11]: http://www.php.net/
 [12]: https://www.docker.com/
