@@ -1,1 +1,3 @@
 extends: stylelint-config-recommended
+plugins: [stylelint-scss]
+customSyntax: postcss-scss
