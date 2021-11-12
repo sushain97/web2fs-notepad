@@ -279,7 +279,7 @@ class App extends React.Component<IAppProps, IAppState> {
         `/${this.state.note.id}/history`,
       );
       this.lastOutdatedVersionCheck = Date.now();
-      currentVersion = history?.length ?? null;
+      currentVersion = history.length ? history.length : null;
       this.setState({ currentVersion });
 
       if (currentVersion !== null && (currentVersion > version || !saved) && !old) {
@@ -296,7 +296,7 @@ class App extends React.Component<IAppProps, IAppState> {
         await this.showNoteVersion(version, false);
       }
     } catch (error) {
-      console.warn('Failed to check for outdated version: ', error); // eslint-disable-line  no-console
+      console.warn('Failed to check for outdated version: ', error); // eslint-disable-line no-console
     }
   };
 
