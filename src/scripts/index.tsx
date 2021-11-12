@@ -376,6 +376,10 @@ class App extends React.Component<IAppProps, IAppState> {
   private handleContentKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const { currentTarget, key, shiftKey } = ev;
 
+    if (key === 'Escape') {
+      currentTarget.blur();
+    }
+
     if (key === 'Tab') {
       ev.preventDefault();
 
