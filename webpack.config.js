@@ -72,7 +72,7 @@ module.exports = {
     path: ASSETS_PATH,
     globalObject: 'this',
   },
-  devtool: 'eval',
+  devtool: development ? 'cheap-eval-source-map' : false,
   resolve: {
     extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js'],
   },
