@@ -13,7 +13,7 @@ const { content, language, mode } = (
 
 let value;
 if (language) {
-  ({ value } = HighlightJs.highlight(content, { language, ignoreIllegals: true }));
+  ({ value } = HighlightJs.highlight(content, { ignoreIllegals: true, language }));
 } else {
   ({ value } = HighlightJs.highlightAuto(content));
 }
