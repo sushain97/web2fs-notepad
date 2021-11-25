@@ -25,7 +25,7 @@ body {
 
   background-color: $light-gray5;
 
-  &.#{$ns}-dark {
+  body.#{$ns}-dark & {
     background-color: $dark-gray4;
   }
 }
@@ -64,10 +64,10 @@ body {
   gap: $pt-grid-size;
   justify-content: space-between;
   padding-top: $content-status-bar-spacing;
+  overflow-y: scroll;
 
   .status-bar-history {
     display: flex;
-    overflow-y: scroll;
 
     .version-tag {
       margin: 0 $pt-grid-size;
@@ -138,7 +138,7 @@ body {
     margin-right: 0;
     color: $pt-text-color-muted;
 
-    .#{$ns}-dark & {
+    body.#{$ns}-dark & {
       color: $pt-dark-text-color-muted;
     }
   }

@@ -32,6 +32,7 @@ import {
   TextArea,
   Toaster,
   Tooltip,
+  PopperModifiers,
 } from '@blueprintjs/core';
 import { IconName, IconNames } from '@blueprintjs/icons';
 import {
@@ -133,7 +134,6 @@ interface IPageContext {
 }
 
 interface IAppProps extends IPageContext {
-  // hotkeyCallbacks: IHotkeyCallbacks;
   noteSettings: INoteSettings | null;
   settings: ISettings;
 }
@@ -143,6 +143,14 @@ FocusStyleManager.onlyShowFocusOnTabs();
 const AppToaster = Toaster.create();
 const SettingsStore = LocalForage.createInstance({ name: 'global' });
 const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
+
+const statusBarPopoverProps = {
+  modifiers: {
+    flip: { enabled: false },
+    preventOverflow: { boundariesElement: 'viewport' },
+  },
+  position: Position.TOP,
+} as { modifiers: PopperModifiers; position: Position };
 
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
@@ -232,12 +240,15 @@ class App extends React.Component<IAppProps, IAppState> {
       this.checkOutdatedVersion,
       OUTDATED_CHECK_MS,
     );
+
+    document.body.classList.toggle(Classes.DARK, this.state.mode === Mode.Dark);
   }
 
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
     if (NOTE_SETTINGS_STATE_PROPERTIES.some((prop) => prevState[prop] !== this.state[prop])) {
       void this.updateNoteSettings();
     }
+
     if (
       prevState.content !== this.state.content ||
       prevState.format !== this.state.format ||
@@ -245,6 +256,8 @@ class App extends React.Component<IAppProps, IAppState> {
     ) {
       this.requestWorkerContentRender();
     }
+
+    document.body.classList.toggle(Classes.DARK, this.state.mode === Mode.Dark);
   }
 
   public componentWillUnmount() {
@@ -258,10 +271,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public render() {
     return (
       <HotkeysTarget2 hotkeys={this.hotkeys}>
-        <div
-          className={classNames({ [Classes.DARK]: this.state.mode === Mode.Dark })}
-          id="container"
-        >
+        <div id="container">
           {this.renderContent(this.state)}
           {this.renderStatusBar(this.state)}
           {this.renderDeleteAlert(this.state)}
@@ -306,7 +316,7 @@ class App extends React.Component<IAppProps, IAppState> {
         await this.showNoteVersion(version, false);
       }
     } catch (error) {
-      console.warn('Failed to check for outdated version: ', error); // eslint-disable-line no-console
+      console.warn('Failed to check for outdated version: ', error);
     }
   };
 
@@ -740,13 +750,13 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   }
 
-  private renderCopyShareUrlAlert({ shareUrl, mode }: IAppState) {
+  private renderCopyShareUrlAlert({ shareUrl }: IAppState) {
     return (
       <Alert
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
         cancelButtonText="Cancel"
-        className={classNames('copy-share-link-alert', { [Classes.DARK]: mode === Mode.Dark })}
+        className={classNames('copy-share-link-alert')}
         confirmButtonText="Copy Share Link"
         icon={IconNames.SHARE}
         intent={Intent.PRIMARY}
@@ -784,13 +794,12 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderEncryptionAlert({ encryptionAlertOpen, mode }: IAppState) {
+  private renderEncryptionAlert({ encryptionAlertOpen }: IAppState) {
     return (
       <Alert
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
         cancelButtonText="Cancel"
-        className={classNames({ [Classes.DARK]: mode === Mode.Dark })}
         confirmButtonText="Encrypt"
         icon={IconNames.SHIELD}
         intent={Intent.PRIMARY}
@@ -916,13 +925,12 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderRenameAlert({ renameAlertOpen, mode }: IAppState) {
+  private renderRenameAlert({ renameAlertOpen }: IAppState) {
     return (
       <Alert
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
         cancelButtonText="Cancel"
-        className={classNames({ [Classes.DARK]: mode === Mode.Dark })}
         confirmButtonText="Rename"
         icon={IconNames.ANNOTATION}
         intent={Intent.PRIMARY}
@@ -953,10 +961,10 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderSelectLanguageDialog({ selectLanguageDialogOpen, mode, languages }: IAppState) {
+  private renderSelectLanguageDialog({ selectLanguageDialogOpen, languages }: IAppState) {
     return (
       <Dialog
-        className={classNames('select-language-dialog', { [Classes.DARK]: mode === Mode.Dark })}
+        className="select-language-dialog"
         icon={IconNames.CODE}
         isOpen={selectLanguageDialogOpen}
         onClose={this.handleSelectLanguageClose}
@@ -1055,7 +1063,7 @@ class App extends React.Component<IAppProps, IAppState> {
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
           <ButtonGroup>
-            <Popover content={this.renderFormatMenu()} position={Position.TOP}>
+            <Popover content={this.renderFormatMenu()} {...statusBarPopoverProps}>
               <Button
                 icon={IconNames.PRESENTATION}
                 rightIcon={mobile ? undefined : IconNames.CARET_UP}
@@ -1082,7 +1090,7 @@ class App extends React.Component<IAppProps, IAppState> {
             </Popover>
             <Tooltip
               content={mode === Mode.Light ? 'Dark Mode' : 'Light Mode'}
-              position={Position.TOP}
+              {...statusBarPopoverProps}
             >
               <Button
                 icon={mode === Mode.Light ? IconNames.MOON : IconNames.FLASH}
@@ -1093,31 +1101,31 @@ class App extends React.Component<IAppProps, IAppState> {
               content={this.renderTextOptionSwitches()}
               hoverCloseDelay={200}
               interactionKind={PopoverInteractionKind.HOVER}
-              position={Position.TOP}
+              {...statusBarPopoverProps}
             >
               <Button icon={IconNames.FONT} />
             </Popover>
-            <Tooltip content="Rename" position={Position.TOP}>
+            <Tooltip content="Rename" {...statusBarPopoverProps}>
               <Button icon={IconNames.ANNOTATION} onClick={this.handleRenameButtonClick} />
             </Tooltip>
-            <Tooltip content="Download" position={Position.TOP}>
+            <Tooltip content="Download" {...statusBarPopoverProps}>
               <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
             </Tooltip>
             <Popover
               content={this.renderShareMenu()}
               hoverCloseDelay={200}
               interactionKind={PopoverInteractionKind.HOVER}
-              position={Position.TOP}
+              {...statusBarPopoverProps}
             >
               <Button
                 icon={IconNames.LINK}
                 onClick={this.shareHandler(currentVersion !== version)}
               />
             </Popover>
-            <Tooltip content="Lock" position={Position.TOP}>
+            <Tooltip content="Lock" {...statusBarPopoverProps}>
               <Button icon={IconNames.LOCK} onClick={this.handleLockButtonClick} />
             </Tooltip>
-            <Tooltip content="Delete" position={Position.TOP}>
+            <Tooltip content="Delete" {...statusBarPopoverProps}>
               <Button
                 icon={IconNames.TRASH}
                 intent={Intent.DANGER}
@@ -1146,7 +1154,10 @@ class App extends React.Component<IAppProps, IAppState> {
       : 'Unsaved';
     return (
       <div className="status-bar-history">
-        <Tooltip content={updating ? 'Saving' : updated ? 'Saved' : 'Save'} position={Position.TOP}>
+        <Tooltip
+          content={updating ? 'Saving' : updated ? 'Saved' : 'Save'}
+          {...statusBarPopoverProps}
+        >
           <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
             disabled={updated || old}
             icon={IconNames.FLOPPY_DISK}
@@ -1157,6 +1168,7 @@ class App extends React.Component<IAppProps, IAppState> {
         <Popover
           content={saved ? this.renderHistoryMenu() : undefined}
           onOpening={this.handleHistoryPopoverOpening}
+          {...statusBarPopoverProps}
           position={Position.TOP_LEFT}
         >
           <Tag
@@ -1170,7 +1182,7 @@ class App extends React.Component<IAppProps, IAppState> {
           </Tag>
         </Popover>
         {old && (
-          <Tooltip content="View latest" position={Position.TOP}>
+          <Tooltip content="View latest" {...statusBarPopoverProps}>
             <Button icon={IconNames.FAST_FORWARD} onClick={this.handleViewLatestButtonClick} />
           </Tooltip>
         )}
