@@ -32,6 +32,7 @@ import {
   TextArea,
   Toaster,
   Tooltip,
+  PopperModifiers,
 } from '@blueprintjs/core';
 import { IconName, IconNames } from '@blueprintjs/icons';
 import {
@@ -128,7 +129,6 @@ interface IPageContext {
 }
 
 interface IAppProps extends IPageContext {
-  // hotkeyCallbacks: IHotkeyCallbacks;
   noteSettings: INoteSettings | null;
   settings: ISettings;
 }
@@ -140,12 +140,12 @@ const SettingsStore = LocalForage.createInstance({ name: 'global' });
 const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 
 const statusBarPopoverProps = {
-  position: Position.TOP,
   modifiers: {
-    preventOverflow: { boundariesElement: 'viewport' },
     flip: { enabled: false },
+    preventOverflow: { boundariesElement: 'viewport' },
   },
-};
+  position: Position.TOP,
+} as { modifiers: PopperModifiers; position: Position };
 
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
@@ -305,7 +305,7 @@ class App extends React.Component<IAppProps, IAppState> {
         await this.showNoteVersion(version, false);
       }
     } catch (error) {
-      console.warn('Failed to check for outdated version: ', error); // eslint-disable-line no-console
+      console.warn('Failed to check for outdated version: ', error);
     }
   };
 
