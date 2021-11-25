@@ -64,10 +64,10 @@ body {
   gap: $pt-grid-size;
   justify-content: space-between;
   padding-top: $content-status-bar-spacing;
+  overflow-y: scroll;
 
   .status-bar-history {
     display: flex;
-    overflow-y: scroll;
 
     .version-tag {
       margin: 0 $pt-grid-size;

@@ -139,6 +139,14 @@ const AppToaster = Toaster.create();
 const SettingsStore = LocalForage.createInstance({ name: 'global' });
 const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 
+const statusBarPopoverProps = {
+  position: Position.TOP,
+  modifiers: {
+    preventOverflow: { boundariesElement: 'viewport' },
+    flip: { enabled: false },
+  },
+};
+
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private checkOutdatedVersionInterval?: number;
@@ -953,7 +961,7 @@ class App extends React.Component<IAppProps, IAppState> {
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
           </Callout>
           <ButtonGroup>
-            <Popover position={Position.TOP} content={this.renderFormatMenu()}>
+            <Popover content={this.renderFormatMenu()} {...statusBarPopoverProps}>
               <Button
                 rightIcon={mobile ? undefined : IconNames.CARET_UP}
                 icon={IconNames.PRESENTATION}
@@ -980,7 +988,7 @@ class App extends React.Component<IAppProps, IAppState> {
             </Popover>
             <Tooltip
               content={mode === Mode.Light ? 'Dark Mode' : 'Light Mode'}
-              position={Position.TOP}
+              {...statusBarPopoverProps}
             >
               <Button
                 icon={mode === Mode.Light ? IconNames.MOON : IconNames.FLASH}
@@ -990,29 +998,29 @@ class App extends React.Component<IAppProps, IAppState> {
             <Popover
               content={this.renderTextOptionSwitches()}
               interactionKind={PopoverInteractionKind.HOVER}
-              position={Position.TOP}
               hoverCloseDelay={200}
+              {...statusBarPopoverProps}
             >
               <Button icon={IconNames.FONT} />
             </Popover>
-            <Tooltip content="Rename" position={Position.TOP}>
+            <Tooltip content="Rename" {...statusBarPopoverProps}>
               <Button icon={IconNames.ANNOTATION} onClick={this.handleRenameButtonClick} />
             </Tooltip>
-            <Tooltip content="Download" position={Position.TOP}>
+            <Tooltip content="Download" {...statusBarPopoverProps}>
               <Button icon={IconNames.DOWNLOAD} onClick={this.handleDownloadButtonClick} />
             </Tooltip>
             <Popover
               content={this.renderShareMenu()}
               interactionKind={PopoverInteractionKind.HOVER}
-              position={Position.TOP}
               hoverCloseDelay={200}
+              {...statusBarPopoverProps}
             >
               <Button
                 icon={IconNames.LINK}
                 onClick={this.shareHandler(currentVersion !== version)}
               />
             </Popover>
-            <Tooltip content="Delete" position={Position.TOP}>
+            <Tooltip content="Delete" {...statusBarPopoverProps}>
               <Button
                 icon={IconNames.TRASH}
                 onClick={this.handleDeleteButtonClick}
@@ -1041,7 +1049,10 @@ class App extends React.Component<IAppProps, IAppState> {
       : 'Unsaved';
     return (
       <div className="status-bar-history">
-        <Tooltip content={updating ? 'Saving' : updated ? 'Saved' : 'Save'} position={Position.TOP}>
+        <Tooltip
+          content={updating ? 'Saving' : updated ? 'Saved' : 'Save'}
+          {...statusBarPopoverProps}
+        >
           <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
             icon={IconNames.FLOPPY_DISK}
             loading={updating}
@@ -1052,6 +1063,7 @@ class App extends React.Component<IAppProps, IAppState> {
         <Popover
           content={saved ? this.renderHistoryMenu() : undefined}
           onOpening={this.handleHistoryPopoverOpening}
+          {...statusBarPopoverProps}
           position={Position.TOP_LEFT}
         >
           <Tag
@@ -1065,7 +1077,7 @@ class App extends React.Component<IAppProps, IAppState> {
           </Tag>
         </Popover>
         {old && (
-          <Tooltip content="View latest" position={Position.TOP}>
+          <Tooltip content="View latest" {...statusBarPopoverProps}>
             <Button icon={IconNames.FAST_FORWARD} onClick={this.handleViewLatestButtonClick} />
           </Tooltip>
         )}
