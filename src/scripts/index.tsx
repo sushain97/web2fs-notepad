@@ -335,10 +335,6 @@ class App extends React.Component<IAppProps, IAppState> {
     };
   };
 
-  private handelRenameCancel = () => {
-    this.setState({ renameAlertOpen: false });
-  };
-
   private handleAutoDetectLanguage = () => {
     this.setState({
       format: Format.Code,
@@ -535,6 +531,10 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private handleRenameButtonClick = () => {
     this.setState({ renameAlertOpen: true });
+  };
+
+  private handleRenameCancel = () => {
+    this.setState({ renameAlertOpen: false });
   };
 
   private handleSelectLanguageClose = () => {
