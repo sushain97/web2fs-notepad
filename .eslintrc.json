@@ -16,6 +16,7 @@
   },
   "plugins": ["eslint-plugin-react", "sonarjs", "@typescript-eslint"],
   "rules": {
+    "react/jsx-sort-props": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/member-ordering": [
       "error",

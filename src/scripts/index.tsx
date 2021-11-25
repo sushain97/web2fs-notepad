@@ -259,8 +259,8 @@ class App extends React.Component<IAppProps, IAppState> {
     return (
       <HotkeysTarget2 hotkeys={this.hotkeys}>
         <div
-          id="container"
           className={classNames({ [Classes.DARK]: this.state.mode === Mode.Dark })}
+          id="container"
         >
           {this.renderContent(this.state)}
           {this.renderStatusBar(this.state)}
@@ -636,19 +636,19 @@ class App extends React.Component<IAppProps, IAppState> {
 
     const textArea = (
       <TextArea
-        inputRef={this.contentRefHandler}
-        onScroll={this.handleContentScroll}
-        value={content}
-        title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
-        onChange={disabled ? undefined : this.handleContentChange}
-        onKeyDown={disabled ? undefined : this.handleContentKeyDown}
-        fill={true}
-        wrap={wrap ? 'soft' : 'off'}
         autoFocus={true}
         className={classNames('content-input', {
           [Classes.MONOSPACE_TEXT]: monospace,
         })}
+        fill={true}
+        inputRef={this.contentRefHandler}
+        onChange={disabled ? undefined : this.handleContentChange}
+        onKeyDown={disabled ? undefined : this.handleContentKeyDown}
+        onScroll={this.handleContentScroll}
         readOnly={disabled}
+        title={disabled ? 'Editing a prior version of a note is not permitted.' : ''}
+        value={content}
+        wrap={wrap ? 'soft' : 'off'}
       />
     );
 
@@ -659,7 +659,7 @@ class App extends React.Component<IAppProps, IAppState> {
           <Divider />
           {renderedContent == null ? (
             <div className={classNames('content-output-container')}>
-              <NonIdealState title={`Rendering ${startCase(format)}...`} icon={<Spinner />} />
+              <NonIdealState icon={<Spinner />} title={`Rendering ${startCase(format)}...`} />
             </div>
           ) : (
             <div
@@ -682,24 +682,24 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderCopyShareUrlAlert({ shareUrl, mode }: IAppState) {
     return (
       <Alert
-        cancelButtonText="Cancel"
-        onConfirm={this.handleCopyShareUrl}
-        isOpen={shareUrl != null}
-        icon={IconNames.SHARE}
-        className={classNames('copy-share-link-alert', { [Classes.DARK]: mode === Mode.Dark })}
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
-        onCancel={this.handleCopyShareUrlCancel}
-        intent={Intent.PRIMARY}
+        cancelButtonText="Cancel"
+        className={classNames('copy-share-link-alert', { [Classes.DARK]: mode === Mode.Dark })}
         confirmButtonText="Copy Share Link"
+        icon={IconNames.SHARE}
+        intent={Intent.PRIMARY}
+        isOpen={shareUrl != null}
+        onCancel={this.handleCopyShareUrlCancel}
+        onConfirm={this.handleCopyShareUrl}
       >
         <InputGroup
-          value={shareUrl}
-          readOnly={true}
-          leftIcon={IconNames.CLIPBOARD}
-          className={Classes.FILL}
           autoFocus={true}
+          className={Classes.FILL}
+          leftIcon={IconNames.CLIPBOARD}
           onFocus={this.handleCopyShareLinkInputFocus}
+          readOnly={true}
+          value={shareUrl}
         />
       </Alert>
     );
@@ -708,15 +708,15 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderDeleteAlert({ confirmDeleteAlertOpen }: IAppState) {
     return (
       <Alert
-        isOpen={confirmDeleteAlertOpen}
-        intent={Intent.DANGER}
-        confirmButtonText="Delete"
-        cancelButtonText="Cancel"
-        icon={IconNames.TRASH}
-        onCancel={this.handleNoteDeletionCancel}
-        onConfirm={this.deleteNote}
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
+        cancelButtonText="Cancel"
+        confirmButtonText="Delete"
+        icon={IconNames.TRASH}
+        intent={Intent.DANGER}
+        isOpen={confirmDeleteAlertOpen}
+        onCancel={this.handleNoteDeletionCancel}
+        onConfirm={this.deleteNote}
       >
         Are you sure you want to delete this note and all associated versions?
       </Alert>
@@ -735,11 +735,11 @@ class App extends React.Component<IAppProps, IAppState> {
 
           return (
             <MenuItem
-              icon={icon}
-              text={startCase(format)}
-              key={format}
               active={this.state.format === Format[format as keyof typeof Format]}
+              icon={icon}
+              key={format}
               onClick={this.formatChangeHandler(format as Format)}
+              text={startCase(format)}
             />
           );
         })}
@@ -758,21 +758,21 @@ class App extends React.Component<IAppProps, IAppState> {
     if (history == null) {
       content = [...Array(currentVersion).keys()].map((i) => (
         <MenuItem
-          key={i}
           className={Classes.SKELETON}
           disabled={true}
-          text={`v${i} - ${new Date().toLocaleString()}`}
+          key={i}
           label="0 bytes"
+          text={`v${i} - ${new Date().toLocaleString()}`}
         />
       ));
     } else {
       content = history.map(({ modificationTime, size }, i) => (
         <MenuItem
-          key={i}
           active={i + 1 === version}
-          text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
+          key={i}
           label={fileSize(size)}
           onClick={this.historyMenuItemClickHandler(i + 1)}
+          text={`v${i + 1} - ${new Date(modificationTime * 1000).toLocaleString()}`}
         />
       ));
     }
@@ -785,7 +785,7 @@ class App extends React.Component<IAppProps, IAppState> {
     { name }: ILanguage,
     { modifiers: { active }, handleClick }: IItemRendererProps,
   ) {
-    return <MenuItem active={active} onClick={handleClick} key={name} text={startCase(name)} />;
+    return <MenuItem active={active} key={name} onClick={handleClick} text={startCase(name)} />;
   }
 
   private renderLanguages(
@@ -808,14 +808,14 @@ class App extends React.Component<IAppProps, IAppState> {
     return (
       <div onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
         <InputGroup
-          leftIcon={IconNames.SEARCH}
-          type="search"
-          placeholder="Search languages"
-          className={classNames(Classes.FILL, 'search-languages-input')}
-          onChange={handleQueryChange}
-          value={query}
-          round={true}
           autoFocus={true}
+          className={classNames(Classes.FILL, 'search-languages-input')}
+          leftIcon={IconNames.SEARCH}
+          onChange={handleQueryChange}
+          placeholder="Search languages"
+          round={true}
+          type="search"
+          value={query}
         />
         {itemList}
       </div>
@@ -825,33 +825,33 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderRenameAlert({ renameAlertOpen, mode }: IAppState) {
     return (
       <Alert
-        isOpen={renameAlertOpen}
-        icon={IconNames.ANNOTATION}
-        intent={Intent.PRIMARY}
-        cancelButtonText="Cancel"
-        confirmButtonText="Rename"
-        onCancel={this.handelRenameCancel}
-        onConfirm={this.handleRename}
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
+        cancelButtonText="Cancel"
         className={classNames({ [Classes.DARK]: mode === Mode.Dark })}
+        confirmButtonText="Rename"
+        icon={IconNames.ANNOTATION}
+        intent={Intent.PRIMARY}
+        isOpen={renameAlertOpen}
+        onCancel={this.handelRenameCancel}
+        onConfirm={this.handleRename}
       >
-        <form ref={this.renameForm} onSubmit={this.handleRename}>
+        <form onSubmit={this.handleRename} ref={this.renameForm}>
           <FormGroup
-            inline={true}
             helperText={
               <>
                 Must be unique and match the pattern <Code>[A-z0-9_-]+</Code>
               </>
             }
+            inline={true}
           >
             <input
-              className={classNames(Classes.INPUT, Classes.FILL)}
-              required={true}
               autoFocus={true}
+              className={classNames(Classes.INPUT, Classes.FILL)}
               pattern="[A-z0-9_-]+"
               placeholder="Enter new name"
               ref={this.renameInput}
+              required={true}
             />
           </FormGroup>
         </form>
@@ -862,22 +862,22 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderSelectLanguageDialog({ selectLanguageDialogOpen, mode, languages }: IAppState) {
     return (
       <Dialog
-        isOpen={selectLanguageDialogOpen}
-        title="Select Language"
+        className={classNames('select-language-dialog', { [Classes.DARK]: mode === Mode.Dark })}
         icon={IconNames.CODE}
+        isOpen={selectLanguageDialogOpen}
         onClose={this.handleSelectLanguageClose}
         onOpening={this.handleSelectLanguageDialogOpening}
-        className={classNames('select-language-dialog', { [Classes.DARK]: mode === Mode.Dark })}
+        title="Select Language"
       >
         <div className={Classes.DIALOG_BODY}>
           {languages ? (
             <QueryList
-              renderer={this.renderLanguagesQueryList}
-              items={sortBy(languages, 'name')}
-              itemRenderer={this.renderLanguage}
-              onItemSelect={this.handleLanguageSelected}
-              itemPredicate={this.languagePredicate}
               itemListRenderer={this.renderLanguages}
+              itemPredicate={this.languagePredicate}
+              itemRenderer={this.renderLanguage}
+              items={sortBy(languages, 'name')}
+              onItemSelect={this.handleLanguageSelected}
+              renderer={this.renderLanguagesQueryList}
             />
           ) : (
             <NonIdealState icon={<Spinner />} title={'Loading Languages…'} />
@@ -886,7 +886,7 @@ class App extends React.Component<IAppProps, IAppState> {
         <div className={Classes.DIALOG_FOOTER}>
           <div className={Classes.DIALOG_FOOTER_ACTIONS}>
             <Button onClick={this.handleSelectLanguageClose}>Cancel</Button>
-            <Button onClick={this.handleAutoDetectLanguage} intent={Intent.PRIMARY}>
+            <Button intent={Intent.PRIMARY} onClick={this.handleAutoDetectLanguage}>
               Auto Detect
             </Button>
           </div>
@@ -910,26 +910,26 @@ class App extends React.Component<IAppProps, IAppState> {
               Share
               <Divider />
               <Switch
-                className="share-menu-switch"
-                label="Read-only"
                 checked={readOnly}
-                onChange={this.handleReadOnlyShareToggle}
+                className="share-menu-switch"
                 inline={true}
+                label="Read-only"
+                onChange={this.handleReadOnlyShareToggle}
               />
             </div>
           }
         />
         <MenuItem
-          text="Latest"
+          icon={IconNames.AUTOMATIC_UPDATES}
           label={currentVersion === version ? '(default)' : undefined}
           onClick={this.shareHandler(false)}
-          icon={IconNames.AUTOMATIC_UPDATES}
+          text="Latest"
         />
         <MenuItem
-          text="Current"
+          icon={IconNames.HISTORY}
           label={`v${version}`}
           onClick={this.shareHandler(true)}
-          icon={IconNames.HISTORY}
+          text="Current"
         />
       </Menu>
     );
@@ -953,9 +953,9 @@ class App extends React.Component<IAppProps, IAppState> {
         {this.renderStatusBarHistory(this.state, { updated, old, saved, mobile })}
         <div className="status-bar-menu">
           <Callout
-            intent={old ? Intent.WARNING : undefined}
-            icon={old ? <Icon icon={IconNames.WARNING_SIGN} /> : null} // manually inserted in order to control sizing
             className="status-bar-callout"
+            icon={old ? <Icon icon={IconNames.WARNING_SIGN} /> : null} // manually inserted in order to control sizing
+            intent={old ? Intent.WARNING : undefined}
           >
             {old && <H5>Editing disabled for old version</H5>}
             Last modified {new Date(modificationTime * 1000).toLocaleString()}
@@ -963,8 +963,8 @@ class App extends React.Component<IAppProps, IAppState> {
           <ButtonGroup>
             <Popover content={this.renderFormatMenu()} {...statusBarPopoverProps}>
               <Button
-                rightIcon={mobile ? undefined : IconNames.CARET_UP}
                 icon={IconNames.PRESENTATION}
+                rightIcon={mobile ? undefined : IconNames.CARET_UP}
               >
                 {!mobile && (
                   <>
@@ -997,8 +997,8 @@ class App extends React.Component<IAppProps, IAppState> {
             </Tooltip>
             <Popover
               content={this.renderTextOptionSwitches()}
-              interactionKind={PopoverInteractionKind.HOVER}
               hoverCloseDelay={200}
+              interactionKind={PopoverInteractionKind.HOVER}
               {...statusBarPopoverProps}
             >
               <Button icon={IconNames.FONT} />
@@ -1011,8 +1011,8 @@ class App extends React.Component<IAppProps, IAppState> {
             </Tooltip>
             <Popover
               content={this.renderShareMenu()}
-              interactionKind={PopoverInteractionKind.HOVER}
               hoverCloseDelay={200}
+              interactionKind={PopoverInteractionKind.HOVER}
               {...statusBarPopoverProps}
             >
               <Button
@@ -1023,8 +1023,8 @@ class App extends React.Component<IAppProps, IAppState> {
             <Tooltip content="Delete" {...statusBarPopoverProps}>
               <Button
                 icon={IconNames.TRASH}
-                onClick={this.handleDeleteButtonClick}
                 intent={Intent.DANGER}
+                onClick={this.handleDeleteButtonClick}
               />
             </Tooltip>
           </ButtonGroup>
@@ -1054,10 +1054,10 @@ class App extends React.Component<IAppProps, IAppState> {
           {...statusBarPopoverProps}
         >
           <AnchorButton // Button swallows hover events when disabled, breaking the tooltip
+            disabled={updated || old}
             icon={IconNames.FLOPPY_DISK}
             loading={updating}
             onClick={this.updateNote}
-            disabled={updated || old}
           />
         </Tooltip>
         <Popover
@@ -1067,11 +1067,11 @@ class App extends React.Component<IAppProps, IAppState> {
           position={Position.TOP_LEFT}
         >
           <Tag
-            icon={updated ? IconNames.SAVED : IconNames.OUTDATED}
-            minimal={true}
-            large={true}
-            interactive={saved}
             className="version-tag"
+            icon={updated ? IconNames.SAVED : IconNames.OUTDATED}
+            interactive={saved}
+            large={true}
+            minimal={true}
           >
             {versionString}
           </Tag>
@@ -1090,8 +1090,8 @@ class App extends React.Component<IAppProps, IAppState> {
 
     return (
       <div className="text-option-switches-container">
-        <Switch label="Monospace" checked={monospace} onChange={this.handleMonospaceToggle} />
-        <Switch label="Wrap Text" checked={wrap} onChange={this.handleWrapToggle} />
+        <Switch checked={monospace} label="Monospace" onChange={this.handleMonospaceToggle} />
+        <Switch checked={wrap} label="Wrap Text" onChange={this.handleWrapToggle} />
       </div>
     );
   }
