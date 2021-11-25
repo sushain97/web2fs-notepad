@@ -205,11 +205,11 @@ class App extends React.Component<IAppProps, IAppState> {
         ['Toggle Text Wrap', 'mod+alt+w', this.handleWrapToggle],
       ] as Array<[string, string, () => void]>
     ).map(([label, combo, onKeyDown]) => ({
-      label,
-      combo,
-      onKeyDown,
-      global: true,
       allowInInput: true,
+      combo,
+      global: true,
+      label,
+      onKeyDown,
       preventDefault: true,
       stopPropagation: true,
     }));
@@ -406,7 +406,7 @@ class App extends React.Component<IAppProps, IAppState> {
   }: React.UIEvent<HTMLTextAreaElement>) => {
     // This redirection is necessary since React's SyntheticEvent will get re-used
     // and a passed currentTarget reference to debounce will be invalid.
-    void this.handleContentScrollDebounced({ scrollTop, scrollLeft });
+    void this.handleContentScrollDebounced({ scrollLeft, scrollTop });
   };
 
   private handleCopyShareLinkInputFocus(
@@ -950,7 +950,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     return (
       <div className="status-bar">
-        {this.renderStatusBarHistory(this.state, { updated, old, saved, mobile })}
+        {this.renderStatusBarHistory(this.state, { mobile, old, saved, updated })}
         <div className="status-bar-menu">
           <Callout
             className="status-bar-callout"
@@ -1325,7 +1325,7 @@ void (async () => {
 
   ReactDOM.render(
     <HotkeysProvider>
-      <App {...{ ...context, settings, noteSettings }} />
+      <App {...{ ...context, noteSettings, settings }} />
     </HotkeysProvider>,
     document.getElementById('app'),
   );

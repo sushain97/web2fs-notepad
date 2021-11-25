@@ -63,7 +63,7 @@ self.addEventListener('message', async ({ data: request }) => {
         // and thus cause a DataCloneError if included.
         const result = pick(
           language
-            ? highlightJs.highlight(content, { language, ignoreIllegals: true })
+            ? highlightJs.highlight(content, { ignoreIllegals: true, language })
             : highlightJs.highlightAuto(content),
           ['language', 'value'],
         );
