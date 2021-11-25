@@ -232,12 +232,15 @@ class App extends React.Component<IAppProps, IAppState> {
       this.checkOutdatedVersion,
       OUTDATED_CHECK_MS,
     );
+
+    document.body.classList.toggle(Classes.DARK, this.state.mode === Mode.Dark);
   }
 
   public componentDidUpdate(prevProps: IAppProps, prevState: IAppState) {
     if (NOTE_SETTINGS_STATE_PROPERTIES.some((prop) => prevState[prop] !== this.state[prop])) {
       void this.updateNoteSettings();
     }
+
     if (
       prevState.content !== this.state.content ||
       prevState.format !== this.state.format ||
@@ -245,6 +248,8 @@ class App extends React.Component<IAppProps, IAppState> {
     ) {
       this.requestWorkerContentRender();
     }
+
+    document.body.classList.toggle(Classes.DARK, this.state.mode === Mode.Dark);
   }
 
   public componentWillUnmount() {
@@ -258,10 +263,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public render() {
     return (
       <HotkeysTarget2 hotkeys={this.hotkeys}>
-        <div
-          className={classNames({ [Classes.DARK]: this.state.mode === Mode.Dark })}
-          id="container"
-        >
+        <div id="container">
           {this.renderContent(this.state)}
           {this.renderStatusBar(this.state)}
           {this.renderDeleteAlert(this.state)}
@@ -679,13 +681,13 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   }
 
-  private renderCopyShareUrlAlert({ shareUrl, mode }: IAppState) {
+  private renderCopyShareUrlAlert({ shareUrl }: IAppState) {
     return (
       <Alert
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
         cancelButtonText="Cancel"
-        className={classNames('copy-share-link-alert', { [Classes.DARK]: mode === Mode.Dark })}
+        className={classNames('copy-share-link-alert')}
         confirmButtonText="Copy Share Link"
         icon={IconNames.SHARE}
         intent={Intent.PRIMARY}
@@ -828,7 +830,6 @@ class App extends React.Component<IAppProps, IAppState> {
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
         cancelButtonText="Cancel"
-        className={classNames({ [Classes.DARK]: mode === Mode.Dark })}
         confirmButtonText="Rename"
         icon={IconNames.ANNOTATION}
         intent={Intent.PRIMARY}
@@ -859,10 +860,10 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderSelectLanguageDialog({ selectLanguageDialogOpen, mode, languages }: IAppState) {
+  private renderSelectLanguageDialog({ selectLanguageDialogOpen, languages }: IAppState) {
     return (
       <Dialog
-        className={classNames('select-language-dialog', { [Classes.DARK]: mode === Mode.Dark })}
+        className={classNames('select-language-dialog')}
         icon={IconNames.CODE}
         isOpen={selectLanguageDialogOpen}
         onClose={this.handleSelectLanguageClose}
