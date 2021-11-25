@@ -120,6 +120,8 @@ const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
   'selectionStart',
 ] as const;
 
+const ENCRYPTION_SENTINEL = '============== BEGIN ENCRYPTED NOTE ==============\n';
+
 interface INoteSettings
   extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
     Partial<Pick<HTMLTextAreaElement, typeof NOTE_SETTINGS_TEXTAREA_PROPERTIES[number]>> {}
@@ -819,6 +821,7 @@ class App extends React.Component<IAppProps, IAppState> {
               placeholder="Enter passphrase"
               ref={this.passphraseInput}
               required={true}
+              type="password"
             />
           </FormGroup>
         </form>
@@ -1044,6 +1047,7 @@ class App extends React.Component<IAppProps, IAppState> {
     mode,
     format,
     language,
+    encryptionParameters,
   }: IAppState) {
     const mobile = window.innerWidth <= 480;
     const saved = currentVersion !== null;
@@ -1122,8 +1126,14 @@ class App extends React.Component<IAppProps, IAppState> {
                 onClick={this.shareHandler(currentVersion !== version)}
               />
             </Popover>
-            <Tooltip content="Lock" {...statusBarPopoverProps}>
-              <Button icon={IconNames.LOCK} onClick={this.handleLockButtonClick} />
+            <Tooltip
+              content={encryptionParameters == null ? 'Lock' : 'Unlock'}
+              {...statusBarPopoverProps}
+            >
+              <Button
+                icon={encryptionParameters == null ? IconNames.LOCK : IconNames.UNLOCK}
+                onClick={this.handleLockButtonClick}
+              />
             </Tooltip>
             <Tooltip content="Delete" {...statusBarPopoverProps}>
               <Button
@@ -1360,19 +1370,34 @@ class App extends React.Component<IAppProps, IAppState> {
 
       let text = currentContent;
       if (encryptionParameters) {
+        const toBase64 = (bytes: Uint8Array) => {
+          let text = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            text += String.fromCharCode(bytes[i]);
+          }
+          return btoa(text);
+        };
+
         const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        text = JSON.stringify({
-          ciphertext: await crypto.subtle.encrypt(
-            {
-              iv,
-              name: 'AES-GCM',
-            },
-            encryptionParameters.key,
-            new TextEncoder().encode(text),
-          ),
-          iv,
-          salt: encryptionParameters.salt,
-        });
+
+        text =
+          ENCRYPTION_SENTINEL +
+          JSON.stringify({
+            ciphertext: toBase64(
+              new Uint8Array(
+                await crypto.subtle.encrypt(
+                  {
+                    iv,
+                    name: 'AES-GCM',
+                  },
+                  encryptionParameters.key,
+                  new TextEncoder().encode(text),
+                ),
+              ),
+            ),
+            iv: toBase64(iv),
+            salt: toBase64(encryptionParameters.salt),
+          });
       }
 
       const { data: updatedNote } = await axios.post<INote>(
