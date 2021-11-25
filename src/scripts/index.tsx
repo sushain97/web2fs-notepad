@@ -88,10 +88,15 @@ interface IAppState {
   confirmDeleteAlertOpen: boolean;
   content: string;
   currentVersion: number | null;
+  encryptionParameters?: {
+    salt: Uint8Array;
+    key: CryptoKey;
+  };
   format: Format;
   history?: INoteVersionEntry[];
   language?: string;
   languages?: ILanguage[];
+  encryptionAlertOpen: boolean;
   mode: Mode;
   monospace: boolean;
   note: INote;
@@ -146,6 +151,8 @@ class App extends React.Component<IAppProps, IAppState> {
   private handleContentScrollDebounced = debounce(this.updateNoteSettings.bind(this), 100);
   private hotkeys: HotkeyConfig[];
   private lastOutdatedVersionCheck: number;
+  private passphraseForm: React.RefObject<HTMLFormElement> = React.createRef();
+  private passphraseInput: React.RefObject<HTMLInputElement> = React.createRef();
   private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
@@ -169,6 +176,7 @@ class App extends React.Component<IAppProps, IAppState> {
       confirmDeleteAlertOpen: false,
       content: note.content,
       currentVersion,
+      encryptionAlertOpen: false,
       format,
       language: noteSettings?.language,
       mode: settings?.mode || Mode.Light,
@@ -259,6 +267,7 @@ class App extends React.Component<IAppProps, IAppState> {
           {this.renderDeleteAlert(this.state)}
           {this.renderCopyShareUrlAlert(this.state)}
           {this.renderRenameAlert(this.state)}
+          {this.renderEncryptionAlert(this.state)}
           {this.renderSelectLanguageDialog(this.state)}
         </div>
       </HotkeysTarget2>
@@ -450,6 +459,62 @@ class App extends React.Component<IAppProps, IAppState> {
     download(content, filename, type);
   };
 
+  private handleEncryptionAdd = async (ev?: React.FormEvent) => {
+    const form = this.passphraseForm.current!;
+
+    if (ev) {
+      ev.preventDefault();
+    }
+
+    if (form.checkValidity()) {
+      this.setState({ encryptionAlertOpen: false });
+
+      const baseKey = await crypto.subtle.importKey(
+        'raw',
+        new TextEncoder().encode(this.passphraseInput.current!.value),
+        'PBKDF2',
+        false,
+        ['deriveKey'],
+      );
+
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+
+      const key = await crypto.subtle.deriveKey(
+        {
+          hash: 'SHA-512',
+          iterations: 25_000,
+          name: 'PBKDF2',
+          salt,
+        },
+        baseKey,
+        { length: 256, name: 'AES-GCM' },
+        true,
+        ['encrypt', 'decrypt'],
+      );
+
+      this.setState({
+        encryptionParameters: {
+          key,
+          salt,
+        },
+      });
+
+      await this.updateNote(true);
+    } else {
+      // We use this minor hack to trigger the native form validation UI
+      const temporarySubmitButton = document.createElement('button');
+      form.appendChild(temporarySubmitButton);
+      temporarySubmitButton.click();
+      form.removeChild(temporarySubmitButton);
+    }
+
+    return false;
+  };
+
+  private handleEncryptionCancel = () => {
+    this.setState({ encryptionAlertOpen: false });
+  };
+
   private handleHistoryPopoverOpening = async () => {
     try {
       this.setState({ history: undefined });
@@ -470,6 +535,10 @@ class App extends React.Component<IAppProps, IAppState> {
       renderedContent: undefined,
       selectLanguageDialogOpen: false,
     });
+  };
+
+  private handleLockButtonClick = () => {
+    this.setState({ encryptionAlertOpen: true });
   };
 
   private handleModeToggle = async () => {
@@ -715,6 +784,39 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
+  private renderEncryptionAlert({ encryptionAlertOpen, mode }: IAppState) {
+    return (
+      <Alert
+        canEscapeKeyCancel={true}
+        canOutsideClickCancel={true}
+        cancelButtonText="Cancel"
+        className={classNames({ [Classes.DARK]: mode === Mode.Dark })}
+        confirmButtonText="Encrypt"
+        icon={IconNames.SHIELD}
+        intent={Intent.PRIMARY}
+        isOpen={encryptionAlertOpen}
+        onCancel={this.handleEncryptionCancel}
+        onConfirm={this.handleEncryptionAdd}
+      >
+        <form onSubmit={this.handleEncryptionAdd} ref={this.passphraseForm}>
+          <FormGroup
+            helperText="Encryption occurs client side and keys are not recoverable if lost."
+            inline={true}
+          >
+            <input
+              autoFocus={true}
+              className={classNames(Classes.INPUT, Classes.FILL)}
+              minLength={1}
+              placeholder="Enter passphrase"
+              ref={this.passphraseInput}
+              required={true}
+            />
+          </FormGroup>
+        </form>
+      </Alert>
+    );
+  }
+
   private renderFormatMenu = () => {
     return (
       <Menu>
@@ -825,7 +927,7 @@ class App extends React.Component<IAppProps, IAppState> {
         icon={IconNames.ANNOTATION}
         intent={Intent.PRIMARY}
         isOpen={renameAlertOpen}
-        onCancel={this.handelRenameCancel}
+        onCancel={this.handleRenameCancel}
         onConfirm={this.handleRename}
       >
         <form onSubmit={this.handleRename} ref={this.renameForm}>
@@ -1012,6 +1114,9 @@ class App extends React.Component<IAppProps, IAppState> {
                 onClick={this.shareHandler(currentVersion !== version)}
               />
             </Popover>
+            <Tooltip content="Lock" position={Position.TOP}>
+              <Button icon={IconNames.LOCK} onClick={this.handleLockButtonClick} />
+            </Tooltip>
             <Tooltip content="Delete" position={Position.TOP}>
               <Button
                 icon={IconNames.TRASH}
@@ -1046,7 +1151,7 @@ class App extends React.Component<IAppProps, IAppState> {
             disabled={updated || old}
             icon={IconNames.FLOPPY_DISK}
             loading={updating}
-            onClick={this.updateNote}
+            onClick={() => this.updateNote()}
           />
         </Tooltip>
         <Popover
@@ -1219,11 +1324,12 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   }
 
-  private updateNote = async () => {
+  private updateNote = async (force = true) => {
     const {
       note: { id, content },
       content: currentContent,
       currentVersion,
+      encryptionParameters,
     } = this.state;
 
     this.updateNoteDebounced.cancel();
@@ -1231,7 +1337,7 @@ class App extends React.Component<IAppProps, IAppState> {
       this.cancelTokenSource.cancel();
     }
 
-    if (currentContent === content && currentVersion !== null) {
+    if (!force && currentContent === content && currentVersion !== null) {
       return;
     }
 
@@ -1240,7 +1346,22 @@ class App extends React.Component<IAppProps, IAppState> {
 
       this.setState({ updating: true });
 
-      const text = encodeURIComponent(currentContent);
+      let text = currentContent;
+      if (encryptionParameters) {
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        text = JSON.stringify({
+          ciphertext: await crypto.subtle.encrypt(
+            {
+              iv,
+              name: 'AES-GCM',
+            },
+            encryptionParameters.key,
+            new TextEncoder().encode(text),
+          ),
+          iv,
+          salt: encryptionParameters.salt,
+        });
+      }
 
       const { data: updatedNote } = await axios.post<INote>(
         `/${id}`,
