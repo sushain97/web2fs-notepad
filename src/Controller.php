@@ -157,11 +157,28 @@ class Controller extends AbstractController
         $this->ensureNoteIdNotReserved($store, $id);
 
         $request = Request::createFromGlobals();
-        if (!$request->request->has('text')) {
-            throw new BadRequestHttpException('Missing text parameter');
+
+        if ($request->getContentType() === 'json') {
+            $json = json_decode($request->getContent());
+            if ($json === null) {
+                throw new BadRequestHttpException('Invalid JSON');
+            }
+            if (!isset($json->text)) {
+                throw new BadRequestHttpException('Missing text parameter');
+            }
+            if (!is_string($json->text)) {
+                throw new BadRequestHttpException('Invalid text parameter');
+            }
+
+            $content = $json->text;
+        } else {
+            if (!$request->request->has('text')) {
+                throw new BadRequestHttpException('Missing text parameter');
+            }
+
+            $content = $request->request->get('text');
         }
 
-        $content = $request->request->get('text');
         $note = $store->updateNote($id, $content);
         return $this->json($note->serialize());
     }

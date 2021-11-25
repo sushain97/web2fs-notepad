@@ -1239,10 +1239,17 @@ class App extends React.Component<IAppProps, IAppState> {
       this.cancelTokenSource = axios.CancelToken.source();
 
       this.setState({ updating: true });
+
+      const text = encodeURIComponent(currentContent);
+
       const { data: updatedNote } = await axios.post<INote>(
         `/${id}`,
-        `text=${encodeURIComponent(currentContent)}`,
-        { cancelToken: this.cancelTokenSource.token },
+        {
+          text,
+        },
+        {
+          cancelToken: this.cancelTokenSource.token,
+        },
       );
 
       delete this.cancelTokenSource;
