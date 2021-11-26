@@ -120,7 +120,7 @@ const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
   'selectionStart',
 ] as const;
 
-const ENCRYPTION_SENTINEL = '============== BEGIN ENCRYPTED NOTE ==============\n';
+const ENCRYPTION_SENTINEL = '============== BEGIN ENCRYPTED NOTE V1 ==============\n';
 
 interface INoteSettings
   extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
@@ -1400,15 +1400,12 @@ class App extends React.Component<IAppProps, IAppState> {
           });
       }
 
-      const { data: updatedNote } = await axios.post<INote>(
-        `/${id}`,
-        {
-          text,
-        },
-        {
-          cancelToken: this.cancelTokenSource.token,
-        },
-      );
+      const params = new FormData();
+      params.append('text', text);
+
+      const { data: updatedNote } = await axios.post<INote>(`/${id}`, params, {
+        cancelToken: this.cancelTokenSource.token,
+      });
 
       delete this.cancelTokenSource;
       this.setState({
