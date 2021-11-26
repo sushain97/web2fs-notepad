@@ -731,7 +731,7 @@ class App extends React.Component<IAppProps, IAppState> {
           <div className="content-input-container">{textArea}</div>
           <Divider />
           {renderedContent == null ? (
-            <div className={classNames('content-output-container')}>
+            <div className="content-output-container">
               <NonIdealState icon={<Spinner />} title={`Rendering ${startCase(format)}...`} />
             </div>
           ) : (
@@ -758,7 +758,7 @@ class App extends React.Component<IAppProps, IAppState> {
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
         cancelButtonText="Cancel"
-        className={classNames('copy-share-link-alert')}
+        className="copy-share-link-alert"
         confirmButtonText="Copy Share Link"
         icon={IconNames.SHARE}
         intent={Intent.PRIMARY}
