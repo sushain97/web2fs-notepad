@@ -120,7 +120,7 @@ const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
   'selectionStart',
 ] as const;
 
-const ENCRYPTION_SENTINEL = '============== BEGIN ENCRYPTED NOTE V1 ==============\n';
+const ENCRYPTION_SENTINEL = '============== BEGIN ENCRYPTED CONTENT V1 ==============\n';
 
 interface INoteSettings
   extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
@@ -335,6 +335,36 @@ class App extends React.Component<IAppProps, IAppState> {
         }
       }
     }
+  };
+
+  private decryptContent = async (content: string): Promise<string> => {
+    const fromBase64 = (str: string): Uint8Array => {
+      return new Uint8Array(Array.from(atob(str)).map((s) => s.charCodeAt(0)));
+    };
+
+    const { encryptionParameters } = this.state;
+
+    if (!content.startsWith(ENCRYPTION_SENTINEL)) {
+      return content;
+    }
+
+    const encryptedData = JSON.parse(content.slice(ENCRYPTION_SENTINEL.length)) as {
+      ciphertext: string;
+      iv: string;
+      salt: string;
+    };
+
+    if (!encryptionParameters) {
+      throw new Error('Encryption parameters not set');
+    }
+
+    return new TextDecoder().decode(
+      await crypto.subtle.decrypt(
+        { iv: fromBase64(encryptedData.iv), name: 'AES-GCM' },
+        encryptionParameters.key,
+        fromBase64(encryptedData.ciphertext),
+      ),
+    );
   };
 
   private deleteNote = async () => {
@@ -1324,7 +1354,7 @@ class App extends React.Component<IAppProps, IAppState> {
         } = await axios.get<{ note: INote }>(`/${id}/${version}`);
         this.setState({
           content: note.content,
-          note,
+          note: { ...note, content: await this.decryptContent(note.content) },
         });
         window.history.pushState(null, '', `/${id}/${version}`);
       } catch (error) {
@@ -1372,9 +1402,9 @@ class App extends React.Component<IAppProps, IAppState> {
       if (encryptionParameters) {
         const toBase64 = (bytes: Uint8Array) => {
           let text = '';
-          for (let i = 0; i < bytes.byteLength; i++) {
-            text += String.fromCharCode(bytes[i]);
-          }
+          bytes.forEach((byte) => {
+            text += String.fromCharCode(byte);
+          });
           return btoa(text);
         };
 
@@ -1410,7 +1440,7 @@ class App extends React.Component<IAppProps, IAppState> {
       delete this.cancelTokenSource;
       this.setState({
         currentVersion: updatedNote.version,
-        note: updatedNote,
+        note: { ...updatedNote, content: await this.decryptContent(updatedNote.content) },
         updating: false,
       });
       window.history.pushState(null, '', `/${id}/${updatedNote.version}`);
