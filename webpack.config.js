@@ -98,12 +98,13 @@ module.exports = {
   },
   performance: {
     hints: 'error',
-    maxEntrypointSize: development ? 32e6 : 2e6,
-    maxAssetSize: development ? 32e6 : 2e6,
+    maxEntrypointSize: development ? 6e6 : 1.25e6,
+    maxAssetSize: development ? 6e6 : 1.25e6,
   },
   optimization: {
     minimizer: [
       new CssMinimizerPlugin(),
+      '...',
     ],
   },
   plugins: [
