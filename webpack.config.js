@@ -23,7 +23,7 @@ class BlueprintIconShakingPlugin {
 
   apply(compiler) {
     const exec = util.promisify(child_process.exec);
-    const writeFile = fs.promises.writeFile;
+    const {writeFile, readFile} = fs.promises;
 
     const iconsShaker = async () => {
       const usedIcons = new Set([
@@ -42,11 +42,15 @@ class BlueprintIconShakingPlugin {
         Object.entries(icons.IconSvgPaths20).filter(([iconName]) => usedIcons.has(iconName)),
       );
 
-      await writeFile(
-        iconsFile.name,
-        `export const IconSvgPaths16 = ${JSON.stringify(iconSvgPaths16, null, 2)}
-    export const IconSvgPaths20 = ${JSON.stringify(iconSvgPaths20, null, 2)}`,
-      );
+      const fileContent = `export const IconSvgPaths16 = ${JSON.stringify(iconSvgPaths16, null, 2)}
+      export const IconSvgPaths20 = ${JSON.stringify(iconSvgPaths20, null, 2)}`;
+
+      if ((await readFile(iconsFile.name, 'utf-8')) != fileContent) {
+        await writeFile(
+          iconsFile.name,
+          fileContent,
+        );
+      }
     };
 
     compiler.hooks.beforeRun.tapPromise('BlueprintIconShakingPlugin', iconsShaker);
@@ -114,5 +118,5 @@ module.exports = {
     }),
     new NormalModuleReplacementPlugin(/.*\/generated\/iconSvgPaths.*/, iconsFile.name),
     new BlueprintIconShakingPlugin(),
-  ].filter(Boolean),
+  ],
 };
