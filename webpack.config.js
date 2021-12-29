@@ -111,8 +111,8 @@ module.exports = {
   },
   performance: {
     hints: development ? 'warning' : 'error',
-    maxEntrypointSize: 1.25e6,
-    maxAssetSize: 1.25e6,
+    maxEntrypointSize: development ? 32e6 : 1.25e6,
+    maxAssetSize: development ? 32e6 : 1.25e6,
   },
   plugins: [
     new CleanWebpackPlugin([ASSETS_PATH]),
