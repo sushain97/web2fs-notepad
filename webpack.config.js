@@ -9,7 +9,7 @@ const tmp = require('tmp');
 const { NormalModuleReplacementPlugin } = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 
 const icons = require('@blueprintjs/icons');
@@ -22,7 +22,7 @@ class BlueprintIconShakingPlugin {
 
   apply(compiler) {
     const exec = util.promisify(child_process.exec);
-    const {writeFile, readFile} = fs.promises;
+    const { writeFile, readFile } = fs.promises;
 
     const iconsShaker = async () => {
       const usedIcons = new Set([
@@ -45,10 +45,7 @@ class BlueprintIconShakingPlugin {
       export const IconSvgPaths20 = ${JSON.stringify(iconSvgPaths20, null, 2)}`;
 
       if ((await readFile(iconsFile.name, 'utf-8')) != fileContent) {
-        await writeFile(
-          iconsFile.name,
-          fileContent,
-        );
+        await writeFile(iconsFile.name, fileContent);
       }
     };
 
@@ -109,10 +106,7 @@ module.exports = {
     maxAssetSize: development ? 8e6 : 1.25e6,
   },
   optimization: {
-    minimizer: [
-      new CssMinimizerPlugin(),
-      '...',
-    ],
+    minimizer: [new CssMinimizerPlugin(), '...'],
   },
   plugins: [
     new CleanWebpackPlugin(),
