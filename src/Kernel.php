@@ -21,7 +21,7 @@ class Kernel extends BaseKernel
     {
         parent::__construct(...$args);
 
-        $manifestPath = $this->getProjectDir().'/public/assets/manifest.json';
+        $manifestPath = $this->getProjectDir().'/public/assets/assets-manifest.json';
         if (file_exists($manifestPath)) {
             $this->manifest = json_decode(file_get_contents($manifestPath), true);
         } else {
