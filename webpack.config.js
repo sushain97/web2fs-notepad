@@ -88,15 +88,7 @@ module.exports = {
       },
       {
         test: /\.(png|woff|woff2|eot|ttf|svg)$/i,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              limit: 8192,
-              fallback: 'file-loader',
-            },
-          },
-        ],
+        type: 'asset',
       },
     ],
   },
