@@ -93,9 +93,9 @@ module.exports = {
     ],
   },
   performance: {
-    hints: development ? 'warning' : 'error',
-    maxEntrypointSize: development ? 32e6 : 1.3e6,
-    maxAssetSize: development ? 32e6 : 1.3e6,
+    hints: 'error',
+    maxEntrypointSize: development ? 32e6 : 2e6,
+    maxAssetSize: development ? 32e6 : 2e6,
   },
   optimization: {
     minimizer: [
