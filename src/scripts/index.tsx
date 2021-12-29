@@ -229,7 +229,7 @@ class App extends React.Component<IAppProps, IAppState> {
     window.addEventListener('beforeunload', this.handleBeforeUnload);
     window.addEventListener('onfocus', () => void this.checkOutdatedVersion());
     this.checkOutdatedVersionInterval = window.setInterval(
-      this.checkOutdatedVersion,
+      () => void this.checkOutdatedVersion,
       OUTDATED_CHECK_MS,
     );
 
