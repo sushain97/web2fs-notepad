@@ -98,8 +98,8 @@ module.exports = {
   },
   performance: {
     hints: 'error',
-    maxEntrypointSize: development ? 6e6 : 1.25e6,
-    maxAssetSize: development ? 6e6 : 1.25e6,
+    maxEntrypointSize: development ? 8e6 : 1.25e6,
+    maxAssetSize: development ? 8e6 : 1.25e6,
   },
   optimization: {
     minimizer: [
