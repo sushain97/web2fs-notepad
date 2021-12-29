@@ -71,7 +71,7 @@ module.exports = {
     path: path.resolve(__dirname, 'public', 'assets'),
     globalObject: 'this',
   },
-  devtool: development ? 'cheap-eval-source-map' : false,
+  devtool: development ? 'eval-cheap-source-map' : false,
   resolve: {
     extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js'],
   },
