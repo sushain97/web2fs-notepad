@@ -7,7 +7,7 @@ const child_process = require('child_process');
 const tmp = require('tmp');
 
 const { NormalModuleReplacementPlugin } = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
@@ -16,7 +16,6 @@ const WebpackRequireFrom = require('webpack-require-from');
 const icons = require('@blueprintjs/icons');
 
 const SRC_PATH = path.resolve(__dirname, 'src', 'scripts');
-const ASSETS_PATH = path.resolve(__dirname, 'public', 'assets');
 const iconsFile = tmp.fileSync();
 
 class BlueprintIconShakingPlugin {
@@ -69,7 +68,7 @@ module.exports = {
     filename: '[name].[contenthash].bundle.js',
     chunkFilename: '[name].[contenthash].chunk.js',
     publicPath: '/assets/',
-    path: ASSETS_PATH,
+    path: path.resolve(__dirname, 'public', 'assets'),
     globalObject: 'this',
   },
   devtool: development ? 'cheap-eval-source-map' : false,
@@ -115,10 +114,9 @@ module.exports = {
     maxAssetSize: development ? 32e6 : 1.3e6,
   },
   plugins: [
-    new CleanWebpackPlugin([ASSETS_PATH]),
+    new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].bundle.css',
-      path: ASSETS_PATH,
     }),
     !development &&
       new OptimizeCssAssetsPlugin({
