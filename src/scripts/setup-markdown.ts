@@ -10,7 +10,7 @@ export default (md: typeof MarkdownIt): MarkdownIt => {
 
   const defaultLinkRenderer =
     markdownIt.renderer.rules.link_open ||
-    ((tokens, idx, options, env, self) => {
+    ((tokens, idx, options, _, self) => {
       return self.renderToken(tokens, idx, options);
     });
   markdownIt.renderer.rules.link_open = (tokens, idx, options, env, self) => {

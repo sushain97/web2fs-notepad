@@ -11,7 +11,6 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const WebpackAssetsManifest = require('webpack-assets-manifest');
-const WebpackRequireFrom = require('webpack-require-from');
 
 const icons = require('@blueprintjs/icons');
 
@@ -121,10 +120,6 @@ module.exports = {
       filename: '[name].[contenthash].bundle.css',
     }),
     new WebpackAssetsManifest(),
-    new WebpackRequireFrom({
-      replaceSrcMethodName: 'mungeImportScriptsUrl',
-      suppressErrors: true,
-    }),
     new NormalModuleReplacementPlugin(/.*\/generated\/iconSvgPaths.*/, iconsFile.name),
     new BlueprintIconShakingPlugin(),
   ],

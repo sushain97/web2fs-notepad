@@ -4707,11 +4707,6 @@ webpack-merge@^5.7.3:
     clone-deep "^4.0.1"
     wildcard "^2.0.0"
 
-webpack-require-from@^1.8.0:
-  version "1.8.6"
-  resolved "https://registry.yarnpkg.com/webpack-require-from/-/webpack-require-from-1.8.6.tgz#47dc065257c522abdf39715556c4f027ea749bed"
-  integrity sha512-QmRsOkOYPKeNXp4uVc7qxnPrFQPrP4bhOc/gl4QenTFNgXdEbF1U8VC+jM/Sljb0VzJLNgyNiHlVkuHjcmDtBQ==
-
 webpack-sources@^3.2.2:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/webpack-sources/-/webpack-sources-3.2.2.tgz#d88e3741833efec57c4c789b6010db9977545260"

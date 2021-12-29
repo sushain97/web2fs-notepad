@@ -13,9 +13,7 @@ declare let self: AppWorker;
 
 const getCodeRenderer = async () => {
   if (!self.HighlightJs) {
-    self.HighlightJs = (
-      await import(/* webpackChunkName: "highlight-js" */ 'highlight.js')
-    ).default;
+    self.HighlightJs = (await import('highlight.js')).default;
   }
 
   return self.HighlightJs;
@@ -23,7 +21,7 @@ const getCodeRenderer = async () => {
 
 const getMarkdownRenderer = async () => {
   if (!self.MarkdownIt) {
-    const md = (await import(/* webpackChunkName: "markdown-it" */ 'markdown-it')).default;
+    const md = (await import('markdown-it')).default;
     self.MarkdownIt = setupMarkdown(md);
   }
 
@@ -50,9 +48,9 @@ self.addEventListener('message', async ({ data: request }) => {
   try {
     switch (request.type) {
       case WorkerMessageType.INITIALIZE: {
-        self.mungeImportScriptsUrl = (url: string) => {
-          return `${request.path}/${url}`;
-        };
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        __webpack_public_path__ = `${request.path}/${__webpack_public_path__ as string}`;
         break;
       }
       case WorkerMessageType.RENDER_CODE: {
