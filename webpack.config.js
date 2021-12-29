@@ -118,7 +118,6 @@ module.exports = {
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].bundle.css',
-      path: ASSETS_PATH,
     }),
     !development &&
       new OptimizeCssAssetsPlugin({
