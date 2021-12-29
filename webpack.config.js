@@ -9,7 +9,7 @@ const tmp = require('tmp');
 const { NormalModuleReplacementPlugin } = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const WebpackRequireFrom = require('webpack-require-from');
 
@@ -105,21 +105,16 @@ module.exports = {
     maxEntrypointSize: development ? 32e6 : 1.3e6,
     maxAssetSize: development ? 32e6 : 1.3e6,
   },
+  optimization: {
+    minimizer: [
+      new CssMinimizerPlugin(),
+    ],
+  },
   plugins: [
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].bundle.css',
     }),
-    !development &&
-      new OptimizeCssAssetsPlugin({
-        cssProcessor: require('cssnano'),
-        cssProcessorOptions: {
-          discardComments: {
-            removeAll: true,
-          },
-        },
-        canPrint: true,
-      }),
     new WebpackAssetsManifest(),
     new WebpackRequireFrom({
       replaceSrcMethodName: 'mungeImportScriptsUrl',
