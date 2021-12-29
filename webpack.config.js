@@ -82,6 +82,14 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /worker\.ts$/,
+        loader: 'worker-loader',
+        options: {
+          publicPath: '/assets/',
+          inline: true,
+        },
+      },
+      {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         loader: 'ts-loader',

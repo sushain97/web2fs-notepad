@@ -159,7 +159,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private updateFailedToastKey?: string;
   private updateNoteDebounced: ReturnType<typeof debounce>;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  private worker = new Worker(new URL('./worker.ts', import.meta.url)) as AppWorker;
+  private worker = new Worker() as AppWorker;
 
   public constructor(props: IAppProps) {
     super(props);
