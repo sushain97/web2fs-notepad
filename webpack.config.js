@@ -7,7 +7,7 @@ const child_process = require('child_process');
 const tmp = require('tmp');
 
 const { NormalModuleReplacementPlugin } = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
@@ -115,7 +115,7 @@ module.exports = {
     maxAssetSize: development ? 32e6 : 1.3e6,
   },
   plugins: [
-    new CleanWebpackPlugin([ASSETS_PATH]),
+    new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].bundle.css',
       path: ASSETS_PATH,
