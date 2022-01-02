@@ -82,7 +82,7 @@ module.exports = {
         loader: 'worker-loader',
         options: {
           publicPath: '/assets/',
-          inline: true,
+          inline: 'fallback',
         },
       },
       {
