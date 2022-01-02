@@ -9,9 +9,8 @@ const tmp = require('tmp');
 const { NormalModuleReplacementPlugin } = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
-const WebpackRequireFrom = require('webpack-require-from');
 
 const icons = require('@blueprintjs/icons');
 
@@ -23,7 +22,7 @@ class BlueprintIconShakingPlugin {
 
   apply(compiler) {
     const exec = util.promisify(child_process.exec);
-    const writeFile = fs.promises.writeFile;
+    const { writeFile, readFile } = fs.promises;
 
     const iconsShaker = async () => {
       const usedIcons = new Set([
@@ -42,11 +41,12 @@ class BlueprintIconShakingPlugin {
         Object.entries(icons.IconSvgPaths20).filter(([iconName]) => usedIcons.has(iconName)),
       );
 
-      await writeFile(
-        iconsFile.name,
-        `export const IconSvgPaths16 = ${JSON.stringify(iconSvgPaths16, null, 2)}
-    export const IconSvgPaths20 = ${JSON.stringify(iconSvgPaths20, null, 2)}`,
-      );
+      const fileContent = `export const IconSvgPaths16 = ${JSON.stringify(iconSvgPaths16, null, 2)}
+      export const IconSvgPaths20 = ${JSON.stringify(iconSvgPaths20, null, 2)}`;
+
+      if ((await readFile(iconsFile.name, 'utf-8')) != fileContent) {
+        await writeFile(iconsFile.name, fileContent);
+      }
     };
 
     compiler.hooks.beforeRun.tapPromise('BlueprintIconShakingPlugin', iconsShaker);
@@ -71,7 +71,7 @@ module.exports = {
     path: path.resolve(__dirname, 'public', 'assets'),
     globalObject: 'this',
   },
-  devtool: development ? 'cheap-eval-source-map' : false,
+  devtool: development ? 'eval-cheap-source-map' : false,
   resolve: {
     extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js'],
   },
@@ -96,44 +96,25 @@ module.exports = {
       },
       {
         test: /\.(png|woff|woff2|eot|ttf|svg)$/i,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              limit: 8192,
-              fallback: 'file-loader',
-            },
-          },
-        ],
+        type: 'asset',
       },
     ],
   },
   performance: {
-    hints: development ? 'warning' : 'error',
-    maxEntrypointSize: development ? 32e6 : 1.3e6,
-    maxAssetSize: development ? 32e6 : 1.3e6,
+    hints: 'error',
+    maxEntrypointSize: development ? 8e6 : 1.25e6,
+    maxAssetSize: development ? 8e6 : 1.25e6,
+  },
+  optimization: {
+    minimizer: [new CssMinimizerPlugin(), '...'],
   },
   plugins: [
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].bundle.css',
     }),
-    !development &&
-      new OptimizeCssAssetsPlugin({
-        cssProcessor: require('cssnano'),
-        cssProcessorOptions: {
-          discardComments: {
-            removeAll: true,
-          },
-        },
-        canPrint: true,
-      }),
     new WebpackAssetsManifest(),
-    new WebpackRequireFrom({
-      replaceSrcMethodName: 'mungeImportScriptsUrl',
-      suppressErrors: true,
-    }),
     new NormalModuleReplacementPlugin(/.*\/generated\/iconSvgPaths.*/, iconsFile.name),
     new BlueprintIconShakingPlugin(),
-  ].filter(Boolean),
+  ],
 };
