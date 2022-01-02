@@ -28,6 +28,7 @@ body {
 
   body.#{$ns}-dark & {
     background-color: $dark-gray4;
+    color-scheme: dark;
   }
 }
 
