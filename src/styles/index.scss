@@ -7,6 +7,7 @@
 @import './markdown.scss';
 
 $content-status-bar-spacing: 0.75rem;
+$content-status-bar-padding: 3px;
 
 html,
 body {
@@ -19,7 +20,7 @@ body {
 }
 
 #container {
-  padding: 1rem 1rem $content-status-bar-spacing 1rem;
+  padding: 1rem 1rem calc(#{$content-status-bar-spacing} - #{$content-status-bar-padding}) 1rem;
   display: flex;
   flex-direction: column;
 
@@ -64,7 +65,8 @@ body {
   gap: $pt-grid-size;
   justify-content: space-between;
   padding-top: $content-status-bar-spacing;
-  overflow-y: scroll;
+  padding-bottom: $content-status-bar-padding;
+  overflow-y: hidden;
 
   .status-bar-history {
     display: flex;
@@ -82,7 +84,7 @@ body {
   .status-bar-callout {
     padding: $pt-grid-size / 2 $pt-grid-size $pt-grid-size / 2;
     width: unset;
-    overflow-x: hidden;
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 
