@@ -53,8 +53,6 @@ self.addEventListener('message', async ({ data: request }) => {
   try {
     switch (request.type) {
       case WorkerMessageType.INITIALIZE: {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         __webpack_public_path__ = `${request.path}/${__webpack_public_path__}`;
         break;
       }
