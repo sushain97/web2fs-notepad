@@ -5,7 +5,8 @@ import classNames from 'classnames';
 
 import { Mode } from './types';
 
-const { content, mode } = (window as unknown as { CONTEXT: { content: string; mode: string } })
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+const { content, mode } = (window as typeof window & { CONTEXT: { content: string; mode: string } })
   .CONTEXT;
 
 const app = document.getElementById('app')!;

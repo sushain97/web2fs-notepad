@@ -11,6 +11,10 @@ import {
 
 declare let self: AppWorker;
 
+declare global {
+  let __webpack_public_path__: string;
+}
+
 const getCodeRenderer = async () => {
   if (!self.HighlightJs) {
     self.HighlightJs = (await import('highlight.js')).default;
@@ -36,6 +40,7 @@ const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResul
     type: WorkerMessageType.RESULT,
   };
   // Avoiding this cast and ensuring type narrowing in handleWorkerMessage seem mutually exclusive.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   self.postMessage(message as WorkerMessage);
 };
 
@@ -50,7 +55,7 @@ self.addEventListener('message', async ({ data: request }) => {
       case WorkerMessageType.INITIALIZE: {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        __webpack_public_path__ = `${request.path}/${__webpack_public_path__ as string}`;
+        __webpack_public_path__ = `${request.path}/${__webpack_public_path__}`;
         break;
       }
       case WorkerMessageType.RENDER_CODE: {
@@ -88,7 +93,7 @@ self.addEventListener('message', async ({ data: request }) => {
     }
   } catch (error) {
     self.postMessage({
-      error: (error as Error).toString(),
+      error: error instanceof Error ? error.message : String(error),
       request,
       request_type: request.type,
       type: WorkerMessageType.ERROR,
@@ -96,5 +101,5 @@ self.addEventListener('message', async ({ data: request }) => {
   }
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any,  @typescript-eslint/consistent-type-assertions
 export default null as any;

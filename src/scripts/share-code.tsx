@@ -7,9 +7,9 @@ import HighlightJs from 'highlight.js';
 
 import { Mode } from './types';
 
-const { content, language, mode } = (
-  window as unknown as { CONTEXT: { content: string; language: string; mode: string } }
-).CONTEXT;
+const { content, language, mode } =
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  (window as unknown as { CONTEXT: { content: string; language: string; mode: string } }).CONTEXT;
 
 let value;
 if (language) {

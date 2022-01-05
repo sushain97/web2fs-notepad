@@ -67,6 +67,8 @@ enum Format {
   Code = 'Code',
 }
 
+const Formats = [Format.PlainText, Format.Code, Format.Markdown];
+
 const FormatExtensions = {
   [Format.PlainText]: 'txt',
   [Format.Markdown]: 'md',
@@ -139,13 +141,13 @@ const AppToaster = Toaster.create();
 const SettingsStore = LocalForage.createInstance({ name: 'global' });
 const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 
-const statusBarPopoverProps = {
+const statusBarPopoverProps: { modifiers: PopperModifiers; position: Position } = {
   modifiers: {
     flip: { enabled: false },
     preventOverflow: { boundariesElement: 'viewport' },
   },
   position: Position.TOP,
-} as { modifiers: PopperModifiers; position: Position };
+};
 
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
@@ -158,8 +160,8 @@ class App extends React.Component<IAppProps, IAppState> {
   private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private updateNoteDebounced: ReturnType<typeof debounce>;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  private worker = new Worker() as AppWorker;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+  private worker: AppWorker = new Worker();
 
   public constructor(props: IAppProps) {
     super(props);
@@ -193,23 +195,23 @@ class App extends React.Component<IAppProps, IAppState> {
       maxWait: UPDATE_MAX_WAIT_MS,
     });
 
-    this.hotkeys = (
-      [
-        ['Save', 'mod+s', this.updateNote],
-        ['Toggle Mode', 'mod+d', this.handleModeToggle],
-        ['Delete', 'mod+alt+d', this.handleDeleteButtonClick],
-        ['Rename', 'mod+alt+r', this.handleRenameButtonClick],
-        ['Download', 'mod+alt+j', this.handleDownloadButtonClick],
-        ['Share', 'mod+alt+s', this.shareHandler(false)],
-        ['Toggle Monospace', 'mod+alt+m', this.handleMonospaceToggle],
-        ['Toggle Text Wrap', 'mod+alt+w', this.handleWrapToggle],
-      ] as Array<[string, string, () => void]>
-    ).map(([label, combo, onKeyDown]) => ({
+    const hotkeys: Array<[string, string, () => unknown]> = [
+      ['Save', 'mod+s', this.updateNote],
+      ['Toggle Mode', 'mod+d', this.handleModeToggle],
+      ['Delete', 'mod+alt+d', this.handleDeleteButtonClick],
+      ['Rename', 'mod+alt+r', this.handleRenameButtonClick],
+      ['Download', 'mod+alt+j', this.handleDownloadButtonClick],
+      ['Share', 'mod+alt+s', this.shareHandler(false)],
+      ['Toggle Monospace', 'mod+alt+m', this.handleMonospaceToggle],
+      ['Toggle Text Wrap', 'mod+alt+w', this.handleWrapToggle],
+    ];
+
+    this.hotkeys = hotkeys.map(([label, combo, onKeyDown]) => ({
       allowInInput: true,
       combo,
       global: true,
       label,
-      onKeyDown,
+      onKeyDown: () => void onKeyDown(),
       preventDefault: true,
       stopPropagation: true,
     }));
@@ -728,19 +730,19 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderFormatMenu = () => {
     return (
       <Menu>
-        {Object.keys(Format).map((format) => {
-          const icon = {
+        {Formats.map((format) => {
+          const formatIcons: { [format in Format]: IconName } = {
             [Format.PlainText]: IconNames.DOCUMENT,
             [Format.Markdown]: IconNames.STYLE,
             [Format.Code]: IconNames.CODE,
-          }[format as Format] as IconName;
+          };
 
           return (
             <MenuItem
-              active={this.state.format === Format[format as keyof typeof Format]}
-              icon={icon}
+              active={this.state.format === Format[format]}
+              icon={formatIcons[format]}
               key={format}
-              onClick={this.formatChangeHandler(format as Format)}
+              onClick={this.formatChangeHandler(format)}
               text={startCase(format)}
             />
           );
@@ -1172,6 +1174,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private showAxiosErrorToast(message: string, error: AxiosError | unknown, key?: string) {
     let details;
     if (axios.isAxiosError(error)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       details = (error.response?.data as { message: string }).message || error.toString();
     } else {
       console.warn('Encountered unknown error', error);
@@ -1283,7 +1286,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private async updateNoteSettings(settings?: Partial<INoteSettings>) {
     const { id } = this.state.note;
     await NotesSettingStore.setItem(id, {
-      ...((await NotesSettingStore.getItem(id)) as Partial<INoteSettings>),
+      ...(await NotesSettingStore.getItem<Partial<INoteSettings>>(id)),
       ...pick(this.state, NOTE_SETTINGS_STATE_PROPERTIES),
       ...settings,
     });
@@ -1308,7 +1311,7 @@ class App extends React.Component<IAppProps, IAppState> {
         }
       }
     } catch (err) {
-      error = (err as Error).toString();
+      error = err instanceof Error ? err.message : String(err);
     } finally {
       if (textArea) {
         document.body.removeChild(textArea);
@@ -1320,9 +1323,10 @@ class App extends React.Component<IAppProps, IAppState> {
 }
 
 void (async () => {
-  const context = (window as unknown as { CONTEXT: IPageContext }).CONTEXT;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const context = (window as typeof window & { CONTEXT: IPageContext }).CONTEXT;
   const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
-  const settings = { mode: (await SettingsStore.getItem<string>('mode')) as Mode };
+  const settings = { mode: await SettingsStore.getItem<Mode>('mode') };
 
   ReactDOM.render(
     <HotkeysProvider>
