@@ -435,8 +435,9 @@ class App extends React.Component<IAppProps, IAppState> {
       AppToaster.show({
         icon: IconNames.WARNING_SIGN,
         intent: Intent.WARNING,
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        message: `Copying share link failed: ${error}.`,
+        message: `Copying share link failed: ${
+          error instanceof Error ? error.message : String(error)
+        }.`,
       });
     }
   };

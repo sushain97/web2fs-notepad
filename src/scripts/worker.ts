@@ -84,10 +84,6 @@ self.addEventListener('message', async ({ data: request }) => {
         }));
         return void respond(request, result);
       }
-      default: {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _: never = request;
-      }
     }
   } catch (error) {
     self.postMessage({
@@ -99,5 +95,5 @@ self.addEventListener('message', async ({ data: request }) => {
   }
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any,  @typescript-eslint/consistent-type-assertions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
 export default null as any;

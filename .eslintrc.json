@@ -20,6 +20,7 @@
     "eslint-comments/no-unused-disable": "error",
     "sort-keys": "error",
     "react/jsx-sort-props": "error",
+    "@typescript-eslint/switch-exhaustiveness-check": "error",
     "@typescript-eslint/consistent-type-assertions": ["error", { "assertionStyle": "never" }],
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/member-ordering": [
