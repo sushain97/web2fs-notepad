@@ -69,12 +69,12 @@ self.addEventListener('message', async ({ data: request }) => {
           ['language', 'value'],
         );
 
-        return void respond(request, result);
+        return respond(request, result);
       }
       case WorkerMessageType.RENDER_MARKDOWN: {
         const markdownIt = await getMarkdownRenderer();
         const result = markdownIt.render(request.content);
-        return void respond(request, result);
+        return respond(request, result);
       }
       case WorkerMessageType.LIST_CODE_LANGUAGES: {
         const highlightJs = await getCodeRenderer();
@@ -82,7 +82,7 @@ self.addEventListener('message', async ({ data: request }) => {
           name,
           ...pick(highlightJs.getLanguage(name), 'aliases'),
         }));
-        return void respond(request, result);
+        return respond(request, result);
       }
     }
   } catch (error) {

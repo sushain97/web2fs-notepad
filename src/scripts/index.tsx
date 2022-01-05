@@ -153,15 +153,15 @@ class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private checkOutdatedVersionInterval?: number;
   private contentRef?: HTMLTextAreaElement | null;
-  private handleContentScrollDebounced = debounce(this.updateNoteSettings.bind(this), 100);
-  private hotkeys: HotkeyConfig[];
+  private readonly handleContentScrollDebounced = debounce(this.updateNoteSettings.bind(this), 100);
+  private readonly hotkeys: HotkeyConfig[];
   private lastOutdatedVersionCheck: number;
-  private renameForm: React.RefObject<HTMLFormElement> = React.createRef();
-  private renameInput: React.RefObject<HTMLInputElement> = React.createRef();
+  private readonly renameForm: React.RefObject<HTMLFormElement> = React.createRef();
+  private readonly renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
-  private updateNoteDebounced: ReturnType<typeof debounce>;
+  private readonly updateNoteDebounced: ReturnType<typeof debounce>;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-  private worker: AppWorker = new Worker();
+  private readonly worker: AppWorker = new Worker();
 
   public constructor(props: IAppProps) {
     super(props);
@@ -181,7 +181,7 @@ class App extends React.Component<IAppProps, IAppState> {
       currentVersion,
       format,
       language: noteSettings?.language,
-      mode: settings?.mode || Mode.Light,
+      mode: settings.mode || Mode.Light,
       monospace,
       note,
       readOnly: true,
@@ -277,7 +277,7 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private checkOutdatedVersion = async () => {
+  private readonly checkOutdatedVersion = async () => {
     let { currentVersion } = this.state;
     const { version } = this.state.note;
     const saved = currentVersion !== null;
@@ -313,7 +313,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private contentRefHandler = async (ref: HTMLTextAreaElement | null) => {
+  private readonly contentRefHandler = async (ref: HTMLTextAreaElement | null) => {
     this.contentRef = ref;
 
     if (this.contentRef) {
@@ -328,7 +328,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private deleteNote = async () => {
+  private readonly deleteNote = async () => {
     try {
       await axios.delete(`/${this.state.note.id}`);
       window.location.href = '/';
@@ -337,7 +337,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private formatChangeHandler = (format: Format) => {
+  private readonly formatChangeHandler = (format: Format) => {
     return () => {
       if (format === Format.Code) {
         this.setState({ selectLanguageDialogOpen: true });
@@ -347,11 +347,11 @@ class App extends React.Component<IAppProps, IAppState> {
     };
   };
 
-  private handelRenameCancel = () => {
+  private readonly handelRenameCancel = () => {
     this.setState({ renameAlertOpen: false });
   };
 
-  private handleAutoDetectLanguage = () => {
+  private readonly handleAutoDetectLanguage = () => {
     this.setState({
       format: Format.Code,
       language: undefined,
@@ -361,7 +361,7 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   };
 
-  private handleBeforeUnload = (ev: BeforeUnloadEvent) => {
+  private readonly handleBeforeUnload = (ev: BeforeUnloadEvent) => {
     const { updating, note, content } = this.state;
 
     if (updating || content !== note.content) {
@@ -371,7 +371,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleContentChange = ({
+  private readonly handleContentChange = ({
     currentTarget: { value: content },
   }: React.FormEvent<HTMLTextAreaElement>) => {
     const { currentVersion, updating } = this.state;
@@ -385,7 +385,7 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   };
 
-  private handleContentKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  private readonly handleContentKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const { currentTarget, key, shiftKey } = ev;
 
     if (key === 'Escape') {
@@ -405,7 +405,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleContentScroll = ({
+  private readonly handleContentScroll = ({
     currentTarget: { scrollLeft, scrollTop },
   }: React.UIEvent<HTMLTextAreaElement>) => {
     // This redirection is necessary since React's SyntheticEvent will get re-used
@@ -421,7 +421,7 @@ class App extends React.Component<IAppProps, IAppState> {
     currentTarget.select();
   }
 
-  private handleCopyShareUrl = async () => {
+  private readonly handleCopyShareUrl = async () => {
     try {
       const { shareUrl, shareUrlSuccessMessage } = this.state;
       await App.copyTextToClipboard(shareUrl!);
@@ -442,15 +442,15 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleCopyShareUrlCancel = () => {
+  private readonly handleCopyShareUrlCancel = () => {
     this.setState({ shareUrl: undefined });
   };
 
-  private handleDeleteButtonClick = () => {
+  private readonly handleDeleteButtonClick = () => {
     this.setState({ confirmDeleteAlertOpen: true });
   };
 
-  private handleDownloadButtonClick = () => {
+  private readonly handleDownloadButtonClick = () => {
     const { format, note, content, language, languages } = this.state;
 
     // We pick the shortest alias/name as a poor man's extension heuristic.
@@ -467,7 +467,7 @@ class App extends React.Component<IAppProps, IAppState> {
     download(content, filename, type);
   };
 
-  private handleHistoryPopoverOpening = async () => {
+  private readonly handleHistoryPopoverOpening = async () => {
     try {
       this.setState({ history: undefined });
       const { data: history } = await axios.get<INoteVersionEntry[]>(
@@ -479,7 +479,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleLanguageSelected = ({ name }: ILanguage) => {
+  private readonly handleLanguageSelected = ({ name }: ILanguage) => {
     this.setState({
       format: Format.Code,
       language: name,
@@ -489,26 +489,26 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   };
 
-  private handleModeToggle = async () => {
+  private readonly handleModeToggle = async () => {
     const mode = this.state.mode === Mode.Light ? Mode.Dark : Mode.Light;
     this.setState({ mode });
     await SettingsStore.setItem('mode', mode);
   };
 
-  private handleMonospaceToggle = () => {
+  private readonly handleMonospaceToggle = () => {
     const { monospace } = this.state;
     this.setState({ monospace: !monospace });
   };
 
-  private handleNoteDeletionCancel = () => {
+  private readonly handleNoteDeletionCancel = () => {
     this.setState({ confirmDeleteAlertOpen: false });
   };
 
-  private handleReadOnlyShareToggle = () => {
+  private readonly handleReadOnlyShareToggle = () => {
     this.setState({ readOnly: !this.state.readOnly });
   };
 
-  private handleRename = async (ev?: React.FormEvent) => {
+  private readonly handleRename = async (ev?: React.FormEvent) => {
     const { id, version } = this.state.note;
     const form = this.renameForm.current!;
 
@@ -546,19 +546,19 @@ class App extends React.Component<IAppProps, IAppState> {
     return false;
   };
 
-  private handleRenameButtonClick = () => {
+  private readonly handleRenameButtonClick = () => {
     this.setState({ renameAlertOpen: true });
   };
 
-  private handleSelectLanguageClose = () => {
+  private readonly handleSelectLanguageClose = () => {
     this.setState({ selectLanguageDialogOpen: false });
   };
 
-  private handleSelectLanguageDialogOpening = () => {
+  private readonly handleSelectLanguageDialogOpening = () => {
     this.worker.postMessage({ type: WorkerMessageType.LIST_CODE_LANGUAGES });
   };
 
-  private handleSelectionChange = () => {
+  private readonly handleSelectionChange = () => {
     if (this.contentRef) {
       void this.updateNoteSettings({
         selectionEnd: this.contentRef.selectionEnd,
@@ -567,11 +567,13 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleViewLatestButtonClick = async ({ metaKey }: React.MouseEvent<HTMLElement>) => {
+  private readonly handleViewLatestButtonClick = async ({
+    metaKey,
+  }: React.MouseEvent<HTMLElement>) => {
     await this.showNoteVersion(this.state.currentVersion!, metaKey);
   };
 
-  private handleWorkerMessage = ({ data: response }: IWorkerMessageEvent) => {
+  private readonly handleWorkerMessage = ({ data: response }: IWorkerMessageEvent) => {
     if (!('request_type' in response)) {
       throw new Error(`Recieved message without request_type: ${JSON.stringify(response)}`);
     }
@@ -609,12 +611,12 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private handleWrapToggle = () => {
+  private readonly handleWrapToggle = () => {
     const { wrap } = this.state;
     this.setState({ wrap: !wrap });
   };
 
-  private historyMenuItemClickHandler = (version: number) => {
+  private readonly historyMenuItemClickHandler = (version: number) => {
     return ({ metaKey }: React.MouseEvent<HTMLElement>) => {
       void this.showNoteVersion(version, metaKey);
     };
@@ -728,7 +730,7 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private renderFormatMenu = () => {
+  private readonly renderFormatMenu = () => {
     return (
       <Menu>
         {Formats.map((format) => {
@@ -1100,7 +1102,7 @@ class App extends React.Component<IAppProps, IAppState> {
     );
   }
 
-  private requestWorkerContentRender = () => {
+  private readonly requestWorkerContentRender = () => {
     const { format, content, language } = this.state;
 
     if (format === Format.Code) {
@@ -1117,7 +1119,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   };
 
-  private shareHandler = (pinned: boolean) => {
+  private readonly shareHandler = (pinned: boolean) => {
     return async () => {
       const { note, content, format, mode, language, readOnly, currentVersion } = this.state;
 
@@ -1175,8 +1177,10 @@ class App extends React.Component<IAppProps, IAppState> {
   private showAxiosErrorToast(message: string, error: AxiosError | unknown, key?: string) {
     let details;
     if (axios.isAxiosError(error)) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      details = (error.response?.data as { message: string }).message || error.toString();
+      details =
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        (error.response?.data as { message: string }).message ||
+        (error instanceof Error ? error.message : String(error));
     } else {
       console.warn('Encountered unknown error', error);
     }
@@ -1236,7 +1240,7 @@ class App extends React.Component<IAppProps, IAppState> {
     });
   }
 
-  private updateNote = async () => {
+  private readonly updateNote = async () => {
     const {
       note: { id, content },
       content: currentContent,

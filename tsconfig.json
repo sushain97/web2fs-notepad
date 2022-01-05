@@ -9,5 +9,6 @@
     "tsBuildInfoFile": ".tsbuildinfo",
     "incremental": true,
     "strict": true
-  }
+  },
+  "exclude": ["public/assets", "vendor"]
 }
