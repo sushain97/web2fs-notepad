@@ -168,7 +168,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     const { note, currentVersion, noteSettings, settings } = props;
 
-    const format = noteSettings?.format || Format.PlainText;
+    const format = noteSettings?.format ?? Format.PlainText;
     const wrap = noteSettings?.wrap ?? true;
     const monospace =
       noteSettings?.monospace === true ||
@@ -181,7 +181,7 @@ class App extends React.Component<IAppProps, IAppState> {
       currentVersion,
       format,
       language: noteSettings?.language,
-      mode: settings.mode || Mode.Light,
+      mode: settings.mode ?? Mode.Light,
       monospace,
       note,
       readOnly: true,
@@ -317,7 +317,7 @@ class App extends React.Component<IAppProps, IAppState> {
     this.contentRef = ref;
 
     if (this.contentRef) {
-      const settings = (await NotesSettingStore.getItem<INoteSettings>(this.props.note.id)) || {};
+      const settings = (await NotesSettingStore.getItem<INoteSettings>(this.props.note.id)) ?? {};
 
       for (const property of NOTE_SETTINGS_TEXTAREA_PROPERTIES) {
         const value = settings[property];
@@ -457,7 +457,7 @@ class App extends React.Component<IAppProps, IAppState> {
     let extension = FormatExtensions[format];
     if (format === Format.Code && language && languages) {
       extension = [
-        ...(languages.find(({ name }) => name === language)!.aliases || []),
+        ...(languages.find(({ name }) => name === language)!.aliases ?? []),
         language,
       ].sort((a, b) => a.length - b.length)[0];
     }
@@ -626,7 +626,7 @@ class App extends React.Component<IAppProps, IAppState> {
     const lowerQuery = query.toLowerCase();
     return (
       name.toLowerCase().includes(lowerQuery) ||
-      (aliases || []).some((alias) => alias.toLowerCase().includes(lowerQuery))
+      (aliases ?? []).some((alias) => alias.toLowerCase().includes(lowerQuery))
     );
   }
 
