@@ -603,10 +603,6 @@ class App extends React.Component<IAppProps, IAppState> {
         case WorkerMessageType.LIST_CODE_LANGUAGES:
           this.setState({ languages: response.result });
           break;
-        default: {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const _: never = response;
-        }
       }
     }
   };
