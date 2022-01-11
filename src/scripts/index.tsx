@@ -574,8 +574,8 @@ class App extends React.Component<IAppProps, IAppState> {
   };
 
   private readonly handleWorkerMessage = ({ data: response }: IWorkerMessageEvent) => {
-    if (!('request_type' in response)) {
-      throw new Error(`Recieved message without request_type: ${JSON.stringify(response)}`);
+    if (!('requestType' in response)) {
+      throw new Error(`Recieved message without requestType: ${JSON.stringify(response)}`);
     }
 
     if (response.type === WorkerMessageType.ERROR) {
@@ -584,13 +584,13 @@ class App extends React.Component<IAppProps, IAppState> {
         intent: Intent.WARNING,
         message: (
           <>
-            <strong>Failed to {startCase(response.request_type.toLowerCase())}</strong>:{' '}
+            <strong>Failed to {startCase(response.requestType.toLowerCase())}</strong>:{' '}
             {response.error}.
           </>
         ),
       });
     } else {
-      switch (response.request_type) {
+      switch (response.requestType) {
         case WorkerMessageType.RENDER_CODE:
           this.setState({
             language: response.result.language,

@@ -46,7 +46,7 @@ export type WorkerRequestMessage =
 
 interface BaseWorkerResultMessage<T extends WorkerRequestMessage> {
   type: WorkerMessageType.RESULT;
-  request_type: T['type'];
+  requestType: T['type'];
   request: T;
   result: WorkerResultForRequest<T>;
 }
@@ -63,7 +63,7 @@ export type WorkerResultForRequest<T extends WorkerRequestMessage> =
 interface WorkerErrorMessage<T extends WorkerRequestMessage | WorkerInitializeMessage> {
   type: WorkerMessageType.ERROR;
   request: T;
-  request_type: T['type'];
+  requestType: T['type'];
   error: string;
 }
 

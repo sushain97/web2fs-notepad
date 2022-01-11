@@ -35,19 +35,20 @@ const getMarkdownRenderer = async () => {
 const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResultForRequest<T>) => {
   const message = {
     request,
-    request_type: request.type,
+    requestType: request.type,
     result,
     type: WorkerMessageType.RESULT,
   };
   // Avoiding this cast and ensuring type narrowing in handleWorkerMessage seem mutually exclusive.
+  // I think this will help: https://github.com/microsoft/TypeScript/issues/32399.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   self.postMessage(message as WorkerMessage);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 self.addEventListener('message', async ({ data: request }) => {
-  if ('request_type' in request) {
-    throw new Error(`Recieved message with request_type: ${JSON.stringify(request)}`);
+  if ('requestType' in request) {
+    throw new Error(`Recieved message with requestType: ${JSON.stringify(request)}`);
   }
 
   try {
@@ -89,7 +90,7 @@ self.addEventListener('message', async ({ data: request }) => {
     self.postMessage({
       error: error instanceof Error ? error.message : String(error),
       request,
-      request_type: request.type,
+      requestType: request.type,
       type: WorkerMessageType.ERROR,
     });
   }
