@@ -20,6 +20,7 @@
   "rules": {
     "@typescript-eslint/ban-types": "error",
     "@typescript-eslint/consistent-type-assertions": ["error", { "assertionStyle": "never" }],
+    "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
     "@typescript-eslint/no-base-to-string": "error",
     "@typescript-eslint/no-dynamic-delete": "error",
     "@typescript-eslint/no-meaningless-void-operator": "error",

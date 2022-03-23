@@ -40,7 +40,6 @@ const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResul
   });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 self.addEventListener('message', async ({ data: request }) => {
   if ('requestType' in request) {
     throw new Error(`Recieved message with requestType: ${JSON.stringify(request)}`);
