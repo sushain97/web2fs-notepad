@@ -99,4 +99,5 @@ export class AppWorker extends Worker {
   ): void;
   public mungeImportScriptsUrl(url: string): string;
   public postMessage(message: WorkerMessage): void;
+  public postMessage<T extends WorkerRequestMessage>(message: BaseWorkerResultMessage<T>): void;
 }

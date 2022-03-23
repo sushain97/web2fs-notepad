@@ -3,7 +3,6 @@ import { pick } from 'lodash-es';
 import setupMarkdown from './setup-markdown';
 import {
   AppWorker,
-  WorkerMessage,
   WorkerMessageType,
   WorkerRequestMessage,
   WorkerResultForRequest,
@@ -33,16 +32,12 @@ const getMarkdownRenderer = async () => {
 };
 
 const respond = <T extends WorkerRequestMessage>(request: T, result: WorkerResultForRequest<T>) => {
-  const message = {
+  self.postMessage({
     request,
     requestType: request.type,
     result,
     type: WorkerMessageType.RESULT,
-  };
-  // Avoiding this cast and ensuring type narrowing in handleWorkerMessage seem mutually exclusive.
-  // I think this will help: https://github.com/microsoft/TypeScript/issues/32399.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  self.postMessage(message as WorkerMessage);
+  });
 };
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
