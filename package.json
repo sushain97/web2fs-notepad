@@ -34,7 +34,7 @@
     "react-dom": "^17.0.2"
   },
   "devDependencies": {
-    "@blueprintjs/eslint-plugin": "^0.3.3",
+    "@blueprintjs/eslint-plugin": "^2.0.0",
     "@types/dom-clipboard-api": "^1.0.0",
     "@types/downloadjs": "^1.4.0",
     "@types/humanize-plus": "^1.8.0",
