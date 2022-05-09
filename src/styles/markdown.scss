@@ -5,6 +5,11 @@
     margin-top: 0;
   }
 
+  pre {
+    overflow-x: auto;
+    margin-right: $pt-grid-size;
+  }
+
   // Blueprint's default styling of <pre><code> needs tweaking
   pre > code {
     background: initial !important;

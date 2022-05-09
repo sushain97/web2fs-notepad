@@ -1,9 +1,34 @@
 import { Classes } from '@blueprintjs/core';
 import classNames from 'classnames';
+import type { HLJSApi } from 'highlight.js';
 import * as MarkdownIt from 'markdown-it';
 
-export default (md: typeof MarkdownIt): MarkdownIt => {
+let highlightJs: HLJSApi | undefined;
+
+export default (md: typeof MarkdownIt, refreshCallback?: () => void): MarkdownIt => {
+  const highlight = (content: string, language: string) => {
+    (async () => {
+      if (!highlightJs) {
+        highlightJs = (await import('highlight.js')).default;
+        if (refreshCallback) {
+          refreshCallback();
+        }
+      }
+    })().catch((err) => console.warn('Unable to load highlighting library: ', err));
+
+    if (highlightJs) {
+      if (highlightJs.getLanguage(language)) {
+        return highlightJs.highlight(content, { ignoreIllegals: true, language }).value;
+      } else {
+        return highlightJs.highlightAuto(content).value;
+      }
+    }
+
+    return '';
+  };
+
   const markdownIt = md({
+    highlight,
     linkify: true,
     typographer: true,
   });
