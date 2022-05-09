@@ -22,10 +22,10 @@ const getCodeRenderer = async () => {
   return self.HighlightJs;
 };
 
-const getMarkdownRenderer = async () => {
+const getMarkdownRenderer = async (refreshCallback: () => void) => {
   if (!self.MarkdownIt) {
     const md = (await import('markdown-it')).default;
-    self.MarkdownIt = setupMarkdown(md);
+    self.MarkdownIt = setupMarkdown(md, refreshCallback);
   }
 
   return self.MarkdownIt;
@@ -67,9 +67,12 @@ self.addEventListener('message', async ({ data: request }) => {
         return respond(request, result);
       }
       case WorkerMessageType.RENDER_MARKDOWN: {
-        const markdownIt = await getMarkdownRenderer();
-        const result = markdownIt.render(request.content);
-        return respond(request, result);
+        const render = () => {
+          const result = markdownIt.render(request.content);
+          return respond(request, result);
+        };
+        const markdownIt = await getMarkdownRenderer(render);
+        return render();
       }
       case WorkerMessageType.LIST_CODE_LANGUAGES: {
         const highlightJs = await getCodeRenderer();
