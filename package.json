@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@blueprintjs/eslint-plugin": "^2.0.0",
+    "@blueprintjs/stylelint-plugin": "^2.0.6",
     "@types/dom-clipboard-api": "^1.0.0",
     "@types/downloadjs": "^1.4.0",
     "@types/humanize-plus": "^1.8.0",

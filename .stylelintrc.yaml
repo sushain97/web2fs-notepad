@@ -1,3 +1,8 @@
 extends: stylelint-config-recommended
-plugins: [stylelint-scss]
+plugins:
+  - stylelint-scss
+  - '@blueprintjs/stylelint-plugin'
 customSyntax: postcss-scss
+rules:
+  '@blueprintjs/no-color-literal': true
+  '@blueprintjs/no-prefix-literal': true
