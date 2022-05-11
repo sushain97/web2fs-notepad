@@ -59,7 +59,7 @@ export default (md: typeof MarkdownIt, refreshCallback?: () => void): MarkdownIt
     return `<table class="${classNames(
       Classes.HTML_TABLE,
       Classes.HTML_TABLE_BORDERED,
-      Classes.SMALL,
+      Classes.HTML_TABLE_CONDENSED,
     )}">\n`;
   };
 
