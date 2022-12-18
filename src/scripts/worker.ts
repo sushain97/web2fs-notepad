@@ -1,12 +1,12 @@
 import { pick } from 'lodash-es';
 
-import setupMarkdown from './setup-markdown';
 import {
   AppWorker,
   WorkerMessageType,
   WorkerRequestMessage,
   WorkerResultForRequest,
 } from './types';
+import setupMarkdown from './setup-markdown';
 
 declare let self: AppWorker;
 

@@ -2,13 +2,13 @@ import '../styles/markdown.scss';
 import '../styles/share.scss';
 import '../styles/code.scss';
 
-import { Classes } from '@blueprintjs/core';
-import classNames from 'classnames';
 import * as MarkdownIt from 'markdown-it';
+import { Classes } from '@blueprintjs/core';
 import MarkdownItAnchor from 'markdown-it-anchor';
+import classNames from 'classnames';
 
-import setupMarkdown from './setup-markdown';
 import { Mode } from './types';
+import setupMarkdown from './setup-markdown';
 
 declare const window: typeof global.window & {
   CONTEXT: { content: string; mode: string };

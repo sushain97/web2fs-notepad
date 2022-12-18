@@ -1,7 +1,7 @@
-import { Classes } from '@blueprintjs/core';
-import classNames from 'classnames';
-import type { HLJSApi } from 'highlight.js';
 import * as MarkdownIt from 'markdown-it';
+import { Classes } from '@blueprintjs/core';
+import type { HLJSApi } from 'highlight.js';
+import classNames from 'classnames';
 
 let highlightJs: HLJSApi | undefined;
 

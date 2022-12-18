@@ -57,6 +57,12 @@
     "eslint-comments/no-unused-disable": "error",
     "react/jsx-sort-props": "error",
     "sonarjs/no-nested-template-literals": "off",
-    "sort-keys": "error"
+    "sort-keys": "error",
+    "sort-imports": [
+      "error",
+      {
+        "allowSeparatedGroups": true
+      }
+    ]
   }
 }

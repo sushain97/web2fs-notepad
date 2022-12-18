@@ -2,8 +2,8 @@ import '../styles/code.scss';
 import '../styles/share.scss';
 
 import { Classes } from '@blueprintjs/core';
-import classNames from 'classnames';
 import HighlightJs from 'highlight.js';
+import classNames from 'classnames';
 
 import { Mode } from './types';
 

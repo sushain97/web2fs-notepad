@@ -1,5 +1,5 @@
-import type { HLJSApi, LanguageDetail } from 'highlight.js';
 import * as MarkdownIt from 'markdown-it';
+import type { HLJSApi, LanguageDetail } from 'highlight.js';
 
 export const enum Mode {
   Light = 'Light',

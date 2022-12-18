@@ -1,5 +1,9 @@
 import '../styles/index.scss';
 
+import * as LocalForage from 'localforage';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import * as punycode from 'punycode';
 import {
   Alert,
   AnchorButton,
@@ -12,9 +16,9 @@ import {
   Divider,
   FocusStyleManager,
   FormGroup,
-  HotkeysProvider,
   H5,
   HotkeyConfig,
+  HotkeysProvider,
   HotkeysTarget2,
   Icon,
   InputGroup,
@@ -25,6 +29,7 @@ import {
   NonIdealState,
   Popover,
   PopoverInteractionKind,
+  PopperModifiers,
   Position,
   Spinner,
   Switch,
@@ -32,27 +37,22 @@ import {
   TextArea,
   Toaster,
   Tooltip,
-  PopperModifiers,
 } from '@blueprintjs/core';
-import { IconName, IconNames } from '@blueprintjs/icons';
 import {
   IItemListRendererProps,
   IItemRendererProps,
   IQueryListRendererProps,
   QueryList,
 } from '@blueprintjs/select';
+import { IconName, IconNames } from '@blueprintjs/icons';
 import axios, { AxiosError, CancelTokenSource } from 'axios';
+import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
 import classNames from 'classnames';
 import download from 'downloadjs';
 import { fileSize } from 'humanize-plus';
-import * as LocalForage from 'localforage';
-import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
-import * as punycode from 'punycode';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 
-import Worker from './worker';
 import { AppWorker, ILanguage, IWorkerMessageEvent, Mode, WorkerMessageType } from './types';
+import Worker from './worker';
 
 declare const window: typeof global.window & { CONTEXT: IPageContext };
 
