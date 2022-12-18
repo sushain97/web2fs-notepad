@@ -92,9 +92,9 @@ interface IAppState {
   content: string;
   currentVersion: number | null;
   format: Format;
-  history?: INoteVersionEntry[];
+  history?: Array<INoteVersionEntry>;
   language?: string;
-  languages?: ILanguage[];
+  languages?: Array<ILanguage>;
   mode: Mode;
   monospace: boolean;
   note: INote;
@@ -154,7 +154,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private checkOutdatedVersionInterval?: number;
   private contentRef?: HTMLTextAreaElement | null;
   private readonly handleContentScrollDebounced = debounce(this.updateNoteSettings.bind(this), 100);
-  private readonly hotkeys: HotkeyConfig[];
+  private readonly hotkeys: Array<HotkeyConfig>;
   private lastOutdatedVersionCheck: number;
   private readonly renameForm: React.RefObject<HTMLFormElement> = React.createRef();
   private readonly renameInput: React.RefObject<HTMLInputElement> = React.createRef();
@@ -288,7 +288,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
 
     try {
-      const { data: history } = await axios.get<INoteVersionEntry[]>(
+      const { data: history } = await axios.get<Array<INoteVersionEntry>>(
         `/${this.state.note.id}/history`,
       );
       this.lastOutdatedVersionCheck = Date.now();
@@ -470,7 +470,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private readonly handleHistoryPopoverOpening = async () => {
     try {
       this.setState({ history: undefined });
-      const { data: history } = await axios.get<INoteVersionEntry[]>(
+      const { data: history } = await axios.get<Array<INoteVersionEntry>>(
         `/${this.state.note.id}/history`,
       );
       this.setState({ history });
@@ -1298,6 +1298,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     let textArea;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(text);
       } else {
