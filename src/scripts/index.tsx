@@ -50,9 +50,11 @@ import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
 import * as punycode from 'punycode';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import Worker from './worker';
 
+import Worker from './worker';
 import { AppWorker, ILanguage, IWorkerMessageEvent, Mode, WorkerMessageType } from './types';
+
+declare const window: typeof global.window & { CONTEXT: IPageContext };
 
 // We want to ensure that versions are somewhat meaningful by debouncing
 // updates. However, we don't want to allow lots of unsent input to get
@@ -149,6 +151,9 @@ const statusBarPopoverProps: { modifiers: PopperModifiers; position: Position } 
   position: Position.TOP,
 };
 
+const hasOwnProperty = <X, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> =>
+  obj != null && typeof obj == 'object' && Object.prototype.hasOwnProperty.call(obj, prop);
+
 class App extends React.Component<IAppProps, IAppState> {
   private cancelTokenSource?: CancelTokenSource;
   private checkOutdatedVersionInterval?: number;
@@ -160,8 +165,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private readonly renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private readonly updateNoteDebounced: ReturnType<typeof debounce>;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-  private readonly worker: AppWorker = new Worker();
+  private readonly worker: AppWorker = new Worker()!;
 
   public constructor(props: IAppProps) {
     super(props);
@@ -1173,9 +1177,9 @@ class App extends React.Component<IAppProps, IAppState> {
   private showAxiosErrorToast(message: string, error: AxiosError | unknown, key?: string) {
     let details;
     if (axios.isAxiosError(error)) {
+      const data = error.response?.data;
       details =
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        (error.response?.data as { message: string }).message ||
+        (hasOwnProperty(data, 'message') ? String(data.message) : null) ??
         (error instanceof Error ? error.message : String(error));
     } else {
       console.warn('Encountered unknown error', error);
@@ -1325,8 +1329,7 @@ class App extends React.Component<IAppProps, IAppState> {
 }
 
 void (async () => {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const context = (window as typeof window & { CONTEXT: IPageContext }).CONTEXT;
+  const context = window.CONTEXT;
   const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
   const settings = { mode: await SettingsStore.getItem<Mode>('mode') };
 

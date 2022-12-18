@@ -8,7 +8,8 @@
     "jsx": "react",
     "tsBuildInfoFile": ".tsbuildinfo",
     "incremental": true,
-    "strict": true
+    "strict": true,
+    "skipLibCheck": true
   },
   "exclude": ["public/assets", "vendor"]
 }

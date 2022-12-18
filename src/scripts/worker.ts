@@ -93,5 +93,5 @@ self.addEventListener('message', async ({ data: request }) => {
   }
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-export default null as any;
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export default null as unknown as typeof AppWorker;

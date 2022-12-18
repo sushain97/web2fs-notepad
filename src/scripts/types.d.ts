@@ -88,7 +88,7 @@ type WorkerEventListenerOrEventListenerObject =
     }
   | ((evt: IWorkerMessageEvent) => void);
 
-export class AppWorker extends Worker {
+export class AppWorker extends ServiceWorkerContainer {
   HighlightJs?: HLJSApi;
   MarkdownIt?: ReturnType<typeof MarkdownIt>;
 

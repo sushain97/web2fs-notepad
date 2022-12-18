@@ -10,9 +10,11 @@ import MarkdownItAnchor from 'markdown-it-anchor';
 import setupMarkdown from './setup-markdown';
 import { Mode } from './types';
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const { content, mode } = (window as typeof window & { CONTEXT: { content: string; mode: string } })
-  .CONTEXT;
+declare const window: typeof global.window & {
+  CONTEXT: { content: string; mode: string };
+};
+const { content, mode } = window.CONTEXT;
+
 document.body.setAttribute(
   'class',
   classNames({ [Classes.DARK]: mode === Mode.Dark.toLowerCase() }),
