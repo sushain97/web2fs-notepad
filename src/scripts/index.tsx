@@ -1302,8 +1302,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
     let textArea;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (navigator.clipboard) {
+      if (window.isSecureContext) {
         await navigator.clipboard.writeText(text);
       } else {
         textArea = document.createElement('textarea');
