@@ -6,7 +6,7 @@ RUN apt-get -qq update && apt-get -qq install \
     git \
     unzip
 
-ADD https://deb.nodesource.com/setup_12.x install_node_source.sh
+ADD https://deb.nodesource.com/setup_14.x install_node_source.sh
 RUN bash install_node_source.sh
 RUN apt-get -qq update && apt-get -qq install nodejs
 RUN npm install -g yarn
