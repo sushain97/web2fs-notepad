@@ -1,10 +1,10 @@
 name: Docker
 on:
   push:
-    branches: [ "master" ]
-    tags: [ 'v*.*.*' ]
+    branches: ['master']
+    tags: ['v*.*.*']
   pull_request:
-    branches: [ "master" ]
+    branches: ['master']
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -22,6 +22,9 @@ jobs:
 
       - name: Setup .env
         run: sed s/APP_ENV=dev/APP_ENV=prod/ .env.dist > .env
+
+      - name: Record version
+        run: git describe --tags --always > .version
 
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'

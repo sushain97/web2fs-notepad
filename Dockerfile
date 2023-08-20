@@ -1,15 +1,5 @@
-FROM php:7-apache-buster
+FROM php:7-alpine AS php-builder
 LABEL maintainer sushain@skc.name
-
-RUN apt-get -qq update && apt-get -qq install \
-    gnupg \
-    git \
-    unzip
-
-ADD https://deb.nodesource.com/setup_14.x install_node_source.sh
-RUN bash install_node_source.sh
-RUN apt-get -qq update && apt-get -qq install nodejs
-RUN npm install -g yarn
 
 ADD https://getcomposer.org/installer install_composer.php
 RUN php install_composer.php
@@ -18,17 +8,27 @@ RUN mv composer.phar /usr/local/bin/composer && \
 
 WORKDIR /app
 
-COPY yarn.lock package.json /app/
-RUN yarn install
-
 COPY .env symfony.lock composer.json composer.lock /app/
 COPY bin bin
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts
+
+FROM node:14-alpine AS js-builder
+
+WORKDIR /app
+
+COPY yarn.lock package.json /app/
+RUN yarn install
 
 COPY src src
 COPY webpack.config.js tsconfig.json /app/
 RUN yarn build --mode production
 
+FROM php:7-apache-bullseye
+
+WORKDIR /app
+
+COPY --from=php-builder /app/vendor /app/vendor/
+COPY --from=js-builder /app/public/assets /app/public/assets/
 COPY . .
 
 RUN mkdir var && chown www-data var

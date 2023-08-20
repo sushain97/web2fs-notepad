@@ -1,6 +1,10 @@
-node_modules/
-vendor/
-var/
-public/assets
+.circleci
 .git
+.github
 .gitignore
+.tsbuildinfo
+.vscode
+node_modules/
+public/assets
+var/
+vendor/
