@@ -1,7 +1,7 @@
 version: 2
 defaults: &defaults
   docker:
-    - image: circleci/php:7.4-apache-node-browsers
+    - image: cimg/php:7.4-node
   working_directory: ~/web2fs-notepad
 jobs:
   test:
