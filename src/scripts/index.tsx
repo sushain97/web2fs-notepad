@@ -45,7 +45,7 @@ import {
   QueryList,
 } from '@blueprintjs/select';
 import { IconName, IconNames } from '@blueprintjs/icons';
-import axios, { AxiosError, CancelTokenSource } from 'axios';
+import axios, { CancelTokenSource } from 'axios';
 import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
 import classNames from 'classnames';
 import download from 'downloadjs';
@@ -120,8 +120,8 @@ const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
 ] as const;
 
 interface INoteSettings
-  extends Partial<Pick<IAppState, typeof NOTE_SETTINGS_STATE_PROPERTIES[number]>>,
-    Partial<Pick<HTMLTextAreaElement, typeof NOTE_SETTINGS_TEXTAREA_PROPERTIES[number]>> {}
+  extends Partial<Pick<IAppState, (typeof NOTE_SETTINGS_STATE_PROPERTIES)[number]>>,
+    Partial<Pick<HTMLTextAreaElement, (typeof NOTE_SETTINGS_TEXTAREA_PROPERTIES)[number]>> {}
 
 interface ISettings {
   mode: Mode | null;
@@ -1174,7 +1174,7 @@ class App extends React.Component<IAppProps, IAppState> {
     }
   }
 
-  private showAxiosErrorToast(message: string, error: AxiosError | unknown, key?: string) {
+  private showAxiosErrorToast(message: string, error: unknown, key?: string) {
     let details;
     if (axios.isAxiosError<{ message: string }, unknown>(error)) {
       const data = error.response?.data;
