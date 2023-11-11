@@ -19,7 +19,7 @@
     "@blueprintjs/core": "^4.3.0",
     "@blueprintjs/icons": "^4.2.5",
     "@blueprintjs/select": "^4.2.0",
-    "axios": "^0.27.2",
+    "axios": "^1.6.0",
     "classnames": "^2.2.6",
     "downloadjs": "^1.4.7",
     "highlight.js": "^11.0.1",
