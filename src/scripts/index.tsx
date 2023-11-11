@@ -1176,7 +1176,7 @@ class App extends React.Component<IAppProps, IAppState> {
 
   private showAxiosErrorToast(message: string, error: AxiosError | unknown, key?: string) {
     let details;
-    if (axios.isAxiosError(error)) {
+    if (axios.isAxiosError<{ message: string }, unknown>(error)) {
       const data = error.response?.data;
       details =
         (hasOwnProperty(data, 'message') ? String(data.message) : null) ??
