@@ -26,8 +26,8 @@
     "humanize-plus": "^1.8.2",
     "localforage": "^1.7.2",
     "lodash-es": "^4.17.14",
-    "markdown-it": "^13.0.1",
-    "markdown-it-anchor": "^8.4.1",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.0.1",
     "normalize.css": "^8.0.0",
     "punycode.js": "^2.3.1",
     "react": "^17.0.2",
@@ -71,7 +71,7 @@
     "typescript": "^5.5.2",
     "webpack": "^5.92.1",
     "webpack-assets-manifest": "^5.2.1",
-    "webpack-cli": "^4.9.1",
+    "webpack-cli": "^5.1.4",
     "worker-loader": "^3.0.0"
   }
 }
