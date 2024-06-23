@@ -16,9 +16,9 @@
     "fix": "yarn run eslint --fix && yarn run prettier --write && yarn run stylelint --fix"
   },
   "dependencies": {
-    "@blueprintjs/core": "^4.3.0",
-    "@blueprintjs/icons": "^4.2.5",
-    "@blueprintjs/select": "^4.2.0",
+    "@blueprintjs/core": "^5.10.3",
+    "@blueprintjs/icons": "^5.9.0",
+    "@blueprintjs/select": "^5.1.5",
     "axios": "^1.7.2",
     "classnames": "^2.5.1",
     "downloadjs": "^1.4.7",
@@ -30,8 +30,8 @@
     "markdown-it-anchor": "^9.0.1",
     "normalize.css": "^8.0.0",
     "punycode.js": "^2.3.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@blueprintjs/eslint-plugin": "^6.1.2",
@@ -42,8 +42,8 @@
     "@types/lodash-es": "^4.17.12",
     "@types/markdown-it": "^14.1.1",
     "@types/punycode": "^2.1.4",
-    "@types/react": "^17.0.11",
-    "@types/react-dom": "^17.0.7",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
     "clean-webpack-plugin": "^4.0.0",
