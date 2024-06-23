@@ -2,8 +2,8 @@ import '../styles/markdown.scss';
 import '../styles/share.scss';
 import '../styles/code.scss';
 
-import * as MarkdownIt from 'markdown-it';
 import { Classes } from '@blueprintjs/core';
+import MarkdownIt from 'markdown-it';
 import MarkdownItAnchor from 'markdown-it-anchor';
 import classNames from 'classnames';
 
