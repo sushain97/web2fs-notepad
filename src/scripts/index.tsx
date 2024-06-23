@@ -234,7 +234,8 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentDidMount() {
     document.addEventListener('selectionchange', this.handleSelectionChange);
     window.addEventListener('beforeunload', this.handleBeforeUnload);
-    window.addEventListener('onfocus', () => void this.checkOutdatedVersion());
+    window.addEventListener('onfocus', this.checkOutdatedVersion);
+    window.addEventListener('visibilitychange', this.checkOutdatedVersion);
     this.checkOutdatedVersionInterval = window.setInterval(
       () => void this.checkOutdatedVersion,
       OUTDATED_CHECK_MS,
@@ -262,7 +263,7 @@ class App extends React.Component<IAppProps, IAppState> {
   public componentWillUnmount() {
     document.removeEventListener('selectionchange', this.handleSelectionChange);
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
-    window.removeEventListener('visibilitychange', () => void this.checkOutdatedVersion());
+    window.removeEventListener('visibilitychange', this.checkOutdatedVersion);
     window.clearInterval(this.checkOutdatedVersionInterval);
     this.updateNoteDebounced.cancel();
   }
