@@ -55,10 +55,10 @@ export type WorkerResultForRequest<T extends WorkerRequestMessage> =
   T extends WorkerRenderCodeRequestMessage
     ? Pick<ReturnType<HLJSApi['highlight']>, 'language' | 'value'>
     : T extends WorkerRenderMarkdownRequestMessage
-    ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
-    : T extends WorkerListLanguagesRequestMessage
-    ? Array<ILanguage>
-    : never;
+      ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
+      : T extends WorkerListLanguagesRequestMessage
+        ? Array<ILanguage>
+        : never;
 
 interface WorkerErrorMessage<T extends WorkerRequestMessage | WorkerInitializeMessage> {
   type: WorkerMessageType.ERROR;
