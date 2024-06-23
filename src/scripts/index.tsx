@@ -2,7 +2,6 @@ import '../styles/index.scss';
 
 import * as LocalForage from 'localforage';
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 import * as punycode from 'punycode';
 import {
   Alert,
@@ -27,27 +26,29 @@ import {
   MenuDivider,
   MenuItem,
   NonIdealState,
+  OverlayToaster,
   Popover,
   PopoverInteractionKind,
-  PopperModifiers,
+  PopoverProps,
   Position,
   Spinner,
   Switch,
   Tag,
   TextArea,
-  Toaster,
   Tooltip,
+  TooltipProps,
 } from '@blueprintjs/core';
-import {
-  IItemListRendererProps,
-  IItemRendererProps,
-  IQueryListRendererProps,
-  QueryList,
-} from '@blueprintjs/select';
 import { IconName, IconNames } from '@blueprintjs/icons';
+import {
+  ItemListRendererProps,
+  ItemRendererProps,
+  QueryList,
+  QueryListRendererProps,
+} from '@blueprintjs/select';
 import axios, { CancelTokenSource } from 'axios';
 import { compact, debounce, pick, sortBy, startCase } from 'lodash-es';
 import classNames from 'classnames';
+import { createRoot } from 'react-dom/client';
 import download from 'downloadjs';
 import { fileSize } from 'humanize-plus';
 
@@ -139,16 +140,16 @@ interface IAppProps extends IPageContext {
 
 FocusStyleManager.onlyShowFocusOnTabs();
 
-const AppToaster = Toaster.create();
+const AppToaster = OverlayToaster.create();
 const SettingsStore = LocalForage.createInstance({ name: 'global' });
 const NotesSettingStore = LocalForage.createInstance({ name: 'notes' });
 
-const statusBarPopoverProps: { modifiers: PopperModifiers; position: Position } = {
+const statusBarPopoverProps: Partial<PopoverProps & TooltipProps> = {
   modifiers: {
     flip: { enabled: false },
-    preventOverflow: { boundariesElement: 'viewport' },
   },
   position: Position.TOP,
+  rootBoundary: 'viewport',
 };
 
 const hasOwnProperty = <X, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> =>
@@ -790,14 +791,14 @@ class App extends React.Component<IAppProps, IAppState> {
   private renderLanguage(
     this: void,
     { name }: ILanguage,
-    { modifiers: { active }, handleClick }: IItemRendererProps,
+    { modifiers: { active }, handleClick }: ItemRendererProps,
   ) {
     return <MenuItem active={active} key={name} onClick={handleClick} text={startCase(name)} />;
   }
 
   private renderLanguages(
     this: void,
-    { filteredItems, renderItem }: IItemListRendererProps<ILanguage>,
+    { filteredItems, renderItem }: ItemListRendererProps<ILanguage>,
   ) {
     return <Menu className="languages">{filteredItems.map(renderItem)}</Menu>;
   }
@@ -810,7 +811,7 @@ class App extends React.Component<IAppProps, IAppState> {
       query,
       handleKeyDown,
       handleKeyUp,
-    }: IQueryListRendererProps<ILanguage>,
+    }: QueryListRendererProps<ILanguage>,
   ) {
     return (
       <div onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
@@ -1332,10 +1333,10 @@ void (async () => {
   const noteSettings = await NotesSettingStore.getItem<INoteSettings | null>(context.note.id);
   const settings = { mode: await SettingsStore.getItem<Mode>('mode') };
 
-  ReactDOM.render(
+  const root = createRoot(document.getElementById('app')!);
+  root.render(
     <HotkeysProvider>
       <App {...{ ...context, noteSettings, settings }} />
     </HotkeysProvider>,
-    document.getElementById('app'),
   );
 })();
