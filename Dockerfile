@@ -12,7 +12,7 @@ COPY .env symfony.lock composer.json composer.lock /app/
 COPY bin bin
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts
 
-FROM node:16-alpine AS js-builder
+FROM node:18-alpine AS js-builder
 
 WORKDIR /app
 

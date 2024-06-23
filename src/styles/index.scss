@@ -83,14 +83,14 @@ body {
   }
 
   .status-bar-callout {
-    padding: $pt-grid-size / 2 $pt-grid-size $pt-grid-size / 2;
+    padding: calc($pt-grid-size / 2) $pt-grid-size calc($pt-grid-size / 2);
     width: unset;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 
     &.#{$ns}-callout-icon > .#{$ns}-icon:first-child {
-      top: $pt-grid-size / 2;
+      top: calc($pt-grid-size / 2);
     }
 
     .#{$ns}-heading {
