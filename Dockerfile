@@ -2,7 +2,7 @@ FROM php:7-alpine AS php-builder
 LABEL maintainer sushain@skc.name
 
 ADD https://getcomposer.org/installer install_composer.php
-RUN php install_composer.php
+RUN php install_composer.php --2.2
 RUN mv composer.phar /usr/local/bin/composer && \
     chmod +x /usr/local/bin/composer
 
