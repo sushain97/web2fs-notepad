@@ -26,7 +26,7 @@
     "humanize-plus": "^1.8.2",
     "localforage": "^1.7.2",
     "lodash-es": "^4.17.23",
-    "markdown-it": "^14.1.0",
+    "markdown-it": "^14.1.1",
     "markdown-it-anchor": "^9.0.1",
     "normalize.css": "^8.0.0",
     "punycode.js": "^2.3.1",
