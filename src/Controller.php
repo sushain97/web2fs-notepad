@@ -6,21 +6,21 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\Routing\Annotation\Route;
 
 class Controller extends AbstractController
 {
+    private const TEMPLATE_PATH = __DIR__.'/index.html.php';
+
     private static function extractFormatLanguageAndShareBundle(string $format): array
     {
         $language = null;
         if ($format === 'markdown') {
             $bundle = 'share-markdown';
-        } elseif (strpos($format, 'code') === 0) {
+        } elseif (str_starts_with($format, 'code')) {
             $bundle = 'share-code';
             $maybeLanguage = explode('-', $format);
             $language = count($maybeLanguage) > 1 ? $maybeLanguage[1] : null;
@@ -53,8 +53,8 @@ class Controller extends AbstractController
         }
 
         $request = Request::createFromGlobals();
-        $userAgent = $request->headers->get('User-Agent');
-        $contentType = $request->getAcceptableContentTypes()[0];
+        $userAgent = $request->headers->get('User-Agent', '');
+        $contentType = $request->getAcceptableContentTypes()[0] ?? null;
 
         if ($hasNote) {
             $note = $store->getNote($id, $version);
@@ -73,7 +73,7 @@ class Controller extends AbstractController
 
         if ($contentType === 'application/json') {
             $response = $this->json($data);
-        } elseif (strpos($userAgent, 'curl') === 0 || $contentType === 'text/plain') {
+        } elseif (str_starts_with($userAgent, 'curl') || $contentType === 'text/plain') {
             $response = new Response($note->content);
         } else {
             $response = $this->renderHTML($data, 'index', $id);
@@ -208,13 +208,13 @@ class Controller extends AbstractController
         return new Response($sharedId);
     }
 
-    public function onKernelException(GetResponseForExceptionEvent $event)
+    public function onKernelException(ExceptionEvent $event): void
     {
-        $exception = $event->getException();
+        $exception = $event->getThrowable();
         if ($this->kernel->getEnvironment() !== 'dev' || $exception instanceof HttpExceptionInterface) {
             $request = $event->getRequest();
-            $userAgent = $request->headers->get('User-Agent');
-            $contentType = $request->getAcceptableContentTypes()[0];
+            $userAgent = $request->headers->get('User-Agent', '');
+            $contentType = $request->getAcceptableContentTypes()[0] ?? null;
 
             $response = null;
 
@@ -225,7 +225,7 @@ class Controller extends AbstractController
                 }
 
                 $response = new JsonResponse($data);
-            } elseif (strpos($userAgent, 'curl') === 0 || $contentType === 'text/plain') {
+            } elseif (str_starts_with($userAgent, 'curl') || $contentType === 'text/plain') {
                 $response = new Response();
                 $response->setContent($exception->getMessage());
             }
@@ -246,12 +246,17 @@ class Controller extends AbstractController
 
     private function renderHTML(array $context, string $bundle, ?string $title = null): Response
     {
-        return $this->render('index.html.php', [
-            'kernel' => $this->kernel,
-            'context' => $context,
-            'bundle' => $bundle,
-            'title' => $title,
-        ]);
+        $kernel = $this->kernel;
+
+        ob_start();
+        try {
+            require self::TEMPLATE_PATH;
+            $content = ob_get_contents();
+        } finally {
+            ob_end_clean();
+        }
+
+        return new Response($content);
     }
 
     private function ensureNoteVersionExists(NoteStore $store, string $id, ?int $version = null): void
