@@ -121,7 +121,8 @@ const NOTE_SETTINGS_TEXTAREA_PROPERTIES = [
 ] as const;
 
 interface INoteSettings
-  extends Partial<Pick<IAppState, (typeof NOTE_SETTINGS_STATE_PROPERTIES)[number]>>,
+  extends
+    Partial<Pick<IAppState, (typeof NOTE_SETTINGS_STATE_PROPERTIES)[number]>>,
     Partial<Pick<HTMLTextAreaElement, (typeof NOTE_SETTINGS_TEXTAREA_PROPERTIES)[number]>> {}
 
 interface ISettings {
@@ -166,7 +167,7 @@ class App extends React.Component<IAppProps, IAppState> {
   private readonly renameInput: React.RefObject<HTMLInputElement> = React.createRef();
   private updateFailedToastKey?: string;
   private readonly updateNoteDebounced: ReturnType<typeof debounce>;
-  private readonly worker: AppWorker = new Worker()!;
+  private readonly worker: AppWorker = new Worker();
 
   public constructor(props: IAppProps) {
     super(props);

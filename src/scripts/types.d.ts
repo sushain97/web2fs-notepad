@@ -1,5 +1,5 @@
-import * as MarkdownIt from 'markdown-it';
 import type { HLJSApi, LanguageDetail } from 'highlight.js';
+import type MarkdownIt from 'markdown-it';
 
 export const enum Mode {
   Light = 'Light',
@@ -55,7 +55,7 @@ export type WorkerResultForRequest<T extends WorkerRequestMessage> =
   T extends WorkerRenderCodeRequestMessage
     ? Pick<ReturnType<HLJSApi['highlight']>, 'language' | 'value'>
     : T extends WorkerRenderMarkdownRequestMessage
-      ? ReturnType<ReturnType<typeof MarkdownIt>['render']>
+      ? ReturnType<MarkdownIt['render']>
       : T extends WorkerListLanguagesRequestMessage
         ? Array<ILanguage>
         : never;
@@ -90,7 +90,7 @@ type WorkerEventListenerOrEventListenerObject =
 
 export class AppWorker extends ServiceWorkerContainer {
   HighlightJs?: HLJSApi;
-  MarkdownIt?: ReturnType<typeof MarkdownIt>;
+  MarkdownIt?: MarkdownIt;
 
   public addEventListener(
     type: 'message',
