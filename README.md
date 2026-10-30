@@ -53,7 +53,7 @@ by default in most environments.
 ## Development
 
 Use the local build instructions above to install dependencies. Then, start
-the development web server using `./bin/console server:run`.
+the development web server using `./bin/serve`.
 
 Run tests and linters using `./bin/test`. [CircleCI][7] powers CI and mirrors
 the test script's actions.
