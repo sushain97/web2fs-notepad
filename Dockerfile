@@ -9,7 +9,9 @@ COPY .env symfony.lock composer.json composer.lock /app/
 COPY bin bin
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts
 
-FROM node:24-alpine AS js-builder
+FROM node:26-alpine AS js-builder
+
+RUN npm install -g yarn@1.22.22
 
 WORKDIR /app
 
