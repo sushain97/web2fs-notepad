@@ -1,10 +1,7 @@
-FROM php:7-alpine AS php-builder
+FROM php:8.4-cli-alpine AS php-builder
 LABEL maintainer sushain@skc.name
 
-ADD https://getcomposer.org/installer install_composer.php
-RUN php install_composer.php --2.2
-RUN mv composer.phar /usr/local/bin/composer && \
-    chmod +x /usr/local/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /app
 
@@ -12,7 +9,9 @@ COPY .env symfony.lock composer.json composer.lock /app/
 COPY bin bin
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts
 
-FROM node:18-alpine AS js-builder
+FROM node:26-alpine AS js-builder
+
+RUN npm install -g yarn@1.22.22
 
 WORKDIR /app
 
@@ -23,7 +22,7 @@ COPY src src
 COPY webpack.config.js tsconfig.json /app/
 RUN yarn build --mode production
 
-FROM php:7-apache-bullseye
+FROM php:8.4-apache-trixie
 
 WORKDIR /app
 

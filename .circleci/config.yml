@@ -1,7 +1,7 @@
 version: 2
 defaults: &defaults
   docker:
-    - image: cimg/php:7.4-node
+    - image: cimg/php:8.4-node
   working_directory: ~/web2fs-notepad
 jobs:
   test:

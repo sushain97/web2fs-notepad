@@ -26,7 +26,7 @@ setting `APP_ENV=prod`.
 
 ### Artifact Download
 
-1. Install [PHP][11] 7.4.3+.
+1. Install [PHP][11] 8.2+.
 1. Download and extract a `dist.tar.gz` from a GitHub release or CircleCI
    build.
 1. Copy `.env.dist` to `.env` and edit settings.
@@ -37,7 +37,7 @@ deployment (CircleCI artifact download has a runtime dependency on [`jq`][14]).
 
 ### Local Build
 
-1. Install [PHP][11] 7.4.3+.
+1. Install [PHP][11] 8.2+.
 1. Install [`yarn`][5] and [`composer`][6].
 1. Download/clone source from GitHub.
 1. Copy `.env.dist` to `.env` and edit settings.
@@ -53,7 +53,7 @@ by default in most environments.
 ## Development
 
 Use the local build instructions above to install dependencies. Then, start
-the development web server using `./bin/console server:run`.
+the development web server using `./bin/serve`.
 
 Run tests and linters using `./bin/test`. [CircleCI][7] powers CI and mirrors
 the test script's actions.

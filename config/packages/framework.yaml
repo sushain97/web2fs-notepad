@@ -1,9 +1,8 @@
 framework:
   secret: '%env(APP_SECRET)%'
+  http_method_override: false
+  handle_all_throwables: true
   #csrf_protection: true
 
   php_errors:
     log: true
-
-  templating:
-    engines: ['php']

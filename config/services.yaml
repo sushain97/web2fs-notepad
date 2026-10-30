@@ -6,7 +6,7 @@ services:
 
   App\:
     resource: '../src/*'
-    exclude: '../src/Kernel.php'
+    exclude: '../src/{Kernel.php,index.html.php,scripts,styles}'
 
   App\Controller:
     tags:
