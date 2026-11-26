@@ -1,11 +1,12 @@
-version: 2
-defaults: &defaults
-  docker:
-    - image: cimg/php:8.4-node
-  working_directory: ~/web2fs-notepad
+version: 2.1
+executors:
+  php-node:
+    docker:
+      - image: cimg/php:8.4-node
+    working_directory: ~/web2fs-notepad
 jobs:
   test:
-    <<: *defaults
+    executor: php-node
     steps:
       - checkout
       - restore_cache:
@@ -14,19 +15,19 @@ jobs:
             - php-dependencies-
       - restore_cache:
           keys:
-            - js-dependencies-{{ checksum "yarn.lock" }}
-            - js-dependencies-
+            - js-pnpm-dependencies-{{ checksum "pnpm-lock.yaml" }}
+            - js-pnpm-dependencies-
       - run: composer install -n --prefer-dist
       - save_cache:
           paths:
             - vendor
           key: php-dependencies-{{ checksum "composer.json" }}
-      - run: yarn install
+      - run: pnpm install --frozen-lockfile
       - save_cache:
           paths:
             - node_modules
-          key: js-dependencies-{{ checksum "yarn.lock" }}
-      - run: yarn lint
+          key: js-pnpm-dependencies-{{ checksum "pnpm-lock.yaml" }}
+      - run: pnpm lint
       - run: ./vendor/bin/phpcs
       - run: git describe --tags --always > .version
       - persist_to_workspace:
@@ -47,14 +48,14 @@ jobs:
             - .env.dist
             - .version
   build:
-    <<: *defaults
+    executor: php-node
     environment:
       APP_ENV: prod
     steps:
       - attach_workspace:
           at: .
       - run: composer install --no-dev --prefer-dist --optimize-autoloader
-      - run: yarn build
+      - run: pnpm build
       - run: tar
           --ignore-case --exclude 'vendor/*/tests' --exclude 'vendor/*.md' --exclude 'vendor/*.gitignore' --exclude 'vendor/*/LICENSE*'
           -cvzf dist.tar.gz
@@ -76,7 +77,6 @@ jobs:
           -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1}
           -replace -draft "$(< .version)" dist.tar.gz
 workflows:
-  version: 2
   main:
     jobs:
       - test:

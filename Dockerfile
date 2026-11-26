@@ -11,16 +11,16 @@ RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts
 
 FROM node:26-alpine AS js-builder
 
-RUN npm install -g yarn@1.22.22
+RUN npm install -g pnpm@12.23.0
 
 WORKDIR /app
 
-COPY yarn.lock package.json /app/
-RUN yarn install
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json /app/
+RUN pnpm install --frozen-lockfile
 
 COPY src src
 COPY webpack.config.js tsconfig.json /app/
-RUN yarn build --mode production
+RUN pnpm build --mode production
 
 FROM php:8.4-apache-trixie
 
