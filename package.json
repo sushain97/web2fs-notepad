@@ -5,15 +5,16 @@
   "author": "Sushain K. Cherivirala <sushain@skc.name>",
   "license": "ISC",
   "private": true,
+  "packageManager": "pnpm@12.23.0",
   "scripts": {
     "build": "webpack",
-    "watch": "yarn run build --watch",
+    "watch": "pnpm run build --watch",
     "eslint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "prettier": "prettier src/**/{*.tsx,*.ts,*.scss} config/**/*.yaml .circleci/**.yml *.json *.js *.md *.yaml",
     "stylelint": "stylelint src/styles",
     "tsc": "tsc --noEmit",
-    "lint": "yarn run eslint && yarn run prettier --list-different && yarn run stylelint && yarn run tsc",
-    "fix": "yarn run eslint --fix && yarn run prettier --write && yarn run stylelint --fix"
+    "lint": "pnpm run eslint && pnpm run prettier --list-different && pnpm run stylelint && pnpm run tsc",
+    "fix": "pnpm run eslint --fix && pnpm run prettier --write && pnpm run stylelint --fix"
   },
   "dependencies": {
     "@blueprintjs/core": "^5.10.3",
@@ -29,7 +30,7 @@
     "markdown-it": "^14.3.3",
     "markdown-it-anchor": "^9.0.1",
     "normalize.css": "^8.0.0",
-    "punycode.js": "^2.3.1",
+    "punycode": "^2.3.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -41,6 +42,7 @@
     "@types/humanize-plus": "^1.8.2",
     "@types/lodash-es": "^4.17.12",
     "@types/markdown-it": "^14.1.1",
+    "@types/node": "^26.6.6",
     "@types/punycode": "^2.1.4",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

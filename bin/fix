@@ -4,4 +4,4 @@ set -euxo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 ./vendor/bin/phpcbf
-yarn fix
+pnpm fix

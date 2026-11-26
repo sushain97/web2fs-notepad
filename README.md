@@ -38,7 +38,7 @@ deployment (CircleCI artifact download has a runtime dependency on [`jq`][14]).
 ### Local Build
 
 1. Install [PHP][11] 8.2+.
-1. Install [`yarn`][5] and [`composer`][6].
+1. Install [`pnpm`][5] and [`composer`][6].
 1. Download/clone source from GitHub.
 1. Copy `.env.dist` to `.env` and edit settings.
 1. Run `./bin/install`.
@@ -65,7 +65,7 @@ Autofix errors from [Prettier][8], [ESLint][9], [Stylelint][13], and
 [2]: https://reactjs.org/
 [3]: http://typescriptlang.org/
 [4]: https://blueprintjs.com/
-[5]: https://yarnpkg.com/
+[5]: https://pnpm.io/
 [6]: https://getcomposer.org/
 [7]: https://circleci.com/
 [8]: https://prettier.io/
